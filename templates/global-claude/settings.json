@@ -1,0 +1,34 @@
+{
+  "statusLine": {
+    "type": "command",
+    "command": "pwsh -NoProfile -File \"{{HOME}}/.claude/statusline.ps1\"",
+    "padding": 0
+  },
+  "permissions": {
+    "defaultMode": "auto"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c 'if command -v pwsh >/dev/null 2>&1; then exec pwsh -NoProfile -File \"$1\"; else exec bash \"$2\"; fi' _ \"{{HOME}}/.claude/hooks/main-push-guard.ps1\" \"{{HOME}}/.claude/hooks/main-push-guard.sh\"",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "sh -c 'if command -v pwsh >/dev/null 2>&1; then exec pwsh -NoProfile -File \"$1\"; else exec bash \"$2\"; fi' _ \"{{HOME}}/.claude/hooks/secret-guard.ps1\" \"{{HOME}}/.claude/hooks/secret-guard.sh\"",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "sh -c 'if command -v pwsh >/dev/null 2>&1; then exec pwsh -NoProfile -File \"$1\"; else exec bash \"$2\"; fi' _ \"{{HOME}}/.claude/hooks/destructive-guard.ps1\" \"{{HOME}}/.claude/hooks/destructive-guard.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
