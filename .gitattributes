@@ -1,0 +1,25 @@
+# Normalizacao de EOL por tipo — independe do core.autocrlf de cada contribuidor.
+# Evita que CRLF entre em scripts POSIX (quebra shebang/bash no Linux/macOS).
+
+# Default: Git decide texto vs binario; texto e normalizado para LF no blob.
+* text=auto
+
+# Scripts POSIX — SEMPRE LF (CRLF quebra o shebang no destino).
+*.sh    text eol=lf
+*.bash  text eol=lf
+
+# git hooks sem extensao (shim sh) — SEMPRE LF (rodam via sh, ate no Windows).
+templates/project-scaffold/.githooks/pre-commit text eol=lf
+
+# Scripts/manifests Windows — CRLF no working tree (convencao PowerShell/CMD).
+*.ps1   text eol=crlf
+*.psd1  text eol=crlf
+*.psm1  text eol=crlf
+*.cmd   text eol=crlf
+*.bat   text eol=crlf
+
+# Texto/dados portaveis — LF.
+*.md    text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.json  text eol=lf
