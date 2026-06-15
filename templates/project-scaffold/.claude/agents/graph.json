@@ -1,0 +1,109 @@
+{
+  "Nodes": [
+    {
+      "Id": "code-reviewer",
+      "Type": "Agent",
+      "Role": "review",
+      "Description": "Revisa um diff ou PR em busca de bugs, riscos de segurança, aderência ao DESIGN/convenções e simplificações. Use ao final de um /build, antes de abrir PR, ou quando o usuário pedir revisão. Read-only — não altera código."
+    },
+    {
+      "Id": "debugger",
+      "Type": "Agent",
+      "Role": "debug",
+      "Description": "Investiga falha, stacktrace ou teste intermitente, isola a causa-raiz e propõe o fix mínimo. Use quando algo quebra ou um teste falha sem causa óbvia. Roda comandos para reproduzir."
+    },
+    {
+      "Id": "documenter",
+      "Type": "Agent",
+      "Role": "documentation",
+      "Description": "Expert em documentação humano×LLM que NÃO entra na KB — doc de código/módulos, ADR, runbook/onboarding, referência/notas. Use ao registrar o que mudou/aconteceu ou documentar como algo funciona. Escreve em docs/."
+    },
+    {
+      "Id": "explorer",
+      "Type": "Agent",
+      "Role": "search",
+      "Description": "Explora uma codebase desconhecida e devolve um mapa conciso (onde está cada coisa, como se conecta) sem despejar arquivos inteiros. Use para localizar código, entender arquitetura ou responder \"onde fica X\" antes de implementar. Read-only."
+    },
+    {
+      "Id": "git-workflow",
+      "Type": "Agent",
+      "Role": "vcs",
+      "Description": "Expert em higiene de repositório e fluxo Git/PR — estrutura, conventional commits, branches, pull requests, .gitignore. Use ao preparar commits/PRs, revisar histórico ou organizar o repo. Roda git/gh."
+    },
+    {
+      "Id": "security-reviewer",
+      "Type": "Agent",
+      "Role": "security",
+      "Description": "Revisão de segurança dedicada e em profundidade — segredos, injeção, authn/authz, dependências/supply-chain, config insegura. Use quando a mudança toca superfície sensível ou sob pedido. Read-only."
+    },
+    {
+      "Id": "test-writer",
+      "Type": "Agent",
+      "Role": "testing",
+      "Description": "Gera ou completa testes para um alvo (função, módulo, feature), cobrindo caminho feliz, edge cases e os Acceptance Tests do DEFINE. Use durante /build ou quando faltar cobertura. Pode criar/editar arquivos de teste e rodá-los."
+    },
+    {
+      "Id": "validator",
+      "Type": "Agent",
+      "Role": "validation",
+      "Description": "Verifica se o resultado entregue cumpre a spec e os Acceptance Tests do DEFINE — roda e observa o comportamento. Use ao fim de um /build ou antes do /ship para confirmar conformidade. Roda checagens."
+    }
+  ],
+  "Edges": [
+    {
+      "From": "code-reviewer",
+      "To": "security-reviewer",
+      "Type": "CONNECTS_TO"
+    },
+    {
+      "From": "code-reviewer",
+      "To": "test-writer",
+      "Type": "CONNECTS_TO"
+    },
+    {
+      "From": "debugger",
+      "To": "explorer",
+      "Type": "CONNECTS_TO"
+    },
+    {
+      "From": "debugger",
+      "To": "test-writer",
+      "Type": "CONNECTS_TO"
+    },
+    {
+      "From": "documenter",
+      "To": "explorer",
+      "Type": "CONNECTS_TO"
+    },
+    {
+      "From": "explorer",
+      "To": "code-reviewer",
+      "Type": "CONNECTS_TO"
+    },
+    {
+      "From": "explorer",
+      "To": "debugger",
+      "Type": "CONNECTS_TO"
+    },
+    {
+      "From": "git-workflow",
+      "To": "code-reviewer",
+      "Type": "CONNECTS_TO"
+    },
+    {
+      "From": "security-reviewer",
+      "To": "code-reviewer",
+      "Type": "CONNECTS_TO"
+    },
+    {
+      "From": "test-writer",
+      "To": "validator",
+      "Type": "CONNECTS_TO"
+    },
+    {
+      "From": "validator",
+      "To": "test-writer",
+      "Type": "CONNECTS_TO"
+    }
+  ]
+}

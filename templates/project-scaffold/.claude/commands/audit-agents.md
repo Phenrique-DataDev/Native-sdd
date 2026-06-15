@@ -1,0 +1,192 @@
+# /audit-agents — curadoria de agentes de domínio
+
+Especializa o catálogo de agentes do projeto: lê o `project-context.md`, **infere** as áreas
+relevantes ao stack/domínio real, detecta lacunas e **gera agentes de domínio** em
+`.claude/agents/domain/` — de forma **idempotente** e com sua aprovação a cada passo.
+
+> Esta é a feature **G2** (EPIC G — curadoria/auto-otimização). O comando **adiciona** ao
+> catálogo de papéis universais do base (`explorer`, `code-reviewer`, `test-writer`,
+> `git-workflow`, `security-reviewer`, `debugger`, `validator`, `documenter`); nunca os substitui.
+>
+> **Papéis universais já cobertos pelo base (B9/B10) — NÃO regerar:** higiene de git/PR, revisão de
+> segurança, debug de causa-raiz, validação de conformidade e **documentação humano×LLM** (`documenter`).
+> Este comando gera **apenas** experts de **stack/domínio** (ex.: `sql-reviewer`, `frontend-specialist`,
+> `infra-specialist`) — o que o base, por ser agnóstico de stack, não cobre.
+
+---
+
+## Uso
+
+```text
+/audit-agents              # auditoria completa + geração interativa das lacunas
+/audit-agents --only-map   # só o mapa de cobertura, sem gerar nada
+/audit-agents --regen      # reconsidera também os agentes já gerados (generated_by)
+```
+
+---
+
+## Passo 0 — Carregar contexto
+
+```text
+Read(".claude/rules/project-context.md")
+```
+
+Extraia: **LINGUAGEM**, **FRAMEWORK/RUNTIME**, **DADOS**, **INFRA**, **DOMÍNIO**, **CONVENÇÕES**.
+
+**Gate:** se o arquivo contiver `status: template` (ou placeholders `<...>`), **pare** e
+oriente o usuário a rodar **`/setup`** primeiro — sem contexto não há o que especializar.
+
+---
+
+## Passo 1 — Inventariar agentes existentes
+
+```text
+Glob(".claude/agents/**/*.md")
+```
+
+Para cada arquivo, leia só o frontmatter e registre `name`, `description` e se tem
+`generated_by: audit-agents` (= foi gerado por esta curadoria). Monte uma tabela interna
+`origem(núcleo/gerado) | name | descrição`. **Não** considere `AGENT_MAP.md` um agente.
+
+---
+
+## Passo 2 — Mapa de cobertura (derivado do contexto)
+
+**Não use uma tabela fixa de áreas.** A partir do stack/domínio **real** do passo 0, infira
+as áreas que fazem sentido para *este* projeto e proponha agentes específicos. Heurísticas
+(exemplos, não checklist obrigatório):
+
+| Sinal no contexto | Área candidata | Agente sugerido (exemplo) |
+|-------------------|----------------|---------------------------|
+| Dados/SQL/warehouse/dbt | Modelagem e revisão de SQL | `sql-reviewer`, `dbt-modeler` |
+| **Stack simulável** (dbt, SQL, migrações, IaC) | **Simular mudança antes de aplicar** (`/simulate`) | `dbt-simulator`, `sql-simulator`, `terraform-simulator` (`role: simulation`) |
+| Frontend (React/Vue/Next) | Componentes e UX | `frontend-specialist` |
+| Backend/API | Serviços e contratos | `api-specialist` |
+| IA/LLM/RAG | Prompt eng. e avaliação | `llm-specialist` |
+| Infra/IaC (Terraform/Docker/CI) | Infra como código | `infra-specialist` |
+| Domínio regulado (fintech, saúde) | Compliance | `compliance-reviewer` |
+| Regras de negócio complexas | Especialista de domínio | `<dominio>-domain-expert` |
+
+> **Simulador de domínio (`role: simulation`):** quando o stack tem uma ferramenta de **dry-run**
+> (ex.: `dbt build --empty`/`--defer`/data-diff, `EXPLAIN`, `terraform plan`), gere um `*-simulator`
+> que cumpre o **contrato do `/simulate`** ([`rules/simulation.md`](../rules/simulation.md)): roda só
+> isolado, **nunca toca produção**, e emite o relatório das 6 seções (incl. `Isolamento`). É o que dá
+> ao projeto a capacidade de "simular antes de aplicar". Sem ferramenta de dry-run no stack → não gere.
+
+Para cada área inferida marque: ✅ coberto · ⚠️ parcial · ❌ lacuna (comparando com o
+inventário do passo 1). Só proponha o que o contexto **justifica** — se não há sinal de
+frontend, não invente um agente de frontend.
+
+> **Papel × stack/domínio:** os papéis **universais** (git/PR, segurança, debug, validação,
+> documentação) já vêm no base — trate-os como ✅ **coberto** e **não** gere genéricos equivalentes.
+> Gere só o que é específico de **stack/domínio** (a coluna "Agente sugerido" acima é toda de stack/domínio).
+
+---
+
+## Passo 3 — Relatório de cobertura
+
+```text
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COBERTURA DE AGENTES — {NOME_PROJETO}
+Stack: {LINGUAGEM} · {FRAMEWORK} · {DADOS} · {INFRA}   |   Domínio: {DOMÍNIO}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COBERTO ✅        {agentes do inventário que cobrem áreas}
+LACUNAS ❌        {área}: sem agente para {descrição}
+A GERAR           {nome-agente} — {justificativa em 1 linha}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+Se **não houver lacunas**, diga claramente que a cobertura está completa e **encerre** — não
+invente agentes. Se `--only-map`, **pare aqui**.
+
+---
+
+## Passo 4 — Confirmar geração
+
+Use `AskUserQuestion`: *"Encontrei {N} lacuna(s). Gerar agora?"* →
+(a) gerar todas · (b) escolher quais · (c) só o relatório (encerra).
+
+---
+
+## Passo 5 — Gerar cada agente escolhido
+
+Salve em `.claude/agents/domain/<nome>.md` (crie a pasta `domain/` se não existir). Use
+contexto **real** — **nunca** deixe placeholders `{...}` no arquivo final. Frontmatter
+obrigatório, no mesmo formato dos agentes do núcleo, **mais** o marcador de origem:
+
+```markdown
+---
+name: <nome-kebab-case-único>
+description: <quando acionar — gatilho concreto do stack/domínio real>
+tools: Read, Grep, Glob, Edit, Bash
+model: inherit
+role: <papel mais próximo: review|testing|search|security|debug|validation|vcs|simulation>
+connects_to: [<agente do base com que encadeia, ex.: code-reviewer>]
+generated_by: audit-agents
+---
+
+Você é um <especialista em X para {DOMÍNIO}>. <Responsabilidade em 1–2 linhas.>
+
+## Antes de agir
+- Leia `.claude/rules/project-context.md` (stack/convenções).
+- Consulte a KB de `{domínio relevante}` se existir.
+
+## Como trabalhar
+- <processo concreto na stack real: {LINGUAGEM}/{FRAMEWORK}/{DADOS}>
+- Siga as convenções: {CONVENÇÕES do contexto}.
+
+## Saída
+- <o que entrega: revisão/artefato/relatório>, específico e acionável.
+```
+
+O `name` deve ser **único** em todo `.claude/agents/`.
+
+---
+
+## Passo 6 — Mostrar e ajustar
+
+Para cada agente gerado, exiba o conteúdo e pergunte: (a) aceitar e salvar · (b) ajustar
+(diga o quê) · (c) descartar. Em (a), `Write(".claude/agents/domain/<nome>.md")`.
+
+---
+
+## Passo 7 — Atualizar roteamento e mapa
+
+Se ≥1 agente foi salvo:
+
+1. **`.claude/rules/agent-routing.md`** — adicione/expanda a seção:
+   ```markdown
+   ## Agentes de domínio (`.claude/agents/domain/`)
+
+   | Gatilho | Subagent |
+   |---------|----------|
+   | {gatilho} | `{nome}` |
+   ```
+2. **`.claude/agents/AGENT_MAP.md`** — **anexe** os novos nós ao grafo Mermaid (uma aresta
+   `dom --> {nome}` ou similar). **Não regenere o mapa inteiro** — regeneração total é da
+   feature **G4** (`/sync-context`).
+
+---
+
+## Passo 8 — Relatório final
+
+```text
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+AUDITORIA CONCLUÍDA — {NOME_PROJETO}
+Aproveitados: {N}   Gerados: {N} ({nomes})   Descartados: {N}
+agent-routing.md: {atualizado|sem alteração}   AGENT_MAP.md: {atualizado|sem alteração}
+→ Revise em .claude/agents/domain/  ·  /brainstorm para começar uma feature
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+---
+
+## Idempotência e regras
+
+- **Idempotência:** na 2ª execução, identifique os agentes com `generated_by: audit-agents`
+  já presentes e **não os duplique** — só preencha lacunas novas. Com `--regen`, reconsidere
+  também os já gerados (confirmando antes de sobrescrever).
+- **Nunca** sobrescreva um agente existente sem confirmação explícita.
+- `name` **único** em todo `.claude/agents/`.
+- **Sem lacuna → não inventa** agente. Agentes devem usar contexto real, sem placeholders.
+- O comando **só adiciona**; manter o catálogo **enxuto** (só o que o domínio justifica).
