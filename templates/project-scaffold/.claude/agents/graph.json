@@ -1,0 +1,233 @@
+{
+  "Nodes": [
+    {
+      "Id": "code-reviewer",
+      "Type": "Agent",
+      "Role": "review",
+      "Description": "Revisor sênior de diff/PR. Prioriza por risco (correção, concorrência, recursos, contrato/retrocompat, performance), lê o contexto e os chamadores além do diff, revisa o que ficou de fora e casa a linguagem com a severidade — sinal alto, sem nit-bombing. Delega estilo aos linters de CI e profundidade de segurança ao security-reviewer. Read-only."
+    },
+    {
+      "Id": "debugger",
+      "Type": "Agent",
+      "Role": "debug",
+      "Description": "Vai da falha à causa-raiz pelo método científico (hipótese→predição→experimento→observação), não ao sintoma. Reproduz primeiro, checa ambiente antes da lógica, reduz o reprodutor (delta debugging), instrumenta com logs/traces, usa debugger e git bisect para regressão, e trata heisenbug/flaky/concorrência. Use quando algo quebra ou um teste falha sem causa óbvia."
+    },
+    {
+      "Id": "designer",
+      "Type": "Agent",
+      "Role": "design",
+      "Description": "Expert em UI/frontend que conduz shape→craft→audit — contraste WCAG/APCA, design tokens (primitivo×semântico), tipografia/espaço fluido, ARIA APG, Core Web Vitals (CLS/LCP/INP), motion com prefers-reduced-motion, anti-slop, static-first. Use ao criar/revisar/refinar interface. Aponta para a skill `impeccable` quando instalada (`/supplements design`); sem ela, aplica a mesma disciplina diretamente. Não carrega paleta/referências fixas de nenhum projeto."
+    },
+    {
+      "Id": "documenter",
+      "Type": "Agent",
+      "Role": "documentation",
+      "Description": "Expert em escrita técnica humano×LLM (fora da KB) — organiza `docs/` por Diátaxis (tutorial/how-to/reference/explanation), lavra ADR (Nygard/MADR), changelog Keep a Changelog derivado de Conventional Commits, runbook/onboarding e diagramas Mermaid. Registros append-only datados, derivados do git/código; nunca inventa. Use ao registrar o que mudou/aconteceu ou documentar como algo funciona."
+    },
+    {
+      "Id": "explorer",
+      "Type": "Agent",
+      "Role": "search",
+      "Description": "Explora uma codebase desconhecida e devolve um mapa conciso (pontos de entrada, como conecta, onde a mudança entra) sem despejar arquivos. Segue o call graph (definição→usos→testes), não só hits de grep; domina ripgrep avançado (tipos, contexto, -w, globs), ast-grep (busca por AST) e tags/LSP. Use para \"onde fica X\" antes de implementar. Read-only."
+    },
+    {
+      "Id": "external-observer",
+      "Type": "Agent",
+      "Role": "observation",
+      "Description": "Observador de caixa-preta — valida ou mapeia um alvo externo/opaco (site, API, app rodando) por observação read-only (rede/HAR, headers de cache/CDN, contrato/OpenAPI), separando fato de hipótese com evidência real e respeitando autorização (CFAA/ToS/robots). Confronta com uma referência; nunca replica, burla nem aplica. Saída: relatório."
+    },
+    {
+      "Id": "git-workflow",
+      "Type": "Agent",
+      "Role": "vcs",
+      "Description": "Expert em higiene de repositório e fluxo Git/PR — Conventional Commits, commits atômicos/bisect-friendly, rebase × merge (regra de ouro do histórico compartilhado), .gitignore preciso, PRs pequenos e revisáveis. Conhece Git-Worktree (isolar branches/sessões paralelas sem colidir na working tree) e aplica isso a outras áreas, como coordenação de sessões concorrentes (/peers). Use ao preparar commits/PRs, revisar histórico, organizar o repo ou paralelizar trabalho. Roda git/gh."
+    },
+    {
+      "Id": "security-reviewer",
+      "Type": "Agent",
+      "Role": "security",
+      "Description": "Revisão de segurança em profundidade (AppSec) guiada por fronteira de confiança — OWASP Top 10 (2021/2025) e ASVS, injeção/SSRF/desserialização/IDOR, authn/authz, cripto, supply-chain (SLSA, lockfiles/pinning), segredos no working-tree e no histórico git (pickaxe, gitleaks/trufflehog) e audit de deps (osv-scanner/pip-audit/npm audit). Read-only."
+    },
+    {
+      "Id": "test-writer",
+      "Type": "Agent",
+      "Role": "testing",
+      "Description": "Escreve/completa testes na stack do projeto cobrindo caminho feliz, bordas, falhas e os Acceptance Tests do DEFINE. Domina pirâmide×troféu, AAA, testar contrato (não implementação), determinismo anti-flaky (relógio/RNG/ordem/estado/async), property-based (Hypothesis/fast-check), mutation testing (mutmut/Stryker) para provar que os testes matam bugs, e mock sem sobre-mock. Lê o setup do projeto — não inventa framework. Cria/edita testes e roda."
+    },
+    {
+      "Id": "tracker",
+      "Type": "Agent",
+      "Role": "tracking",
+      "Description": "Expert em tráfego/traqueamento server-side. Domina sGTM (web→tag mãe→servidor first-party→GA4/Meta CAPI/Google Ads), dedup client×server por `event_id`/`transaction_id`, click-ids (fbclid→fbc, gclid/gbraid/wbraid) com fallback e ITP, PII normalizada+SHA-256 hex, Enhanced Conversions, atribuição cross-domain, Consent Mode v2 (EEA) e QA de runtime (DebugView/Tag Assistant/Test Events/EMQ). Lê o setup do projeto — não carrega IDs/eventos fixos."
+    },
+    {
+      "Id": "validator",
+      "Type": "Agent",
+      "Role": "validation",
+      "Description": "Verifica se o resultado entregue cumpre a spec e os Acceptance Tests do DEFINE — executa e observa o comportamento real, checa exit code (não só stdout), cobre o caso negativo e a fronteira, e isola o veredito em ambiente reprodutível (worktree limpo, deps do zero). Distingue cumpre/parcial/não-cumpre com evidência. Não conserta — só verifica. Read-only."
+    },
+    {
+      "Id": "max",
+      "Type": "Hub",
+      "Role": "orchestrator-hub",
+      "Description": "Modo MAX — hub orquestrador-mestre do grafo de agentes (H7)"
+    }
+  ],
+  "Edges": [
+    {
+      "From": "code-reviewer",
+      "To": "security-reviewer",
+      "Type": "CONNECTS_TO"
+    },
+    {
+      "From": "code-reviewer",
+      "To": "test-writer",
+      "Type": "CONNECTS_TO"
+    },
+    {
+      "From": "debugger",
+      "To": "explorer",
+      "Type": "CONNECTS_TO"
+    },
+    {
+      "From": "debugger",
+      "To": "test-writer",
+      "Type": "CONNECTS_TO"
+    },
+    {
+      "From": "designer",
+      "To": "code-reviewer",
+      "Type": "CONNECTS_TO"
+    },
+    {
+      "From": "designer",
+      "To": "validator",
+      "Type": "CONNECTS_TO"
+    },
+    {
+      "From": "documenter",
+      "To": "explorer",
+      "Type": "CONNECTS_TO"
+    },
+    {
+      "From": "explorer",
+      "To": "code-reviewer",
+      "Type": "CONNECTS_TO"
+    },
+    {
+      "From": "explorer",
+      "To": "debugger",
+      "Type": "CONNECTS_TO"
+    },
+    {
+      "From": "external-observer",
+      "To": "debugger",
+      "Type": "CONNECTS_TO"
+    },
+    {
+      "From": "external-observer",
+      "To": "documenter",
+      "Type": "CONNECTS_TO"
+    },
+    {
+      "From": "external-observer",
+      "To": "security-reviewer",
+      "Type": "CONNECTS_TO"
+    },
+    {
+      "From": "external-observer",
+      "To": "validator",
+      "Type": "CONNECTS_TO"
+    },
+    {
+      "From": "git-workflow",
+      "To": "code-reviewer",
+      "Type": "CONNECTS_TO"
+    },
+    {
+      "From": "max",
+      "To": "code-reviewer",
+      "Type": "ORCHESTRATES"
+    },
+    {
+      "From": "max",
+      "To": "debugger",
+      "Type": "ORCHESTRATES"
+    },
+    {
+      "From": "max",
+      "To": "designer",
+      "Type": "ORCHESTRATES"
+    },
+    {
+      "From": "max",
+      "To": "documenter",
+      "Type": "ORCHESTRATES"
+    },
+    {
+      "From": "max",
+      "To": "explorer",
+      "Type": "ORCHESTRATES"
+    },
+    {
+      "From": "max",
+      "To": "external-observer",
+      "Type": "ORCHESTRATES"
+    },
+    {
+      "From": "max",
+      "To": "git-workflow",
+      "Type": "ORCHESTRATES"
+    },
+    {
+      "From": "max",
+      "To": "security-reviewer",
+      "Type": "ORCHESTRATES"
+    },
+    {
+      "From": "max",
+      "To": "test-writer",
+      "Type": "ORCHESTRATES"
+    },
+    {
+      "From": "max",
+      "To": "tracker",
+      "Type": "ORCHESTRATES"
+    },
+    {
+      "From": "max",
+      "To": "validator",
+      "Type": "ORCHESTRATES"
+    },
+    {
+      "From": "security-reviewer",
+      "To": "code-reviewer",
+      "Type": "CONNECTS_TO"
+    },
+    {
+      "From": "test-writer",
+      "To": "validator",
+      "Type": "CONNECTS_TO"
+    },
+    {
+      "From": "tracker",
+      "To": "external-observer",
+      "Type": "CONNECTS_TO"
+    },
+    {
+      "From": "tracker",
+      "To": "security-reviewer",
+      "Type": "CONNECTS_TO"
+    },
+    {
+      "From": "tracker",
+      "To": "validator",
+      "Type": "CONNECTS_TO"
+    },
+    {
+      "From": "validator",
+      "To": "test-writer",
+      "Type": "CONNECTS_TO"
+    }
+  ]
+}
