@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Política de Privacidade — Native-SDD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@0,300..800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: oklch(0.165 0.012 55); --surface: oklch(0.215 0.014 58);
+  --line: oklch(0.32 0.016 60); --ink: oklch(0.96 0.006 80);
+  --ink-soft: oklch(0.8 0.012 75); --muted: oklch(0.7 0.012 72);
+  --accent: oklch(0.72 0.135 42); --radius: 14px;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: "Hanken Grotesk", system-ui, sans-serif; line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { width: min(100% - 2.4rem, 760px); margin: 0 auto; padding: clamp(2.5rem, 6vw, 5rem) 0 4rem; }
+a { color: var(--accent); text-underline-offset: 2px; }
+.back { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: var(--muted); text-decoration: none; margin-bottom: 2.5rem; }
+.back:hover { color: var(--ink); }
+h1 { font-size: clamp(1.9rem, 1.5rem + 2vw, 2.8rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 0.6rem; }
+.updated { font-family: "JetBrains Mono", monospace; font-size: 0.78rem; color: var(--muted); margin-bottom: 2.5rem; }
+h2 { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; margin: 2.4rem 0 0.7rem; }
+p, li { color: var(--ink-soft); margin-bottom: 0.7rem; }
+ul { padding-left: 1.3rem; }
+li { margin-bottom: 0.4rem; }
+code, .mono { font-family: "JetBrains Mono", monospace; font-size: 0.85em; color: var(--accent); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.2rem 1.4rem; margin-top: 1rem; }
+hr { border: none; border-top: 1px solid var(--line); margin: 2.5rem 0; }
+footer { color: var(--muted); font-size: 0.82rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html">← voltar para o site</a>
+
+  <h1>Política de Privacidade</h1>
+  <p class="updated mono">Última atualização: 30 de junho de 2026</p>
+
+  <p>Esta página explica como o site do <strong>Native-SDD</strong> (<span class="mono">phenrique-datadev.github.io/Native-sdd</span>), mantido por <strong>Phenrique-DataDev</strong>, trata dados de quem o visita. O texto segue a Lei Geral de Proteção de Dados (Lei nº 13.709/2018, a LGPD).</p>
+
+  <h2>1. Quais dados coletamos</h2>
+  <p>O site é uma página estática e <strong>não tem formulários, cadastro ou login</strong>. Não pedimos nome, e-mail nem qualquer dado que identifique você diretamente.</p>
+  <p>Usamos o <strong>Google Analytics 4</strong> para entender, de forma agregada, o tráfego do site (páginas vistas, origem das visitas, tipo de dispositivo, país/região aproximados e cliques em botões como "copiar comandos" e "ver no GitHub"). Esses dados são <strong>estatísticos e anônimos</strong>; não construímos perfis individuais identificáveis.</p>
+  <p>Mantemos também um <strong>registro próprio e agregado de acessos</strong> (<em>first-party</em>), independente do Google Analytics. A cada visita ou clique registramos, de forma <strong>anônima e sem cookies</strong>: data e hora, página acessada, origem do acesso (<em>referrer</em> e parâmetros <span class="mono">utm</span>), idioma e fuso horário do navegador, tamanho da tela e tipo de dispositivo (celular ou computador). <strong>Não</strong> registramos endereço IP, identificador de visitante, impressão digital do navegador (<em>fingerprint</em>) nem qualquer dado que identifique você. A base legal é o <strong>legítimo interesse</strong> (art. 7º, IX, da LGPD) em medir e melhorar o site; os registros ficam numa planilha privada do mantenedor, não alimentam perfis individuais e não são compartilhados.</p>
+
+  <h2>2. Cookies e consentimento</h2>
+  <p>O Google Analytics usa cookies para distinguir visitas. Adotamos o <strong>Consent Mode v2</strong> do Google: por padrão, o consentimento vem <strong>negado</strong> e <strong>nenhum cookie de análise ou publicidade é gravado antes do seu aceite</strong> no banner. O <strong>registro first-party</strong> descrito acima <strong>não usa cookies</strong> e, por ser anônimo, independe dessa escolha (base legal de legítimo interesse).</p>
+  <ul>
+    <li><strong>Aceitar</strong> — habilita os cookies de análise e medição.</li>
+    <li><strong>Recusar</strong> — o site continua funcionando normalmente, sem cookies de rastreamento.</li>
+  </ul>
+  <p>Sua escolha fica salva localmente no seu navegador (<code>localStorage</code>). Para revê-la, limpe os dados do site no navegador e a pergunta aparece de novo.</p>
+
+  <h2>3. Publicidade</h2>
+  <p>Podemos divulgar este site por meio do <strong>Google Ads</strong>. Quando ativo, o Google pode usar cookies de medição de conversão — sempre <strong>condicionados ao seu consentimento</strong> acima. Você pode gerenciar a personalização de anúncios em <a href="https://myadcenter.google.com" target="_blank" rel="noopener">myadcenter.google.com</a>.</p>
+
+  <h2>4. Compartilhamento</h2>
+  <p>Os dados agregados de navegação são processados pelo <strong>Google</strong> como operador, conforme a <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Política de Privacidade do Google</a>. Não vendemos nem repassamos dados a terceiros para outros fins.</p>
+
+  <h2>5. Seus direitos (LGPD)</h2>
+  <p>Você pode solicitar confirmação de tratamento, acesso, correção, anonimização ou exclusão dos dados, além de revogar o consentimento a qualquer momento. Como não coletamos dados identificáveis diretamente, a forma mais direta de exercer o controle é gerenciar o consentimento no banner e as configurações de cookies/anúncios no seu navegador e no Google.</p>
+
+  <h2>6. Contato</h2>
+  <div class="card">
+    <p style="margin-bottom:0">Dúvidas sobre privacidade? Abra uma issue no repositório: <a href="https://github.com/Phenrique-DataDev/Native-sdd/issues" target="_blank" rel="noopener">github.com/Phenrique-DataDev/Native-sdd/issues</a>.</p>
+  </div>
+
+  <hr>
+  <footer>Native-SDD · projeto independente e de código aberto. Esta política pode ser atualizada; a data acima indica a última revisão.</footer>
+</div>
+</body>
+</html>

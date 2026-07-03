@@ -1,0 +1,34 @@
+# ─── Dependências / Dependencies ───
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pnp/
+dist/
+build/
+
+# ─── Ambiente / Environment ───
+.env
+.env.local
+*.local
+
+# ─── Editores / Editors ───
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+
+# ─── SO / OS ───
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# ─── Logs / temporários ───
+*.log
+tmp/
+.cache/
+
+# ─── Visão HTML do grafo (graph-export -Html) — view local opt-in, regenerável ───
+graph.html
+testResults.xml
