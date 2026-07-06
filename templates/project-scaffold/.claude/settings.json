@@ -1,0 +1,51 @@
+{
+  "//": "Config do Claude Code para projetos scaffolded. Merge no .claude/settings.json existente via install (Install-JsonBaselineItem). Caveat: Merge-JsonObject SUBSTITUI arrays — se voce mantem hooks proprios aqui, eles serao sobrescritos no -Update. O command e' uma dispatch-line portavel (J4): com pwsh roda o .ps1; sem pwsh, cai p/ o .sh (degradacao consciente).",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c 'if command -v pwsh >/dev/null 2>&1; then exec pwsh -NoProfile -File \"$1\"; else exec bash \"$2\"; fi' _ \"${CLAUDE_PROJECT_DIR}/.claude/hooks/curation-nudge.ps1\" \"${CLAUDE_PROJECT_DIR}/.claude/hooks/curation-nudge.sh\"",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "sh -c 'if command -v pwsh >/dev/null 2>&1; then exec pwsh -NoProfile -File \"$1\"; else exec bash \"$2\"; fi' _ \"${CLAUDE_PROJECT_DIR}/.claude/hooks/peer-heartbeat.ps1\" \"${CLAUDE_PROJECT_DIR}/.claude/hooks/peer-heartbeat.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c 'if command -v pwsh >/dev/null 2>&1; then exec pwsh -NoProfile -File \"$1\"; else exec bash \"$2\"; fi' _ \"${CLAUDE_PROJECT_DIR}/.claude/hooks/curation-nudge.ps1\" \"${CLAUDE_PROJECT_DIR}/.claude/hooks/curation-nudge.sh\"",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "sh -c 'if command -v pwsh >/dev/null 2>&1; then exec pwsh -NoProfile -File \"$1\"; else exec bash \"$2\"; fi' _ \"${CLAUDE_PROJECT_DIR}/.claude/hooks/peer-heartbeat.ps1\" \"${CLAUDE_PROJECT_DIR}/.claude/hooks/peer-heartbeat.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c 'if command -v pwsh >/dev/null 2>&1; then exec pwsh -NoProfile -File \"$1\"; else exec bash \"$2\"; fi' _ \"${CLAUDE_PROJECT_DIR}/.claude/hooks/agent-graph-context.ps1\" \"${CLAUDE_PROJECT_DIR}/.claude/hooks/agent-graph-context.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
