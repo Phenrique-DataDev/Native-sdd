@@ -1,0 +1,4 @@
+# Scratch efêmero do modo MAX (rules/max-mode.md, H8) e caches locais — nunca versionar.
+.cache/
+# Visão HTML do grafo (graph-export -Html) — view local opt-in, regenerável; não versionar.
+agents/graph.html
