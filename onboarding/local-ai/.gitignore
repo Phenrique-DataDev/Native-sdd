@@ -1,0 +1,7 @@
+# Artefatos de runtime — nunca versionar
+.venv/
+__pycache__/
+*.pyc
+uv.lock
+analises/
+bench_results.json
