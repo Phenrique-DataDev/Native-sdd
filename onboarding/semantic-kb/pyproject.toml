@@ -1,0 +1,17 @@
+[project]
+name = "semantic-kb-mcp"
+version = "0.1.0"
+description = "Servidor MCP de busca semântica local (Ollama + sqlite-vec) sobre KB/docs/archive"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp[cli]>=1.2.0",
+    "httpx>=0.27",
+    "sqlite-vec>=0.1.6",
+    "pysqlite3-binary>=0.5.3 ; sys_platform == 'darwin'",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+]
