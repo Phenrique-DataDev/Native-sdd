@@ -1,0 +1,15 @@
+{
+  "_comment": "Exemplo de registro do adapter H5 no Cursor. Copie para .cursor/hooks.json no projeto-alvo e ajuste o path do 'command' para onde voce copiou adapter-guard.ps1 (ou .sh, se preferir bash). NAO instalado automaticamente pelo onboarding -- opt-in manual. Ver docs/HARNESS-CONTRACT.md.",
+  "version": 1,
+  "hooks": {
+    "beforeShellExecution": [
+      { "command": "pwsh -NoProfile -File ./.cursor/hooks/adapter-guard.ps1" }
+    ],
+    "afterFileEdit": [
+      { "command": "pwsh -NoProfile -File ./.cursor/hooks/adapter-guard.ps1" }
+    ],
+    "sessionStart": [
+      { "command": "pwsh -NoProfile -File ./.cursor/hooks/adapter-guard.ps1" }
+    ]
+  }
+}
