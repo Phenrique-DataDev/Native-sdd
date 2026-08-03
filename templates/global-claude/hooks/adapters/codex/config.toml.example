@@ -1,0 +1,24 @@
+# Exemplo de registro do adapter H5 no Codex CLI via config.toml (alternativa ao hooks.json).
+# Copie o bloco relevante para ~/.codex/config.toml e ajuste o path do 'command'.
+# NAO instalado automaticamente pelo onboarding -- opt-in manual. Ver docs/HARNESS-CONTRACT.md.
+
+[[hooks.PreToolUse]]
+matcher = "^Bash$"
+
+[[hooks.PreToolUse.hooks]]
+type = "command"
+command = "pwsh -NoProfile -File ~/.codex/hooks/adapter-guard.ps1"
+statusMessage = "Checando comando destrutivo (destructive-guard via adapter H5)"
+
+[[hooks.PostToolUse]]
+matcher = "^(Edit|Write)$"
+
+[[hooks.PostToolUse.hooks]]
+type = "command"
+command = "pwsh -NoProfile -File ~/.codex/hooks/adapter-guard.ps1"
+
+[[hooks.SessionStart]]
+
+[[hooks.SessionStart.hooks]]
+type = "command"
+command = "pwsh -NoProfile -File ~/.codex/hooks/adapter-guard.ps1"
