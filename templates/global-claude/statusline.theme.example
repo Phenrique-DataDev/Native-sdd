@@ -1,0 +1,34 @@
+# statusline.theme.example — tema da status line (statusline.ps1 / statusline.sh).
+#
+# COMO USAR: copie este arquivo para ~/.claude/statusline.theme e descomente/edite.
+# Formato: linhas `chave = valor`. Linhas em branco e começando com '#' são ignoradas.
+# Precedência de seleção do tema:  este arquivo  >  $env:SDD_STATUSLINE_THEME  >  'dracula'.
+#
+# ── Escolher um tema embutido ────────────────────────────────────────────
+# Valores: dracula (default) | onedark | catppuccin
+# theme = onedark
+#
+# ── Sobrescrever cores por role (R,G,B de 0 a 255) ───────────────────────
+# Vale sobre o tema escolhido acima — mude só as roles que quiser.
+#   primary  → nome do modelo               accent  → diretório / total de tokens
+#   success  → git staged, custo, faixa OK  warning → branch, faixa média-baixa
+#   caution  → git modified, faixa média    danger  → faixa alta (contexto/rate cheio)
+#   muted    → separadores, versão, ?N      track   → parte vazia da barra
+# primary = 189, 147, 249
+# danger  = 255, 85, 85
+#
+# ── Ajustar os limiares coloridos (0 a 100) ──────────────────────────────
+# Faixas da barra de contexto E dos blocos de rate limit (5h / 7d):
+#   < th_low = success · >= th_low = warning · >= th_mid = caution · >= th_high = danger
+# th_low  = 40
+# th_mid  = 60
+# th_high = 80
+#
+# ── Profundidade de cor (variáveis de ambiente, não deste arquivo) ────────
+# NO_COLOR (qualquer valor não-vazio)  → sem cor, texto puro (padrão no-color.org).
+# SDD_STATUSLINE_COLOR = truecolor|256|off → força o modo (default: truecolor).
+#   Use `256` em tmux SEM RGB capability (evita cores 24-bit degradadas pelo tmux):
+#     PowerShell:  $env:SDD_STATUSLINE_COLOR = '256'
+#     bash:        export SDD_STATUSLINE_COLOR=256
+#   Alternativa (mantém truecolor): habilite RGB no tmux via
+#     set -as terminal-features ',*:RGB'   # ~/.tmux.conf, tmux 3.2+
