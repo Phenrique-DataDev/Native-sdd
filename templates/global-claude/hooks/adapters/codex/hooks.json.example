@@ -1,0 +1,29 @@
+{
+  "_comment": "Exemplo de registro do adapter H5 no Codex CLI. Copie para ~/.codex/hooks.json (ou <repo>/.codex/hooks.json) e ajuste o path do 'command'. NAO instalado automaticamente pelo onboarding -- opt-in manual. Ver docs/HARNESS-CONTRACT.md e config.toml.example para o formato TOML equivalente.",
+  "_comment_confianca": "ATENCAO -- COPIAR NAO BASTA: o Codex tem gate de CONFIANCA de hook. Hook nao-gerenciado nasce 'Untrusted' e NAO RODA, em silencio, com o comando executando normalmente (medido 2026-08-04, codex-cli 0.146.0). Depois de copiar: rode '/hooks' no Codex e confie no hook (a confianca e' por HASH do comando -- mudou o 'command', volta a 'Modified' e para de rodar), ou use 'codex exec --dangerously-bypass-hook-trust' em automacao que ja auditou a origem. Guard que nao dispara e' pior que guard ausente: a instalacao PARECE feita.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "^Bash$",
+        "hooks": [
+          { "type": "command", "command": "pwsh -NoProfile -File ~/.codex/hooks/adapter-guard.ps1" }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "^(Edit|Write)$",
+        "hooks": [
+          { "type": "command", "command": "pwsh -NoProfile -File ~/.codex/hooks/adapter-guard.ps1" }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          { "type": "command", "command": "pwsh -NoProfile -File ~/.codex/hooks/adapter-guard.ps1" }
+        ]
+      }
+    ]
+  }
+}

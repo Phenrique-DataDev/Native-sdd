@@ -1,0 +1,21 @@
+#!/bin/sh
+# pre-commit — bloqueia commit com segredo (rede DETERMINISTICA, independe do modelo/agente).
+# Shim fino: delega a logica ao PowerShell (.githooks/secret-scan.ps1). Ativado por
+# `git config core.hooksPath .githooks` (feito pelo onboarding/new-project.ps1).
+#
+# Para pular conscientemente (NAO recomendado): git commit --no-verify
+root="$(git rev-parse --show-toplevel)"
+script="$root/.githooks/secret-scan.ps1"
+
+if [ ! -f "$script" ]; then
+  exit 0
+fi
+
+if command -v pwsh >/dev/null 2>&1; then
+  exec pwsh -NoProfile -File "$script"
+elif command -v powershell >/dev/null 2>&1; then
+  exec powershell -NoProfile -ExecutionPolicy Bypass -File "$script"
+else
+  echo "pre-commit: PowerShell ausente — varredura de segredos PULADA." >&2
+  exit 0
+fi
