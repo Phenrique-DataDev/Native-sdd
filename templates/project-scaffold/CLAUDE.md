@@ -1,0 +1,130 @@
+# CLAUDE.md
+
+> **Fonte principal: [`AGENTS.md`](AGENTS.md)** — o contrato canônico, válido para qualquer
+> agente. Este arquivo carrega o `AGENTS.md` e adiciona só o que é específico do **Claude
+> Code**. Complementa também o seu `~/.claude/CLAUDE.md` pessoal (**projeto vence global**).
+
+@AGENTS.md
+
+---
+
+## Específico do Claude Code
+
+### Slash commands
+
+Cada fase do SDD tem um command dedicado e **auto-contido** (carrega a própria lógica):
+
+| Comando | Fase | Propósito |
+|---------|------|-----------|
+<!-- sync-context:start:commands -->
+
+**Ciclo SDD** — fases 0→4, na ordem; `/dev` é o atalho de tarefa pequena.
+
+| Comando | Propósito |
+|---------|-----------|
+| `/brainstorm` | Fase 0 — explorar a ideia antes de definir requisitos |
+| `/define` | Fase 1 — requisitos e critérios de aceite |
+| `/design` | Fase 2 — arquitetura e spec técnica |
+| `/build` | Fase 3 — implementar + relatório de build |
+| `/ship` | Fase 4 — encerrar, arquivar, registrar lições |
+| `/dev` | Atalho: tarefa pequena, sem o ciclo completo |
+
+**Entrada do projeto** — `/setup` só preenche o contexto; `/init` roda a cadeia inteira; `/adapt` é o `/init` de quem já tem código.
+
+| Comando | Propósito |
+|---------|-----------|
+| `/setup` | Wizard que preenche `project-context.md` |
+| `/init` | Cadeia de especialização do scaffold, resumável |
+| `/adapt` | Adota projeto brownfield e delega ao `/init` |
+
+**Conhecimento (`.claude/kb/`)** — `/train-kb` povoa do zero; `/learn` promove uma lição; `/reflect` compacta o que já existe.
+
+| Comando | Propósito |
+|---------|-----------|
+| `/train-kb` | Povoa a KB por ondas |
+| `/learn` | Promove lição recorrente do `SHIPPED` a entrada de KB |
+| `/reflect` | Consolida/compacta a KB, nunca-destrutivo |
+| `/skill-gap` | Gera a skill que as ondas pressupõem e falta |
+
+**Curadoria e higiene**
+
+| Comando | Propósito |
+|---------|-----------|
+| `/audit-agents` | Gera agentes de domínio nas lacunas |
+| `/sync-context` | Ressincroniza índices e ponteiros com o estado curado |
+| `/update-skills` | Inventaria e atualiza skills dos dois escopos |
+| `/supplements` | Lista/instala suplementos por tema; `find` busca no marketplace |
+| `/complementary-repos` | Registra repos de referência read-only (`add`/`list`/`remove`) |
+| `/document` | Registra em `docs/` — fora da KB |
+
+**Verificação (read-only)** — `/status` diz onde você está; `/check` julga os artefatos; `/doctor` prova que os hooks ainda disparam.
+
+| Comando | Propósito |
+|---------|-----------|
+| `/status` | Painel do projeto e próxima ação |
+| `/check` | Veredito de conformidade dos artefatos curados |
+| `/doctor` | Health-check do runtime dos guards de segurança |
+| `/telemetry` | Relatório por fase SDD |
+| `/review` | Revisa um PR ou o diff atual |
+
+**Modos sob demanda** — a postura chega junto com o command, não fica no always-on.
+
+| Comando | Propósito |
+|---------|-----------|
+| `/doubt` | Dúvida adversarial sobre decisão ainda aberta |
+| `/simulate` | Simula a mudança antes de aplicar |
+| `/iterate` | Laço bounded até o verde, com circuit-breaker |
+| `/orchestrate` | Decompõe objetivo, delega a subagentes, valida em gate |
+| `/max` | Modo de operação máxima; `/max off` desliga |
+| `/peers` | Sessões concorrentes: peers ativos e recados |
+<!-- sync-context:end:commands -->
+
+> A tabela acima é regenerada por `/sync-context` (G4). Os arquivos vivem em `.claude/commands/`.
+
+### Você PODE disparar os commands acima — via `Skill`
+
+Os commands (`.claude/commands/*.md`) chegam à sessão **como skills**: `Skill(skill: "define")`
+funciona (*"Launching skill: define"*) e injeta a lógica da fase. Nenhum command deste scaffold
+declara `disable-model-invocation`, e o default é `false` — ou seja, **você pode acioná-los por conta
+própria**, sem pedir que o usuário digite.
+
+> **Isto era o contrário até 2026-07-13.** Esta seção afirmava que chamar `Skill` com estes nomes
+> falhava com `Unknown skill` e que *"o agente nunca os invoca"* — verdade em versões antigas do
+> Claude Code, **falso** a partir da 2.1.207 (verificado em runtime, não na doc). A crença obsoleta
+> tinha um custo real: o agente **pedia ao usuário para digitar** o que ele mesmo podia executar,
+> e o humano virava o motor do fluxo. **Se você se pegar dizendo "digite `/x`", tente `Skill`
+> primeiro.**
+
+**Poder invocar não é pular etapa.** As regras de fase continuam valendo integralmente:
+
+- **Não pule fases** e não funda artefatos ([`workflow-sdd.md`](.claude/rules/workflow-sdd.md)) —
+  poder disparar `/build` não autoriza fazê-lo sem DESIGN.
+- **Anuncie antes de disparar** um command que escreve, arquiva ou custa (`/build`, `/ship`,
+  `/train-kb`, `/iterate`): diga o que vai rodar e por quê. Barato e read-only (`/status`, `/check`,
+  `/doubt`) pode ir direto.
+- **Pull-only continua pull-only:** as posturas que dizem *"nunca aja sozinho"* (`/simulate`,
+  `/reflect`, `/learn`) seguem esperando o usuário — a permissão técnica não revoga a disciplina.
+- O nome da skill é o **nome do arquivo** sem `.md` (`ship.md` → `Skill(skill: "ship")`).
+
+### Regras auto-carregadas
+
+Os arquivos de `.claude/rules/` são contexto sempre ativo — não precisa abri-los à mão.
+O catálogo e a disciplina de cada um estão listados no [`AGENTS.md`](AGENTS.md).
+
+### Skills
+
+Duas origens distintas em `.claude/skills/` — não confunda a manutenção de uma com a da outra:
+
+| Origem | Onde vive | Exemplo | Manutenção |
+|--------|-----------|---------|------------|
+| **Interna** (autorada por este scaffold) | `.claude/skills/<nome>/`, shipada por padrão, sem instalação | [`decision-preview`](.claude/skills/decision-preview/SKILL.md) — gera Artifact comparando variantes de uma decisão ainda aberta; [`page-to-markdown`](.claude/skills/page-to-markdown/SKILL.md) — busca URL→Markdown limpo via `WebFetch`→`claude-in-chrome`, sem binário externo | Ciclo SDD normal deste repositório (PR + revisão) |
+| **De terceiro** (marketplace) | instalada via `/supplements` (opt-in, `tools/supplements.psd1`) | `visual-explainer`, `impeccable`, `dataviz`, `ui-ux-pro-max` | Do próprio autor externo — o scaffold só consome |
+
+A postura [`artifact-first.md`](.claude/rules/artifact-first.md) referencia ambas as origens ao
+decidir qual ferramenta rotear para uma decisão de design.
+
+### Menção `@agente`
+
+Quando o usuário escrever `@nome-do-agente` (ex.: `@code-reviewer`), invoque esse subagent
+com o resto da mensagem como tarefa. Catálogo em [`.claude/agents/`](.claude/agents/);
+roteamento em [`.claude/rules/agent-routing.md`](.claude/rules/agent-routing.md).
