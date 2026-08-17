@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Política de Privacidade — Native-SDD</title>
+<style>
+@font-face {
+  font-family: 'Hanken Grotesk';
+  font-style: normal;
+  font-weight: 300 800;
+  font-display: swap;
+  src: url(assets/fonts/hanken-grotesk-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url(assets/fonts/jetbrains-mono-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+:root {
+  --bg: oklch(0.115 0.008 240); --surface: oklch(0.16 0.01 240);
+  --line: oklch(0.27 0.013 240); --ink: oklch(0.95 0.005 240);
+  --ink-soft: oklch(0.78 0.01 240); --muted: oklch(0.66 0.01 240);
+  --accent: oklch(0.66 0.072 230); --radius: 14px;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: "Hanken Grotesk", system-ui, sans-serif; line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { width: min(100% - 2.4rem, 760px); margin: 0 auto; padding: clamp(2.5rem, 6vw, 5rem) 0 4rem; }
+a { color: var(--accent); text-underline-offset: 2px; }
+.back { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: var(--muted); text-decoration: none; margin-bottom: 2.5rem; }
+.back:hover { color: var(--ink); }
+h1 { font-size: clamp(1.9rem, 1.5rem + 2vw, 2.8rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 0.6rem; }
+.updated { font-family: "JetBrains Mono", monospace; font-size: 0.78rem; color: var(--muted); margin-bottom: 2.5rem; }
+h2 { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; margin: 2.4rem 0 0.7rem; }
+p, li { color: var(--ink-soft); margin-bottom: 0.7rem; }
+ul { padding-left: 1.3rem; }
+li { margin-bottom: 0.4rem; }
+code, .mono { font-family: "JetBrains Mono", monospace; font-size: 0.85em; color: var(--accent); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.2rem 1.4rem; margin-top: 1rem; }
+hr { border: none; border-top: 1px solid var(--line); margin: 2.5rem 0; }
+footer { color: var(--muted); font-size: 0.82rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html">← voltar para o site</a>
+
+  <h1>Política de Privacidade</h1>
+  <p class="updated mono">Última atualização: 6 de julho de 2026</p>
+
+  <p>Esta página explica como o site do <strong>Native-SDD</strong> (<span class="mono">phenrique-datadev.github.io/Native-sdd</span>), mantido por <strong>Phenrique-DataDev</strong>, trata dados de quem o visita. O texto segue a Lei Geral de Proteção de Dados (Lei nº 13.709/2018, a LGPD).</p>
+
+  <h2>1. Quais dados coletamos</h2>
+  <p>O site é uma página estática e <strong>não tem formulários, cadastro ou login</strong>. Não pedimos nome, e-mail nem qualquer dado que identifique você diretamente. <strong>Não usamos Google Analytics, Google Ads nem qualquer ferramenta de terceiros para medição</strong>: nenhum script de rastreamento de terceiros carrega neste site.</p>
+  <p>Mantemos apenas um <strong>registro próprio e agregado de acessos</strong> (<em>first-party</em>), hospedado numa planilha privada do mantenedor via Google Apps Script. A cada visita ou interação registramos, de forma <strong>anônima e sem cookies</strong>: data e hora, página acessada, evento (ex.: rolagem, clique num botão, troca de tema), origem do acesso (<em>referrer</em> e parâmetros <span class="mono">utm</span>), idioma e fuso horário do navegador, tamanho da tela, tipo de conexão e tipo de dispositivo (celular ou computador). <strong>Não</strong> registramos endereço IP, identificador de visitante persistente, impressão digital do navegador (<em>fingerprint</em>) nem qualquer dado que identifique você: o identificador de sessão é sorteado a cada carregamento da página e descartado ao sair. A base legal é o <strong>legítimo interesse</strong> (art. 7º, IX, da LGPD) em medir e melhorar o site; os registros não alimentam perfis individuais e não são compartilhados com terceiros.</p>
+
+  <h2>2. Cookies</h2>
+  <p>Este site <strong>não usa cookies</strong> de nenhum tipo (nem de análise, nem de publicidade, nem de preferências). O registro first-party descrito acima funciona inteiramente sem cookies (por isso não exibimos banner de consentimento: não há nada para consentir).</p>
+
+  <h2>3. Publicidade</h2>
+  <p>Este site não veicula anúncios nem usa ferramentas de publicidade de terceiros.</p>
+
+  <h2>4. Compartilhamento</h2>
+  <p>Os registros de acesso ficam numa planilha do Google Sheets de acesso restrito ao mantenedor (o Google atua como operador de infraestrutura, nunca recebendo dados identificáveis). Não vendemos nem repassamos dados a terceiros para nenhum fim.</p>
+
+  <h2>5. Seus direitos (LGPD)</h2>
+  <p>Você pode solicitar confirmação de tratamento, acesso, correção, anonimização ou exclusão dos dados. Como o registro é anônimo por padrão (sem identificador persistente, sem IP, sem cookie), não há como localizar retroativamente os registros de uma pessoa específica. A forma mais direta de exercer controle é entrar em contato pelo canal abaixo.</p>
+
+  <h2>6. Contato</h2>
+  <div class="card">
+    <p style="margin-bottom:0">Dúvidas sobre privacidade? Abra uma issue no repositório: <a href="https://github.com/Phenrique-DataDev/Native-sdd/issues" target="_blank" rel="noopener">github.com/Phenrique-DataDev/Native-sdd/issues</a>.</p>
+  </div>
+
+  <hr>
+  <footer>Native-SDD · projeto independente e de código aberto. Esta política pode ser atualizada; a data acima indica a última revisão.</footer>
+</div>
+</body>
+</html>
