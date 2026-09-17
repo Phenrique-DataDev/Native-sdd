@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Native-SDD — Spec-to-Artifact Compiler</title>
+<meta name="description" content="Um scaffold que se auto-otimiza para Spec-Driven Development: cinco fases determinísticas, 11 experts de papel e uma memória viva em .claude/ — nada de improviso entre o prompt e o artefato.">
+<link rel="canonical" href="https://nativesdd.me/">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="icon" type="image/png" sizes="48x48" href="assets/favicon.png">
+<meta name="theme-color" content="#070809">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Native-SDD — Spec-to-Artifact Compiler">
+<meta property="og:description" content="Cinco fases determinísticas, 11 experts de papel e uma memória viva em .claude/ — pare de improvisar, compile a especificação.">
+<meta property="og:image" content="https://nativesdd.me/assets/native-sdd-og.png">
+<meta property="og:url" content="https://nativesdd.me/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Native-SDD — Spec-to-Artifact Compiler">
+<meta name="twitter:description" content="Cinco fases determinísticas, 11 experts de papel e uma memória viva em .claude/ — pare de improvisar, compile a especificação.">
+<meta name="twitter:image" content="https://nativesdd.me/assets/native-sdd-og.png">
+
+<!-- Três papéis, duas faces (EVOLUCAO.md D-01 → D-20): a Archivo EXPANDIDA grita, a Archivo
+     normal se lê, Martian Mono mede. O display é a mesma família do corpo no eixo `wdth` — o
+     contraste vem da proporção, não de uma terceira face. Anton saiu em 2026-09-12.
+     AUTO-HOSPEDADAS desde 2026-09-07, e o motivo é um número: a folha de `fonts.googleapis.com`
+     que estava aqui era render-blocking — nada pintava antes de a ida e volta ao Google voltar —
+     e custava ~1,5s de LCP (2636ms x 1068ms no desktop, 3180ms x 1596ms no mobile, medido por
+     `npm run lcp --com-rede` contra a bancada isolada). A v1 já auto-hospedava as faces dela;
+     colocar esta página no ar puxando de terceiro seria publicar uma regressão medida.
+     Só o subset `latin` entra, como na v1: português não alcança latin-ext, e cyrillic/vietnamese
+     seriam 7 arquivos a mais que ninguém baixaria. As faces vêm de `fixtures/fontes/`, capturadas
+     do próprio Google; conferido lendo a tabela `fvar` de cada WOFF2 — Archivo tem `wght`
+     100–900 e `wdth` 62–125 (o arquivo de 2026-09-07 só tinha `wght`: pedido sem `wdth` na URL),
+     Martian Mono tem `wght`. Os intervalos abaixo são os do `fvar`, não os que a página usa: pedir
+     fora deles faz o navegador sintetizar negrito ou largura, e há caso que reprova isso.
+     Archivo e Martian Mono são SIL Open Font License 1.1, que permite a redistribuição.
+     Inline e não em site.css de propósito: no arquivo externo o download da face só começaria
+     depois de o CSS chegar, uma ida e volta a mais na frente do primeiro texto. -->
+<style>
+@font-face {
+  font-family: 'Archivo';
+  font-style: normal;
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  font-display: swap;
+  src: url(assets/fonts/archivo-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Martian Mono';
+  font-style: normal;
+  font-weight: 400 700;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url(assets/fonts/martian-mono-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+</style>
+<link rel="stylesheet" href="assets/css/site.css">
+<!-- Antes do paint: o header mobile (hambúrguer) só vale onde o JS de fato roda. Sem esta
+     classe o CSS mantém a faixa de nav rolável, que funciona sem script. -->
+<script>document.documentElement.classList.add('has-js');</script>
+</head>
+<body>
+
+<a href="#conteudo" class="skip-link">Pular para o conteúdo</a>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a class="brand" href="#hero">
+      <!-- Isologo (docs/assets/brand/). Inline, nao <img>: e o unico jeito de as cores virem
+           dos tokens do site e o SVG custar zero requisicao. aria-hidden porque o texto ao
+           lado ja nomeia o link. -->
+      <svg class="brand-marca" viewBox="-4.5 -4.5 182.205 209" fill="none"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+        <path d="M0,50 L86.603,0 L173.205,50 L173.205,150 L86.603,200 M86.603,0 L86.603,100 L173.205,150"
+              stroke="var(--logo-quente)" stroke-width="8"/>
+        <path d="M0,50 L0,150 L86.603,200 M86.603,100 L0,150"
+              stroke="var(--logo-frio)" stroke-width="8"/>
+      </svg>
+      <span class="brand-name mono">NATIVE-SDD</span>
+    </a>
+    <!-- Alvo do toggle mobile (assets/js/nav.js). No desktop e a faixa normal do header;
+         a <=768px vira o painel que o hamburguer abre. -->
+    <div class="header-rail" id="navPanel">
+      <nav class="site-nav" aria-label="Seções da página">
+        <a href="#hero">01. SPEC</a>
+        <a href="#motor">02. FASES</a>
+        <a href="#topologia">03. AGENTES</a>
+        <a href="#instrumentacao">04. TELEMETRIA</a>
+        <a href="#author">05. AUTOR</a>
+      </nav>
+      <div class="header-meta">
+        <a href="#execucao" class="btn btn-primary">INICIALIZAR</a>
+      </div>
+    </div>
+    <button type="button" class="nav-toggle" id="navToggle"
+            aria-controls="navPanel" aria-expanded="false" aria-label="Abrir o menu">
+      <span class="nav-toggle-bars" aria-hidden="true"><span></span><span></span></span>
+    </button>
+  </div>
+</header>
+
+<main id="conteudo">
+
+<!-- ============================================================
+     01 · HERO — Main.dc.html / HeroMobile.dc.html
+     ============================================================ -->
+<section id="hero" data-track-section="hero">
+  <div class="bp-grid" aria-hidden="true"></div>
+  <div class="hero-cabeca" data-motion="cabeca" aria-hidden="true"></div>
+  <div class="hero-grid">
+    <div class="section-rail hero-rail">
+      <span class="rail-label mono">SEC_01 // A PROVOCAÇÃO</span>
+      <span class="rail-line"></span>
+    </div>
+
+    <div class="hero-copy">
+      <div class="eyebrow">
+        <span class="eyebrow-bar" aria-hidden="true"></span>
+        <span class="eyebrow-label mono">SPEC-DRIVEN DEVELOPMENT ENGINE</span>
+      </div>
+
+      <h1 class="hero-title" data-motion="split">Pare de improvisar.<br>Compile a<br>especificação.</h1>
+
+      <p class="hero-sub">Um scaffold que se auto-otimiza para Spec-Driven Development: cinco fases determinísticas, 11 experts de papel e uma memória viva em <span class="mono">.claude/</span>. Entre o prompt e o artefato não sobra onde improvisar.</p>
+
+      <p class="hero-author mono">AUTOR // <a href="#author">Pedro Henrique Lopes</a> · Dados + Dev</p>
+
+      <div class="hero-ctas">
+        <a href="#execucao" class="btn btn-primary" data-track-cta="primary">
+          <span>INICIALIZAR PROTOCOLO</span>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M1 7H13M13 7L7 1M13 7L7 13" stroke="currentColor" stroke-width="1.75" stroke-linecap="square"/></svg>
+        </a>
+        <a href="#motor" class="btn btn-ghost">VER AS 5 FASES</a>
+        <a href="https://github.com/Phenrique-DataDev/Native-sdd" target="_blank" rel="noopener" class="btn btn-quiet">GITHUB</a>
+      </div>
+
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="hero-stat-num" data-motion="counter" data-to="5">05</div>
+          <div class="hero-stat-label">FASES SEQUENCIAIS</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-num" data-motion="counter" data-to="11" data-conta="agents">11</div>
+          <div class="hero-stat-label">EXPERTS DE PAPEL</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-num" data-motion="counter" data-to="12" data-conta="rules">12</div>
+          <div class="hero-stat-label">REGRAS ALWAYS-ON</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-art">
+      <div class="hero-stage" data-hero-stage>
+      <canvas class="hero-canvas" data-hero3d aria-hidden="true"></canvas>
+      <svg data-motion="hero-monolith" viewBox="0 0 520 700" width="520" height="700" role="img" aria-label="Elevação ortográfica do compilador: cinco camadas atravessadas por um feixe vertical.">
+        <defs>
+          <linearGradient id="beamGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="var(--accent)" stop-opacity="0"/>
+            <stop offset="50%" stop-color="var(--accent)" stop-opacity="1"/>
+            <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/>
+          </linearGradient>
+          <clipPath id="beamClip"><rect x="260" y="48" width="32" height="584"/></clipPath>
+        </defs>
+
+        <g stroke="rgba(240,243,246,0.14)" stroke-width="1">
+          <line x1="56" y1="48" x2="56" y2="632"/>
+          <line x1="56" y1="48" x2="66" y2="48"/><line x1="56" y1="164" x2="66" y2="164"/>
+          <line x1="56" y1="280" x2="66" y2="280"/><line x1="56" y1="396" x2="66" y2="396"/>
+          <line x1="56" y1="516" x2="66" y2="516"/><line x1="56" y1="632" x2="66" y2="632"/>
+        </g>
+        <!-- Cotas do desenho. São ornamento de blueprint, não dado: a 340px o monólito desenha a
+             58% e elas chegariam à tela com 5,8px. Somem abaixo de 768 — um número ilegível não
+             informa, só suja. -->
+        <g class="hero-cotas" fill="var(--muted)" font-family="Martian Mono, ui-monospace, monospace" font-size="10" letter-spacing="1">
+          <text x="18" y="52">000</text><text x="18" y="168">024</text><text x="18" y="284">048</text>
+          <text x="18" y="400">072</text><text x="18" y="520">096</text><text x="18" y="636">120</text>
+        </g>
+
+        <rect x="96" y="48" width="360" height="584" fill="none" stroke="rgba(240,243,246,0.08)"/>
+        <g stroke="var(--muted)" stroke-width="1">
+          <line x1="90" y1="48" x2="102" y2="48"/><line x1="96" y1="42" x2="96" y2="54"/>
+          <line x1="450" y1="48" x2="462" y2="48"/><line x1="456" y1="42" x2="456" y2="54"/>
+          <line x1="90" y1="632" x2="102" y2="632"/><line x1="96" y1="626" x2="96" y2="638"/>
+          <line x1="450" y1="632" x2="462" y2="632"/><line x1="456" y1="626" x2="456" y2="638"/>
+        </g>
+
+        <g data-layer="0">
+          <rect x="126" y="76" width="300" height="88" fill="#0F1115" stroke="rgba(240,243,246,0.14)"/>
+          <text class="hero-rotulo-camada" x="144" y="106" fill="var(--muted)" font-family="Martian Mono, ui-monospace, monospace" font-size="10" letter-spacing="2">L_00 // ENTRADA</text>
+          <text x="144" y="136" fill="var(--ink)" font-family="Archivo, Helvetica, sans-serif" font-size="21" font-weight="600">Intenção ambígua</text>
+          <text class="hero-rotulo-camada" x="408" y="106" text-anchor="end" fill="var(--muted)" font-family="Martian Mono, ui-monospace, monospace" font-size="10">ENTROPIA</text>
+        </g>
+
+        <g data-layer="1">
+          <rect x="126" y="188" width="300" height="88" fill="#16191F" stroke="rgba(240,243,246,0.14)"/>
+          <text class="hero-rotulo-camada" x="144" y="218" fill="var(--muted)" font-family="Martian Mono, ui-monospace, monospace" font-size="10" letter-spacing="2">L_01 // SPEC</text>
+          <text x="144" y="248" fill="var(--ink)" font-family="Archivo, Helvetica, sans-serif" font-size="21" font-weight="600">Contrato formal</text>
+          <text class="hero-rotulo-camada" x="408" y="218" text-anchor="end" fill="var(--cyan)" font-family="Martian Mono, ui-monospace, monospace" font-size="10">≥ 12/15</text>
+        </g>
+
+        <g data-layer="2">
+          <rect x="126" y="300" width="300" height="88" fill="#16191F" stroke="rgba(240,243,246,0.14)"/>
+          <text class="hero-rotulo-camada" x="144" y="330" fill="var(--muted)" font-family="Martian Mono, ui-monospace, monospace" font-size="10" letter-spacing="2">L_02 // ARQUITETURA</text>
+          <text x="144" y="360" fill="var(--ink)" font-family="Archivo, Helvetica, sans-serif" font-size="21" font-weight="600">O como, antes</text>
+          <text class="hero-rotulo-camada" x="408" y="330" text-anchor="end" fill="var(--muted)" font-family="Martian Mono, ui-monospace, monospace" font-size="10">DESIGN</text>
+        </g>
+
+        <g data-layer="3">
+          <rect x="126" y="412" width="300" height="88" fill="#16191F" stroke="rgba(240,243,246,0.14)"/>
+          <text class="hero-rotulo-camada" x="144" y="442" fill="var(--muted)" font-family="Martian Mono, ui-monospace, monospace" font-size="10" letter-spacing="2">L_03 // VERIFICAÇÃO</text>
+          <text x="144" y="472" fill="var(--ink)" font-family="Archivo, Helvetica, sans-serif" font-size="21" font-weight="600">Lint · testes · AT</text>
+          <text class="hero-rotulo-camada" x="408" y="442" text-anchor="end" fill="var(--ok)" font-family="Martian Mono, ui-monospace, monospace" font-size="10">PASS</text>
+        </g>
+
+        <g data-layer="4">
+          <rect x="126" y="524" width="300" height="88" fill="#0F1115" stroke="rgba(240,243,246,0.24)"/>
+          <text class="hero-rotulo-camada" x="144" y="554" fill="var(--muted)" font-family="Martian Mono, ui-monospace, monospace" font-size="10" letter-spacing="2">L_04 // SAÍDA</text>
+          <text x="144" y="584" fill="var(--ink)" font-family="Archivo, Helvetica, sans-serif" font-size="21" font-weight="600">Artefato determinístico</text>
+          <text class="hero-rotulo-camada" x="408" y="554" text-anchor="end" fill="var(--muted)" font-family="Martian Mono, ui-monospace, monospace" font-size="10">ORDEM</text>
+        </g>
+
+        <line x1="276" y1="48" x2="276" y2="632" stroke="var(--accent)" stroke-width="1" stroke-opacity="0.3"/>
+        <g clip-path="url(#beamClip)">
+          <rect data-motion="beam" x="274" y="48" width="4" height="170" fill="url(#beamGrad)"/>
+        </g>
+        <g fill="var(--accent)">
+          <rect x="272" y="116" width="8" height="8"/>
+          <rect x="272" y="228" width="8" height="8"/>
+          <rect x="272" y="340" width="8" height="8"/>
+          <rect x="272" y="452" width="8" height="8"/>
+          <rect x="272" y="564" width="8" height="8"/>
+        </g>
+      </svg>
+
+      <!-- Legenda das cinco fases. Existe no markup (não é criada por JS) mas fica oculta
+           enquanto o SVG estiver visível — ele já traz os mesmos rótulos desenhados. Quando o
+           monólito WebGL assume o palco, o SVG sai e esta lista entra no lugar dos rótulos que
+           o canvas não sabe desenhar, acompanhando o pulso camada a camada.
+           Fica FORA do palco, como irmã dele: dentro, ela cairia sobre o desenho — e o palco
+           não pode ganhar altura própria, é o SVG que a define.
+           `aria-hidden` é permanente: o `aria-label` do SVG acima continua sendo a descrição
+           para leitor de tela nos dois estados, e duas descrições do mesmo objeto seria ruído. -->
+      </div>
+      <ol class="hero-phases mono" data-hero-phases aria-hidden="true">
+        <li data-hero-phase="0"><b>L_00</b> Intenção ambígua <i>ENTROPIA</i></li>
+        <li data-hero-phase="1"><b>L_01</b> Contrato formal <i>≥ 12/15</i></li>
+        <li data-hero-phase="2"><b>L_02</b> O como, antes <i>DESIGN</i></li>
+        <li data-hero-phase="3"><b>L_03</b> Lint · testes · AT <i>PASS</i></li>
+        <li data-hero-phase="4"><b>L_04</b> Artefato determinístico <i>ORDEM</i></li>
+      </ol>
+
+      <div class="hero-art-caption mono">
+        AST-01 // SPEC MONOLITH<br>
+        <span class="dot">●</span> FEIXE ATIVO · 5 CAMADAS
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     02 · PARADOXO — ProblemSpace.dc.html
+     ============================================================ -->
+<section id="paradoxo" class="section" data-track-section="paradoxo">
+  <div class="section-grid">
+    <div class="section-rail">
+      <span class="rail-label mono">SEC_02 // O PARADOXO</span>
+      <span class="rail-line"></span>
+    </div>
+    <div class="section-body">
+      <div class="section-head paradox-head reveal">
+        <div>
+          <div class="eyebrow">
+            <span class="eyebrow-bar" aria-hidden="true"></span>
+            <span class="eyebrow-label mono">O COLAPSO DE CONTEXTO</span>
+          </div>
+          <h2 data-motion="split">O modelo não erra por burrice. Erra por falta de contrato.</h2>
+        </div>
+        <p class="lede">Sem uma especificação que o prenda, cada resposta parte de uma leitura nova do problema. O projeto cresce, o contexto dispersa, e a terceira feature contradiz a primeira. Em nenhum momento algo falhou visivelmente.</p>
+      </div>
+
+      <div class="paradox-compare">
+        <div class="paradox-col reveal">
+          <div class="paradox-tag mono">
+            <span class="paradox-chip paradox-chip-a">A // SEM SPEC</span>
+            <span class="fail">ENTROPIA CRESCENTE</span>
+          </div>
+
+          <svg class="paradox-svg" viewBox="0 0 560 300" width="100%" height="300" role="img" aria-label="Vetores de contexto dispersos e fragmentados.">
+            <g data-motion="entropy" data-traco="conteudo" stroke="rgba(240,243,246,0.42)" stroke-width="1" fill="none">
+              <path d="M40 60 L120 60 L120 130" />
+              <path d="M160 40 L230 40 L230 90 L300 90" />
+              <path d="M70 190 L150 190 L150 240" />
+              <path d="M260 160 L330 160 L330 220 L400 220" />
+              <path d="M360 40 L430 40 L430 110" />
+              <path d="M440 170 L500 170 L500 250" />
+            </g>
+            <g fill="rgba(240,243,246,0.34)">
+              <rect x="118" y="128" width="5" height="5"/>
+              <rect x="298" y="88" width="5" height="5"/>
+              <rect x="148" y="238" width="5" height="5"/>
+              <rect x="398" y="218" width="5" height="5"/>
+              <rect x="428" y="108" width="5" height="5"/>
+              <rect x="498" y="248" width="5" height="5"/>
+            </g>
+          </svg>
+          <p class="paradox-marcas mono"><span>DERIVA_CTX</span><span>RETRABALHO</span></p>
+        </div>
+
+        <div class="paradox-divider" aria-hidden="true"><span class="paradox-vs mono">VS</span></div>
+
+        <div class="paradox-col reveal">
+          <div class="paradox-tag mono">
+            <span class="paradox-chip paradox-chip-b">B // SOB O NATIVE-SDD</span>
+            <span class="ok">CONTIDO</span>
+          </div>
+
+          <svg class="paradox-svg" viewBox="0 0 560 300" width="100%" height="300" role="img" aria-label="Os mesmos vetores comprimidos em lâminas paralelas dentro de uma câmara.">
+            <rect x="40" y="30" width="480" height="220" fill="#0F1115" stroke="rgba(240,243,246,0.14)"/>
+            <g data-motion="contained" stroke="var(--accent)" stroke-width="1" stroke-opacity="0.9">
+              <line x1="72" y1="62" x2="488" y2="62"/>
+              <line x1="72" y1="90" x2="488" y2="90"/>
+              <line x1="72" y1="118" x2="488" y2="118"/>
+              <line x1="72" y1="146" x2="488" y2="146"/>
+              <line x1="72" y1="174" x2="488" y2="174"/>
+              <line x1="72" y1="202" x2="488" y2="202"/>
+            </g>
+            <g stroke="rgba(240,243,246,0.16)" stroke-width="1">
+              <line x1="72" y1="30" x2="72" y2="250"/>
+              <line x1="488" y1="30" x2="488" y2="250"/>
+            </g>
+
+            <g stroke="var(--muted)" stroke-width="1">
+              <line x1="34" y1="30" x2="46" y2="30"/><line x1="40" y1="24" x2="40" y2="36"/>
+              <line x1="514" y1="250" x2="526" y2="250"/><line x1="520" y1="244" x2="520" y2="256"/>
+            </g>
+          </svg>
+          <p class="paradox-marcas mono"><span>CONTRATO_FIXO</span><span>AT VERIFICÁVEL</span></p>
+        </div>
+      </div>
+
+      <!-- A tabela é compartilhada de propósito. Antes, cada coluna trazia a sua própria lista
+           REQUISITO/ACEITE/MEMÓRIA, e o leitor tinha de casar rótulo com rótulo atravessando a
+           divisa para descobrir que era um comparativo. Aqui a chave aparece UMA vez, no eixo, e
+           os dois valores ficam na mesma linha dela: a leitura horizontal é a comparação.
+
+           A legenda repete as duas identidades logo acima da primeira linha. Elas eram declaradas
+           uma vez só, no topo dos desenhos: quem chegava na tabela já não tinha como saber qual
+           coluna era qual, e nada na tabela dizia. -->
+      <div class="paradox-matrix reveal">
+        <div class="paradox-legend mono">
+          <span class="paradox-legend-a">A // SEM SPEC</span>
+          <span class="paradox-legend-axis" aria-hidden="true"></span>
+          <span class="paradox-legend-b">B // SOB O NATIVE-SDD</span>
+        </div>
+        <dl class="paradox-table">
+          <div class="paradox-row">
+            <dt class="paradox-k mono">REQUISITO</dt>
+            <dd class="paradox-a">Reinterpretado a cada resposta</dd>
+            <dd class="paradox-b">Congelado em spec</dd>
+          </div>
+          <div class="paradox-row">
+            <dt class="paradox-k mono">ACEITE</dt>
+            <dd class="paradox-a">Implícito</dd>
+            <dd class="paradox-b">Teste que reprova</dd>
+          </div>
+          <div class="paradox-row">
+            <dt class="paradox-k mono">MEMÓRIA</dt>
+            <dd class="paradox-a">Volátil</dd>
+            <dd class="paradox-b">Persistida em <span class="mono">.claude/</span></dd>
+          </div>
+        </dl>
+      </div>
+
+      <p class="paradox-caption mono">AST-02 // CONTEXT DEGRADATION ARTIFACT · a mesma entrada, os mesmos vetores. o que muda é a contenção.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     03 · TESE — banda tipográfica de largura total, sem card (§1/§6)
+     ============================================================ -->
+<section id="tese" class="section" data-track-section="tese">
+  <div class="tese-band reveal">
+    <h2 class="tese-headline" data-motion="split">O Native-SDD é um sistema de contenção.</h2>
+    <p class="tese-support">Cada fase só existe porque a anterior deixou um artefato em disco. Nenhuma delas depende de alguém lembrar de pedir. A memória em <span class="mono">.claude/</span> troca a lembrança do operador pela persistência do sistema, e o caminho da intenção ambígua ao artefato verificado não tem etapa opcional.</p>
+  </div>
+</section>
+
+<!-- ============================================================
+     04 · MOTOR — Phases.dc.html
+     ============================================================ -->
+<section id="motor" class="section" data-track-section="motor">
+  <div class="section-grid">
+    <div class="section-rail">
+      <span class="rail-label mono">SEC_03 // O MOTOR</span>
+      <span class="rail-line"></span>
+    </div>
+    <div class="section-body">
+      <div class="section-head reveal">
+        <div>
+          <div class="eyebrow">
+            <span class="eyebrow-bar" aria-hidden="true"></span>
+            <span class="eyebrow-label mono">PIPELINE DETERMINÍSTICO</span>
+          </div>
+          <h2 data-motion="split">Cinco fases. Uma de cada vez, sem pular.</h2>
+        </div>
+        <p class="lede">Cada fase recebe um artefato e devolve outro, mais restrito. Nada avança sem que a saída da anterior exista em disco.</p>
+      </div>
+
+      <div class="ribbon-wrap">
+        <div class="ribbon-track" aria-hidden="true">
+          <span class="ribbon-packet"></span>
+        </div>
+
+        <!-- No desktop o GSAP prende a seção e move este trilho pelo scroll; no mobile ele
+             volta a ser uma faixa que rola com o dedo, e aí precisa avisar que rola e ser
+             alcançável por teclado — mesma solução da tabela de agentes. -->
+        <div class="ribbon rola-lateral" data-motion="ribbon" tabindex="0" role="region"
+             aria-label="As cinco fases do método — rola na horizontal">
+          <div class="cassette" data-phase="0">
+            <div class="cassette-head">
+              <span class="cassette-id mono">PHASE_00</span>
+              <span class="cassette-dot" aria-hidden="true"></span>
+            </div>
+            <div class="cassette-cmd">/brainstorm</div>
+            <div class="cassette-title">Explorar a ideia</div>
+            <p class="cassette-desc">Reduzir incerteza antes de fixar requisitos. Onde a feature ainda é hipótese.</p>
+            <div class="cassette-foot mono">SAÍDA · notas de exploração</div>
+          </div>
+
+          <div class="cassette" data-phase="1">
+            <div class="cassette-head">
+              <span class="cassette-id mono">PHASE_01</span>
+              <span class="cassette-dot" aria-hidden="true"></span>
+            </div>
+            <div class="cassette-cmd">/define</div>
+            <div class="cassette-title">Capturar requisitos</div>
+            <p class="cassette-desc">O quê e os critérios de aceite: quando exatamente está "pronto".</p>
+            <div class="cassette-foot mono gate">GATE · Clarity ≥ 12/15</div>
+          </div>
+
+          <div class="cassette" data-phase="2" data-phase-active="true">
+            <div class="cassette-head">
+              <span class="cassette-id mono is-active">PHASE_02 · ATIVA</span>
+              <span class="cassette-dot is-active" aria-hidden="true"></span>
+            </div>
+            <div class="cassette-cmd">/design</div>
+            <div class="cassette-title">Definir arquitetura</div>
+            <p class="cassette-desc">A spec técnica: o como construir, antes de escrever a primeira linha.</p>
+            <div class="cassette-foot mono">SAÍDA · DESIGN.md</div>
+          </div>
+
+          <div class="cassette" data-phase="3">
+            <div class="cassette-head">
+              <span class="cassette-id mono">PHASE_03</span>
+              <span class="cassette-dot" aria-hidden="true"></span>
+            </div>
+            <div class="cassette-cmd">/build</div>
+            <div class="cassette-title">Implementar com verificação</div>
+            <p class="cassette-desc">Código real + lint/testes + relatório de build. A prova de qualidade sai junto com o código.</p>
+            <div class="cassette-foot mono gate-ok">GATE · lint · testes · AT</div>
+          </div>
+
+          <div class="cassette" data-phase="4">
+            <div class="cassette-head">
+              <span class="cassette-id mono">PHASE_04</span>
+              <span class="cassette-dot" aria-hidden="true"></span>
+            </div>
+            <div class="cassette-cmd">/ship</div>
+            <div class="cassette-title">Encerrar e aprender</div>
+            <p class="cassette-desc">Arquivar a feature e registrar as lições, o acervo que alimenta a KB.</p>
+            <div class="cassette-foot mono">SAÍDA · archive + lições</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="motor-detail">
+        <div class="detail-card reveal">
+          <div class="detail-tag mono">ID_REF // PHASE_02 — DISSECAÇÃO</div>
+          <div class="detail-facts">
+            <div class="detail-fact">
+              <div class="detail-fact-key mono">ENTRADA</div>
+              <div class="detail-fact-val">Requisitos + AT</div>
+              <div class="detail-fact-sub mono">de /define</div>
+            </div>
+            <div class="detail-fact">
+              <div class="detail-fact-key mono">PROCESSO</div>
+              <div class="detail-fact-val">Decisão registrada</div>
+              <div class="detail-fact-sub mono">trade-off explícito</div>
+            </div>
+            <div class="detail-fact">
+              <div class="detail-fact-key mono">SAÍDA</div>
+              <div class="detail-fact-val">Spec técnica</div>
+              <div class="detail-fact-sub mono" style="color:var(--accent)">para /build</div>
+            </div>
+          </div>
+          <div class="detail-status">
+            <span class="path mono">ARTEFATO_PERSISTIDO: .claude/sdd/</span>
+            <span class="live mono">STATUS: COMPILANDO</span>
+          </div>
+        </div>
+
+        <div class="bypass-card reveal">
+          <div class="detail-tag mono">BYPASS // DEV LOOP</div>
+          <div class="bypass-cmd">/dev</div>
+          <p class="bypass-desc">Tarefa pequena e direta? Pula o ciclo completo e usa o atalho. O rigor de verificação é o mesmo; o que some são os cinco artefatos.</p>
+          <div class="bypass-cond mono">CONDIÇÃO: escopo &lt; 1 arquivo-alvo</div>
+        </div>
+      </div>
+
+      <p class="motor-caption mono">AST-03 // PHASE TRANSFORMATION RIBBON · o pacote de sinal percorre as cinco cassetes no scroll.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     05 · TOPOLOGIA — AgentTopology.dc.html
+     ============================================================ -->
+<section id="topologia" class="section" data-track-section="topologia">
+  <div class="section-grid">
+    <div class="section-rail">
+      <span class="rail-label mono">SEC_04 // TOPOLOGIA</span>
+      <span class="rail-line"></span>
+    </div>
+    <div class="section-body">
+      <div class="section-head reveal">
+        <div>
+          <div class="eyebrow">
+            <span class="eyebrow-bar" aria-hidden="true"></span>
+            <span class="eyebrow-label mono">SUBAGENTS · BARRAMENTO COMPARTILHADO</span>
+          </div>
+          <h2 data-motion="split">11 experts de papel, agnósticos de stack.</h2>
+        </div>
+        <p class="lede">O escopo de cada um é um papel de engenharia, aplicável a qualquer stack. Cada agente entra quando a tarefa se beneficia de contexto próprio, e todos rodam em <span class="mono">model: inherit</span>.</p>
+      </div>
+
+      <div class="topo-panels">
+        <div class="topo-graph-panel reveal">
+          <div class="topo-panel-head mono">
+            <span>GRAFO // .claude/agents/graph.json</span>
+            <span class="live">ORCHESTRATES</span>
+          </div>
+
+          <!-- Breadcrumb do drill-down: some no estado "visão geral" (graph.js controla). -->
+          <div class="topo-crumb mono" data-graph-crumb hidden>
+            <button type="button" class="topo-crumb-back" data-graph-back>&larr; Voltar</button>
+            <span class="topo-crumb-sep" aria-hidden="true">/</span>
+            <span class="topo-crumb-label" data-graph-crumb-label></span>
+          </div>
+
+          <!-- O grafo é construído por assets/js/graph.js a partir de graph-data.js (gerado
+               das fontes reais do scaffold). Sem JS, o conteúdo abaixo permanece. -->
+          <div class="topo-graph-host rola-lateral" data-graph-host tabindex="0" role="region" aria-label="Grafo do orquestrador e dos 11 agentes — role na horizontal">
+            <!-- Fallback: o grafo ortogonal estático que existia antes do graph.js. Fica no
+                 markup por causa da regra dura do CONTRATO (§2) — a página tem de ficar
+                 completa com JS desligado. Com JS, o graph.js troca este SVG pelo grafo
+                 interativo montado a partir de graph-data.js; sem JS (ou se o graph.js
+                 falhar), é este que o motion.js anima, exatamente como antes. -->
+            <svg class="topo-graph-svg" data-motion="graph" viewBox="0 0 760 540" width="100%" role="img" aria-label="Grafo ortogonal: o orquestrador max no centro conectado a 11 agentes especializados.">
+              <title>Grafo do orquestrador max conectado aos 11 agentes especializados</title>
+              <g stroke="rgba(240,243,246,0.10)" stroke-width="1" fill="none">
+                <path d="M144 55 H250 V270 H320"/><path d="M144 115 H250 V270"/><path d="M144 175 H250 V270"/>
+                <path d="M144 395 H250 V270"/><path d="M144 455 H250 V270"/>
+                <path d="M616 55 H510 V270 H440"/><path d="M616 115 H510 V270"/><path d="M616 175 H510 V270"/>
+                <path d="M616 395 H510 V270"/><path d="M616 455 H510 V270"/>
+                <path d="M380 480 V296"/>
+              </g>
+              <g stroke="var(--cyan)" stroke-width="1.4" fill="none" stroke-linecap="square">
+                <path d="M144 55 H250 V270 H320"/>
+                <path d="M144 175 H250 V270 H320"/>
+                <path d="M616 115 H510 V270 H440"/>
+                <path d="M616 455 H510 V270 H440"/>
+                <path d="M380 480 V296"/>
+              </g>
+
+              <rect x="308" y="222" width="144" height="76" fill="none" stroke="var(--accent)" stroke-width="1"/>
+              <rect x="320" y="234" width="120" height="52" fill="#16191F" stroke="var(--accent)" stroke-width="1"/>
+              <text x="380" y="258" text-anchor="middle" fill="var(--accent)" font-family="Martian Mono, ui-monospace, monospace" font-size="15" font-weight="700">max</text>
+              <text x="380" y="274" text-anchor="middle" fill="var(--muted)" font-family="Martian Mono, ui-monospace, monospace" font-size="11" letter-spacing="1.5">ORQUESTRADOR</text>
+
+              <g>
+                <rect x="40" y="40" width="104" height="30" fill="#0F1115" stroke="rgba(240,243,246,0.14)"/>
+                <text x="52" y="59" fill="var(--ink)" font-family="Martian Mono, ui-monospace, monospace" font-size="10">explorer</text>
+                <rect x="40" y="100" width="104" height="30" fill="#0F1115" stroke="rgba(240,243,246,0.14)"/>
+                <text x="52" y="119" fill="var(--ink)" font-family="Martian Mono, ui-monospace, monospace" font-size="10">code-reviewer</text>
+                <rect x="40" y="160" width="104" height="30" fill="#0F1115" stroke="rgba(240,243,246,0.14)"/>
+                <text x="52" y="179" fill="var(--ink)" font-family="Martian Mono, ui-monospace, monospace" font-size="10">test-writer</text>
+                <rect x="40" y="380" width="104" height="30" fill="#0F1115" stroke="rgba(240,243,246,0.14)"/>
+                <text x="52" y="399" fill="var(--ink)" font-family="Martian Mono, ui-monospace, monospace" font-size="10">git-workflow</text>
+                <rect x="40" y="440" width="104" height="30" fill="#0F1115" stroke="rgba(240,243,246,0.14)"/>
+                <text x="52" y="459" fill="var(--ink)" font-family="Martian Mono, ui-monospace, monospace" font-size="10">security-rev.</text>
+
+                <rect x="616" y="40" width="104" height="30" fill="#0F1115" stroke="rgba(240,243,246,0.14)"/>
+                <text x="628" y="59" fill="var(--ink)" font-family="Martian Mono, ui-monospace, monospace" font-size="10">debugger</text>
+                <rect x="616" y="100" width="104" height="30" fill="#0F1115" stroke="rgba(240,243,246,0.14)"/>
+                <text x="628" y="119" fill="var(--ink)" font-family="Martian Mono, ui-monospace, monospace" font-size="10">validator</text>
+                <rect x="616" y="160" width="104" height="30" fill="#0F1115" stroke="rgba(240,243,246,0.14)"/>
+                <text x="628" y="179" fill="var(--ink)" font-family="Martian Mono, ui-monospace, monospace" font-size="10">documenter</text>
+                <rect x="616" y="380" width="104" height="30" fill="#0F1115" stroke="rgba(240,243,246,0.14)"/>
+                <text x="628" y="399" fill="var(--ink)" font-family="Martian Mono, ui-monospace, monospace" font-size="10">ext-observer</text>
+                <rect x="616" y="440" width="104" height="30" fill="#0F1115" stroke="rgba(240,243,246,0.14)"/>
+                <text x="628" y="459" fill="var(--ink)" font-family="Martian Mono, ui-monospace, monospace" font-size="10">designer</text>
+
+                <rect x="328" y="480" width="104" height="30" fill="#0F1115" stroke="rgba(240,243,246,0.14)"/>
+                <text x="340" y="499" fill="var(--ink)" font-family="Martian Mono, ui-monospace, monospace" font-size="10">tracker</text>
+              </g>
+
+              <g stroke="var(--muted)" stroke-width="1">
+                <line x1="14" y1="20" x2="26" y2="20"/><line x1="20" y1="14" x2="20" y2="26"/>
+                <line x1="734" y1="520" x2="746" y2="520"/><line x1="740" y1="514" x2="740" y2="526"/>
+              </g>
+            </svg>
+          </div>
+          <p class="topo-graph-dica" aria-hidden="true">← ARRASTE PARA OS LADOS PARA VER O GRAFO INTEIRO →</p>
+
+          <p class="topo-graph-note mono" data-graph-hint>
+            Toque ou clique num nó para abrir a ficha. Cada agente declara <span class="ink">role</span>,
+            <span class="ink">tools</span> e <span class="ink">connects_to</span> (ex.: debugger &rarr; test-writer).
+          </p>
+        </div>
+
+        <div class="memory-panel reveal" data-graph-memory>
+          <div class="memory-tag">MEMÓRIA VIVA // AST-05</div>
+          <div class="memory-title">O coração é o <span class="mono">.claude/</span> que cada projeto recebe.</div>
+
+          <div class="memory-list">
+            <div class="memory-row">
+              <span class="memory-bar accent" aria-hidden="true"></span>
+              <div>
+                <div class="memory-row-title">/rules</div>
+                <div class="memory-row-desc">contrato always-on da sessão</div>
+              </div>
+              <span class="memory-row-status mono">LIVE</span>
+            </div>
+            <div class="memory-row">
+              <span class="memory-bar" aria-hidden="true"></span>
+              <div>
+                <div class="memory-row-title">/kb</div>
+                <div class="memory-row-desc">base treinada por projeto</div>
+              </div>
+              <span class="memory-row-status mono">LIVE</span>
+            </div>
+            <div class="memory-row">
+              <span class="memory-bar" aria-hidden="true"></span>
+              <div>
+                <div class="memory-row-title">/sdd</div>
+                <div class="memory-row-desc">features, specs e arquivo</div>
+              </div>
+              <span class="memory-row-status mono">LIVE</span>
+            </div>
+            <div class="memory-row">
+              <span class="memory-bar" aria-hidden="true"></span>
+              <div>
+                <div class="memory-row-title">/agents</div>
+                <div class="memory-row-desc">os 11 papéis + o grafo</div>
+              </div>
+              <span class="memory-row-status mono">LIVE</span>
+            </div>
+          </div>
+
+          <div class="memory-meta mono">
+            RETENÇÃO: persistente entre sessões<br>
+            SINCRONIA: <span class="live">/setup · /init · /train-kb</span>
+          </div>
+        </div>
+
+        <!-- Ficha do nó selecionado. Ocupa a mesma coluna do painel de memória: um dos dois
+             está visível por vez (graph.js alterna o atributo hidden). -->
+        <aside class="inspector-panel" data-graph-inspector hidden aria-live="polite">
+          <div class="insp-bar mono">
+            <span>FICHA // .claude/agents</span>
+            <button type="button" class="insp-close" data-graph-inspector-close aria-label="Fechar a ficha e voltar à memória viva">&times;</button>
+          </div>
+          <div class="insp-body" data-graph-inspector-body></div>
+        </aside>
+      </div>
+
+      <!-- Até 2026-09-15 a tabela rolava 654px na horizontal no mobile, com a coluna ESCOPO fora
+           da tela. Com menos de 640px de bloco ela vira lista (o `@container roster` no site.css) e
+           não rola mais. `tabindex` e a região ficam para o caso de um nome sem quebra passar da
+           borda; a máscara e a dica só aparecem se isso acontecer. Os `role` explícitos seguram a
+           semântica de tabela que o `display: block` da lista tiraria em alguns leitores de tela. -->
+      <div class="roster reveal" tabindex="0" role="region" aria-label="Tabela dos 11 agentes">
+        <table class="roster-table" role="table">
+          <thead role="rowgroup">
+            <tr role="row"><th scope="col" role="columnheader">AGENTE</th><th scope="col" role="columnheader">ROLE</th><th scope="col" role="columnheader">ESCOPO</th></tr>
+          </thead>
+          <tbody role="rowgroup">
+            <tr role="row"><td class="roster-name" role="cell">explorer</td><td class="roster-role" role="cell">search</td><td class="roster-scope" role="cell">Localizar código e entender a arquitetura antes de implementar.</td></tr>
+            <tr role="row"><td class="roster-name" role="cell">code-reviewer</td><td class="roster-role" role="cell">review</td><td class="roster-scope" role="cell">Revisão ampla de diff/PR: bugs, segurança, aderência, simplicidade.</td></tr>
+            <tr role="row"><td class="roster-name" role="cell">test-writer</td><td class="roster-role" role="cell">testing</td><td class="roster-scope" role="cell">Escrever/completar testes cobrindo os Acceptance Tests.</td></tr>
+            <tr role="row"><td class="roster-name" role="cell">git-workflow</td><td class="roster-role" role="cell">vcs</td><td class="roster-scope" role="cell">Higiene de repo: conventional commits, branches, PRs, .gitignore.</td></tr>
+            <tr role="row"><td class="roster-name" role="cell">security-reviewer</td><td class="roster-role" role="cell">security</td><td class="roster-scope" role="cell">Profundidade em segurança: segredos, injeção, authn/authz, deps.</td></tr>
+            <tr role="row"><td class="roster-name" role="cell">debugger</td><td class="roster-role" role="cell">debug</td><td class="roster-scope" role="cell">A partir da falha/stacktrace: isolar a causa-raiz e propor o fix mínimo.</td></tr>
+            <tr role="row"><td class="roster-name" role="cell">validator</td><td class="roster-role" role="cell">validation</td><td class="roster-scope" role="cell">Verificar conformidade do resultado à spec/AT: roda e observa.</td></tr>
+            <tr role="row"><td class="roster-name" role="cell">documenter</td><td class="roster-role" role="cell">docs</td><td class="roster-scope" role="cell">Documentar em docs/ (humano × LLM, fora da KB), nunca-destrutivo.</td></tr>
+            <tr role="row"><td class="roster-name" role="cell">external-observer</td><td class="roster-role" role="cell">observation</td><td class="roster-scope" role="cell">Observar alvo externo/opaco (site/API/app) e confrontá-lo com a referência.</td></tr>
+            <tr role="row"><td class="roster-name" role="cell">designer</td><td class="roster-role" role="cell">design</td><td class="roster-scope" role="cell">Criar/revisar interface: shape → craft → audit, a11y e anti-slop.</td></tr>
+            <tr role="row"><td class="roster-name" role="cell">tracker</td><td class="roster-role" role="cell">tracking</td><td class="roster-scope" role="cell">Instrumentar tráfego consent-first: medição, dedup, PII hasheada.</td></tr>
+          </tbody>
+        </table>
+        <p class="roster-dica mono" aria-hidden="true">← ARRASTE OU USE AS SETAS PARA VER TODAS AS COLUNAS</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     06 · INSTRUMENTAÇÃO — Terminal.dc.html
+     ============================================================ -->
+<section id="instrumentacao" class="section" data-track-section="instrumentacao">
+  <div class="section-grid">
+    <div class="section-rail">
+      <span class="rail-label mono">SEC_05 // INSTRUMENTAÇÃO</span>
+      <span class="rail-line"></span>
+    </div>
+    <div class="section-body">
+      <div class="section-head reveal">
+        <div>
+          <div class="eyebrow">
+            <span class="eyebrow-bar" aria-hidden="true"></span>
+            <span class="eyebrow-label mono">CLI · STATUSLINE · TERMINAL</span>
+          </div>
+          <h2 data-motion="split">É assim que o seu terminal fica.</h2>
+        </div>
+        <p class="lede">Do zero ao ciclo SDD em cinco passos. Sem dashboard, sem painel: a instrumentação vive onde você já trabalha.</p>
+      </div>
+
+      <div class="term-layout">
+        <div class="term-slab reveal">
+          <div class="term-titlebar">
+            <div class="term-dots" aria-hidden="true"><span></span><span></span></div>
+            <span class="term-titlebar-name mono">pwsh — native-sdd</span>
+            <div class="term-titlebar-meta">
+              <span>branch: main</span>
+              <span>v0.10.58</span>
+            </div>
+          </div>
+
+          <div class="term-body" data-motion="typewriter">
+            <span class="term-line dim"># 0. clonar o repositório</span>
+            <span class="term-line"><span class="pr">$</span> git clone github.com/Phenrique-DataDev/Native-sdd</span>
+            <span class="term-line">&nbsp;</span>
+            <span class="term-line dim"># 1. preparar a máquina + ~/.claude</span>
+            <span class="term-line"><span class="pr">$</span> onboarding/install.ps1</span>
+            <span class="term-line"><span class="ok">✓</span> <span class="dim">CLIs · Claude Code · perfil pessoal — idempotente</span></span>
+            <span class="term-line">&nbsp;</span>
+            <span class="term-line dim"># 2. criar o projeto (alias: nsp)</span>
+            <span class="term-line"><span class="pr">$</span> New-SddProject meu-projeto -Git -Open</span>
+            <span class="term-line"><span class="ok">✓</span> <span class="dim">.claude/ · rules · agents · sdd — scaffold limpo</span></span>
+            <span class="term-line">&nbsp;</span>
+            <span class="term-line dim"># 3. curadoria: especializa o scaffold neste projeto</span>
+            <span class="term-line"><span class="pr">$</span> <span class="sl">/setup</span></span>
+            <span class="term-line"><span class="ok">✓</span> <span class="dim">11 agentes ajustados · KB treinada · contexto sincronizado</span></span>
+            <span class="term-line">&nbsp;</span>
+            <span class="term-line dim"># 4. executar o ciclo</span>
+            <span class="term-line"><span class="pr">$</span> <span class="sl">/init</span> <span class="term-caret" aria-hidden="true"></span></span>
+          </div>
+
+          <div class="term-footbar">
+            <span>AST-07 // SPEC-TO-CODE COMPILER CLI</span>
+            <span class="ok">EXIT 0</span>
+          </div>
+        </div>
+
+        <div class="hud reveal">
+          <div class="hud-block">
+            <div class="hud-tag">STATUSLINE // AST-06</div>
+            <div class="hud-phase">PHASE: 03_BUILD<br><span class="cyan">CONTEXT_BUFFER: OPTIMAL</span></div>
+          </div>
+
+          <div class="hud-block">
+            <div class="hud-progress-head">
+              <span>PROGRESSO DE FASE</span><span class="ink">03 / 05</span>
+            </div>
+            <div class="hud-progress-bars">
+              <span class="done"></span><span class="done"></span><span class="done"></span><span></span><span></span>
+            </div>
+            <div class="hud-progress-labels">
+              <span>brainstorm</span><span>define</span><span>design</span><span>build</span><span>ship</span>
+            </div>
+          </div>
+
+          <div class="hud-block">
+            <div class="hud-tag">DESPACHO DE AGENTES</div>
+            <div class="hud-dispatch">
+              <div class="hud-dispatch-row">
+                <span class="hud-dispatch-name">test-writer</span>
+                <span class="hud-dispatch-status done">✓ CONCLUÍDO</span>
+              </div>
+              <div class="hud-dispatch-row">
+                <span class="hud-dispatch-name">code-reviewer</span>
+                <span class="hud-dispatch-status active">● EM CURSO</span>
+              </div>
+              <div class="hud-dispatch-row">
+                <span class="hud-dispatch-name">validator</span>
+                <span class="hud-dispatch-status queued">○ NA FILA</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="hud-block">
+            <div class="hud-tag">GUARDS SEMPRE ATIVOS</div>
+            <div class="hud-guards">
+              <span class="ok">✓</span> secret-guard<br>
+              <span class="ok">✓</span> destructive-guard<br>
+              <span class="ok">✓</span> managed policy
+            </div>
+            <div class="hud-guards-foot">permissão-só · fail-closed · não persiste entre sessões</div>
+          </div>
+
+          <div class="hud-block quiet">
+            <div class="hud-tag">/peers · SESSÕES ATIVAS</div>
+            <div class="hud-peers">
+              <span class="arrow">→</span> chat-A · feat/landing<br>
+              <span class="arrow">→</span> chat-B · fix/install-mcp
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     06 · EXECUÇÃO — Blueprint.dc.html (inclui id="author")
+     ============================================================ -->
+<section id="execucao" class="section" data-track-section="execucao">
+  <div class="section-grid">
+    <div class="section-rail">
+      <span class="rail-label mono">SEC_06 // EXECUÇÃO</span>
+      <span class="rail-line"></span>
+    </div>
+    <div class="section-body">
+      <div class="eyebrow reveal">
+        <span class="eyebrow-bar" aria-hidden="true"></span>
+        <span class="eyebrow-label mono">MATRIZ UNIFICADA · AST-08</span>
+      </div>
+      <h2 class="section-head-solo" data-motion="split">Três blocos e você está rodando.</h2>
+
+      <div class="blueprint-frame reveal" tabindex="0" role="region" aria-label="Esquema mestre do compilador">
+        <svg class="blueprint-svg blueprint-svg--horizontal" data-motion="blueprint" viewBox="0 0 1080 300" role="img" aria-label="Esquema mestre: entrada, pipeline de cinco fases, barramento de agentes, memória e artefato.">
+          <title>Esquema mestre do compilador: entrada, pipeline de cinco fases, barramento de agentes, memória e artefato</title>
+          <!-- O barramento tocava UMA fase (o `ship`) e a memória tinha duas pontas soltas.
+               A legenda ao lado dizia "barramento acima do pipe" e "memória abaixo" — o desenho
+               não mostrava nem uma coisa nem outra, e por isso lia-se como caixas soltas.
+               Agora cada um tem espinha e desce em TODA fase, que é o que a §topologia afirma
+               ("cada agente entra quando a tarefa se beneficia") e o que a §tese afirma
+               ("cada fase só existe porque a anterior deixou um artefato em disco"). -->
+          <g data-traco="conteudo" stroke="rgba(240,243,246,0.42)" stroke-width="1" fill="none">
+            <!-- o pipe, borda a borda -->
+            <path d="M130 152 H190"/><path d="M300 152 H330"/><path d="M440 152 H470"/>
+            <path d="M580 152 H610"/><path d="M720 152 H750"/><path d="M860 152 H900"/>
+
+            <!-- barramento: caixa → espinha → uma descida por fase -->
+            <path d="M525 88 V108"/>
+            <path d="M245 108 H805"/>
+            <path d="M245 108 V130"/><path d="M385 108 V130"/><path d="M525 108 V130"/>
+            <path d="M665 108 V130"/><path d="M805 108 V130"/>
+
+            <!-- memória: uma subida por fase → espinha → caixa -->
+            <path d="M245 174 V196"/><path d="M385 174 V196"/><path d="M525 174 V196"/>
+            <path d="M665 174 V196"/><path d="M805 174 V196"/>
+            <path d="M245 196 H805"/>
+            <path d="M525 196 V222"/>
+          </g>
+
+          <rect x="20" y="130" width="110" height="44" fill="#070809" stroke="rgba(240,243,246,0.22)"/>
+          <text x="75" y="150" text-anchor="middle" fill="var(--muted)" font-family="Martian Mono, ui-monospace, monospace" font-size="11" letter-spacing="1.5">ENTRADA</text>
+          <text x="75" y="165" text-anchor="middle" fill="var(--ink)" font-family="Martian Mono, ui-monospace, monospace" font-size="12">intenção</text>
+
+          <g>
+            <rect x="190" y="130" width="110" height="44" fill="#16191F" stroke="rgba(240,243,246,0.16)"/>
+            <text x="245" y="150" text-anchor="middle" fill="var(--muted)" font-family="Martian Mono, ui-monospace, monospace" font-size="11" letter-spacing="1.5">P_00</text>
+            <text x="245" y="165" text-anchor="middle" fill="var(--ink)" font-family="Martian Mono, ui-monospace, monospace" font-size="12">brainstorm</text>
+
+            <rect x="330" y="130" width="110" height="44" fill="#16191F" stroke="rgba(240,243,246,0.16)"/>
+            <text x="385" y="150" text-anchor="middle" fill="var(--muted)" font-family="Martian Mono, ui-monospace, monospace" font-size="11" letter-spacing="1.5">P_01</text>
+            <text x="385" y="165" text-anchor="middle" fill="var(--ink)" font-family="Martian Mono, ui-monospace, monospace" font-size="12">define</text>
+
+            <rect x="470" y="130" width="110" height="44" fill="#16191F" stroke="rgba(240,243,246,0.16)"/>
+            <text x="525" y="150" text-anchor="middle" fill="var(--muted)" font-family="Martian Mono, ui-monospace, monospace" font-size="11" letter-spacing="1.5">P_02</text>
+            <text x="525" y="165" text-anchor="middle" fill="var(--ink)" font-family="Martian Mono, ui-monospace, monospace" font-size="12">design</text>
+
+            <rect x="610" y="130" width="110" height="44" fill="#16191F" stroke="rgba(240,243,246,0.16)"/>
+            <text x="665" y="150" text-anchor="middle" fill="var(--muted)" font-family="Martian Mono, ui-monospace, monospace" font-size="11" letter-spacing="1.5">P_03</text>
+            <text x="665" y="165" text-anchor="middle" fill="var(--ink)" font-family="Martian Mono, ui-monospace, monospace" font-size="12">build</text>
+
+            <rect x="750" y="130" width="110" height="44" fill="#16191F" stroke="var(--accent)" stroke-opacity="0.6"/>
+            <text x="805" y="150" text-anchor="middle" fill="var(--muted)" font-family="Martian Mono, ui-monospace, monospace" font-size="11" letter-spacing="1.5">P_04</text>
+            <text x="805" y="165" text-anchor="middle" fill="var(--ink)" font-family="Martian Mono, ui-monospace, monospace" font-size="12">ship</text>
+          </g>
+
+          <rect x="900" y="126" width="150" height="52" fill="#070809" stroke="var(--accent)"/>
+          <text x="975" y="147" text-anchor="middle" fill="var(--accent)" font-family="Martian Mono, ui-monospace, monospace" font-size="11" letter-spacing="1.5">SAÍDA</text>
+          <text x="975" y="164" text-anchor="middle" fill="var(--ink)" font-family="Archivo, Helvetica, sans-serif" font-size="14" font-weight="600">artefato verificado</text>
+
+          <rect x="405" y="52" width="240" height="36" fill="#0F1115" stroke="rgba(240,243,246,0.16)"/>
+          <text x="525" y="75" text-anchor="middle" fill="var(--cyan)" font-family="Martian Mono, ui-monospace, monospace" font-size="12" letter-spacing="1">BARRAMENTO · 11 AGENTES</text>
+
+          <rect x="425" y="222" width="200" height="36" fill="#0F1115" stroke="rgba(240,243,246,0.16)"/>
+          <text x="525" y="245" text-anchor="middle" fill="var(--ink)" font-family="Martian Mono, ui-monospace, monospace" font-size="12" letter-spacing="1">MEMÓRIA · .claude/</text>
+
+          <g stroke="var(--muted)" stroke-width="1">
+            <line x1="14" y1="24" x2="26" y2="24"/><line x1="20" y1="18" x2="20" y2="30"/>
+            <line x1="1054" y1="276" x2="1066" y2="276"/><line x1="1060" y1="270" x2="1060" y2="282"/>
+          </g>
+        </svg>
+
+        <!-- A mesma matriz em pé, para quadro com menos de 1080px (ver `.blueprint-svg--vertical`
+             no site.css). O pipe desce pelo meio; barramento e memória viram duas espinhas, uma
+             de cada lado, com uma ligação por fase, e as caixas deles fecham a espinha embaixo. -->
+        <svg class="blueprint-svg blueprint-svg--vertical" data-motion="blueprint" viewBox="0 0 280 620" role="img" aria-label="Esquema mestre: entrada, pipeline de cinco fases, barramento de agentes, memória e artefato.">
+          <title>Esquema mestre do compilador: entrada, pipeline de cinco fases, barramento de agentes, memória e artefato</title>
+          <g data-traco="conteudo" stroke="rgba(240,243,246,0.42)" stroke-width="1" fill="none">
+            <!-- o pipe, de cima a baixo -->
+            <path d="M140 68 V100"/><path d="M140 144 V170"/><path d="M140 214 V240"/>
+            <path d="M140 284 V310"/><path d="M140 354 V380"/><path d="M140 424 V456"/>
+
+            <!-- barramento: uma ligação por fase → espinha à esquerda → caixa -->
+            <path d="M80 122 H30"/><path d="M80 192 H30"/><path d="M80 262 H30"/>
+            <path d="M80 332 H30"/><path d="M80 402 H30"/>
+            <path d="M30 122 V540"/>
+
+            <!-- memória: uma ligação por fase → espinha à direita → caixa -->
+            <path d="M200 122 H250"/><path d="M200 192 H250"/><path d="M200 262 H250"/>
+            <path d="M200 332 H250"/><path d="M200 402 H250"/>
+            <path d="M250 122 V540"/>
+          </g>
+
+          <rect x="80" y="24" width="120" height="44" fill="#070809" stroke="rgba(240,243,246,0.22)"/>
+          <text x="140" y="44" text-anchor="middle" fill="var(--muted)" font-family="Martian Mono, ui-monospace, monospace" font-size="12" letter-spacing="1.5">ENTRADA</text>
+          <text x="140" y="60" text-anchor="middle" fill="var(--ink)" font-family="Martian Mono, ui-monospace, monospace" font-size="13">intenção</text>
+
+          <g>
+            <rect x="80" y="100" width="120" height="44" fill="#16191F" stroke="rgba(240,243,246,0.16)"/>
+            <text x="140" y="120" text-anchor="middle" fill="var(--muted)" font-family="Martian Mono, ui-monospace, monospace" font-size="12" letter-spacing="1.5">P_00</text>
+            <text x="140" y="136" text-anchor="middle" fill="var(--ink)" font-family="Martian Mono, ui-monospace, monospace" font-size="13">brainstorm</text>
+
+            <rect x="80" y="170" width="120" height="44" fill="#16191F" stroke="rgba(240,243,246,0.16)"/>
+            <text x="140" y="190" text-anchor="middle" fill="var(--muted)" font-family="Martian Mono, ui-monospace, monospace" font-size="12" letter-spacing="1.5">P_01</text>
+            <text x="140" y="206" text-anchor="middle" fill="var(--ink)" font-family="Martian Mono, ui-monospace, monospace" font-size="13">define</text>
+
+            <rect x="80" y="240" width="120" height="44" fill="#16191F" stroke="rgba(240,243,246,0.16)"/>
+            <text x="140" y="260" text-anchor="middle" fill="var(--muted)" font-family="Martian Mono, ui-monospace, monospace" font-size="12" letter-spacing="1.5">P_02</text>
+            <text x="140" y="276" text-anchor="middle" fill="var(--ink)" font-family="Martian Mono, ui-monospace, monospace" font-size="13">design</text>
+
+            <rect x="80" y="310" width="120" height="44" fill="#16191F" stroke="rgba(240,243,246,0.16)"/>
+            <text x="140" y="330" text-anchor="middle" fill="var(--muted)" font-family="Martian Mono, ui-monospace, monospace" font-size="12" letter-spacing="1.5">P_03</text>
+            <text x="140" y="346" text-anchor="middle" fill="var(--ink)" font-family="Martian Mono, ui-monospace, monospace" font-size="13">build</text>
+
+            <rect x="80" y="380" width="120" height="44" fill="#16191F" stroke="var(--accent)" stroke-opacity="0.6"/>
+            <text x="140" y="400" text-anchor="middle" fill="var(--muted)" font-family="Martian Mono, ui-monospace, monospace" font-size="12" letter-spacing="1.5">P_04</text>
+            <text x="140" y="416" text-anchor="middle" fill="var(--ink)" font-family="Martian Mono, ui-monospace, monospace" font-size="13">ship</text>
+          </g>
+
+          <rect x="65" y="456" width="150" height="52" fill="#070809" stroke="var(--accent)"/>
+          <text x="140" y="478" text-anchor="middle" fill="var(--accent)" font-family="Martian Mono, ui-monospace, monospace" font-size="12" letter-spacing="1.5">SAÍDA</text>
+          <text x="140" y="496" text-anchor="middle" fill="var(--ink)" font-family="Archivo, Helvetica, sans-serif" font-size="14" font-weight="600">artefato verificado</text>
+
+          <rect x="8" y="540" width="124" height="48" fill="#0F1115" stroke="rgba(240,243,246,0.16)"/>
+          <text x="70" y="561" text-anchor="middle" fill="var(--cyan)" font-family="Martian Mono, ui-monospace, monospace" font-size="12" letter-spacing="1">BARRAMENTO</text>
+          <text x="70" y="578" text-anchor="middle" fill="var(--cyan)" font-family="Martian Mono, ui-monospace, monospace" font-size="12" letter-spacing="1">11 AGENTES</text>
+
+          <rect x="148" y="540" width="124" height="48" fill="#0F1115" stroke="rgba(240,243,246,0.16)"/>
+          <text x="210" y="561" text-anchor="middle" fill="var(--ink)" font-family="Martian Mono, ui-monospace, monospace" font-size="12" letter-spacing="1">MEMÓRIA</text>
+          <text x="210" y="578" text-anchor="middle" fill="var(--ink)" font-family="Martian Mono, ui-monospace, monospace" font-size="13">.claude/</text>
+
+          <g stroke="var(--muted)" stroke-width="1">
+            <line x1="14" y1="16" x2="26" y2="16"/><line x1="20" y1="10" x2="20" y2="22"/>
+            <line x1="254" y1="606" x2="266" y2="606"/><line x1="260" y1="600" x2="260" y2="612"/>
+          </g>
+        </svg>
+      </div>
+
+      <!-- A legenda saiu de dentro do SVG, e a razão é medida: texto de SVG vive nas unidades do
+           viewBox, então encolhe junto com o desenho — a 390px estas linhas chegavam à tela com
+           5,6px. Em HTML elas têm o tamanho que a folha de estilo diz, em qualquer viewport, e
+           ficam visíveis sem precisar rolar o quadro até o fim. -->
+      <div class="blueprint-legenda">
+        <dl class="blueprint-notas">
+          <dt class="mono">ESQUEMA MESTRE</dt>
+          <dd>fluxo unidirecional</dd>
+          <dd>agentes sob demanda</dd>
+          <dd>toda fase lê e grava</dd>
+        </dl>
+        <div class="blueprint-rev mono">
+          <span>REV // 0.10.58</span>
+          <span class="ok">STATUS: COMPILADO</span>
+        </div>
+      </div>
+
+      <div class="exec-layout">
+        <div class="quickstart-card reveal">
+          <span class="quickstart-tag">COMO COMEÇAR</span>
+
+          <!-- Até 2026-09-12 este card ensinava `git clone` seguido de `onboarding/install.ps1` sem o
+               `cd` entre os dois, e o botão copiava os comandos do Windows com `/setup` e `/init` no
+               fim, que são do Claude Code e não do shell. Quem colasse via erro.
+               Agora a instalação é a rota de uma linha do README (o caso `cada comando de instalação
+               do card existe, igual, no README` amarra os dois). Cada radio carrega o comando do
+               seu sistema em `data-copy`, e o botão copia o do radio marcado. Só a instalação vai
+               para a área de transferência: o `nsp` do passo 2 existe apenas num terminal NOVO. -->
+          <input type="radio" name="qsOs" id="osWin" class="qs-os-radio" checked data-copy="pwsh -NoProfile -Command &quot;irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboarding/bootstrap.ps1 | iex&quot;">
+          <input type="radio" name="qsOs" id="osLin" class="qs-os-radio" data-copy="curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboarding/bootstrap.sh | bash">
+          <div class="qs-os-toggle" role="group" aria-label="Sistema operacional do quickstart">
+            <label for="osWin" data-os-toggle="windows">Windows</label>
+            <label for="osLin" data-os-toggle="linux">Linux / macOS</label>
+          </div>
+
+          <ol class="qs-passos">
+            <li class="qs-passo">
+              <span class="qs-num mono" aria-hidden="true">1</span>
+              <div class="qs-corpo">
+                <p class="qs-titulo">Instale</p>
+                <p class="qs-desc">Prepara a máquina: as ferramentas de linha de comando, o Claude Code e a sua configuração pessoal. Leva alguns minutos.</p>
+                <div class="quickstart-route" id="routeWin">
+                  <div class="quickstart-block" tabindex="0" role="region" aria-label="Comando de instalação no Windows, role na horizontal"><span class="pr">$</span> pwsh -NoProfile -Command "irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboarding/bootstrap.ps1 | iex"</div>
+                  <p class="qs-req">Rode num PowerShell 7 (<span class="mono">pwsh</span>).</p>
+                </div>
+                <div class="quickstart-route" id="routeLin">
+                  <div class="quickstart-block" tabindex="0" role="region" aria-label="Comando de instalação no Linux e no macOS, role na horizontal"><span class="pr">$</span> curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboarding/bootstrap.sh | bash</div>
+                  <p class="qs-req">Precisa de bash, curl e tar. No macOS, pede a senha de administrador uma vez.</p>
+                </div>
+                <p class="qs-aviso">No fim, feche e abra um terminal novo.</p>
+              </div>
+            </li>
+            <li class="qs-passo">
+              <span class="qs-num mono" aria-hidden="true">2</span>
+              <div class="qs-corpo">
+                <p class="qs-titulo">Crie o projeto</p>
+                <p class="qs-desc">Troque <span class="mono">meu-projeto</span> pelo nome que quiser. A pasta nasce com o método pronto e abre no VS Code.</p>
+                <div class="quickstart-block"><span class="pr">$</span> nsp meu-projeto -Open</div>
+              </div>
+            </li>
+            <li class="qs-passo">
+              <span class="qs-num mono" aria-hidden="true">3</span>
+              <div class="qs-corpo">
+                <p class="qs-titulo">Comece no Claude Code</p>
+                <p class="qs-desc">Dentro do projeto, <span class="mono">/setup</span> registra a stack, o domínio e as convenções, e <span class="mono">/init</span> especializa os agentes para eles.</p>
+                <div class="quickstart-block qs-claude"><span class="pr">›</span> /setup<br><span class="pr">›</span> /init</div>
+              </div>
+            </li>
+          </ol>
+
+          <div class="quickstart-cta-row">
+            <button type="button" class="btn btn-primary" id="copyQs" data-copy="pwsh -NoProfile -Command &quot;irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboarding/bootstrap.ps1 | iex&quot;">
+              <span>COPIAR INSTALAÇÃO</span>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M1 7H13M13 7L7 1M13 7L7 13" stroke="currentColor" stroke-width="1.75" stroke-linecap="square"/></svg>
+            </button>
+            <a class="quickstart-guia" href="https://github.com/Phenrique-DataDev/Native-sdd#readme" target="_blank" rel="noopener">Guia completo no README</a>
+          </div>
+
+          <div class="quickstart-foot">Sem cadastro. O Native-SDD não coleta telemetria de uso.</div>
+        </div>
+
+        <div class="author-card reveal" id="author">
+          <span class="author-tag">// AUTOR</span>
+
+          <!-- Card de perfil no molde de um LinkedIn (pedido de 2026-09-12, EVOLUCAO.md D-22). Todo
+               fato abaixo saiu dos perfis públicos do autor na mesma data, nada além deles. A
+               procedência campo a campo está na D-22, que é dev/meta e NÃO é distribuída.
+               Esta página vai ao espelho público: comentário aqui é conteúdo publicado — a versão
+               anterior deste bloco citava o primeiro nome solto (que a denylist bloqueia, ao
+               contrário da assinatura completa, que está no allowlist) e um cargo antigo. -->
+          <div class="author-head">
+            <!-- A marca PHL redesenhada na gramática do isologo: traço de blueprint, os dois tons da
+                 marca (frio nas letras do nome, quente no L que fecha) e os cantos de desenho técnico
+                 que o site usa para fechar um quadro. -->
+            <svg class="author-mark" width="64" height="64" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+              <path d="M1 13 V1 H13 M51 63 H63 V51" fill="none" stroke="var(--muted)" stroke-width="1.5"/>
+              <g fill="none" stroke-width="2.75" stroke-linecap="square" stroke-linejoin="miter">
+                <path d="M11 46 V18 H18 A7 7 0 0 1 18 32 H11" stroke="var(--logo-frio)"/>
+                <path d="M31 18 V46 M31 32 H41 M41 18 V46" stroke="var(--logo-frio)"/>
+                <path d="M47 18 V46 H55" stroke="var(--logo-quente)"/>
+              </g>
+            </svg>
+            <div class="author-id">
+              <div class="author-name">Pedro Henrique Lopes</div>
+              <div class="author-role">Analytics Engineer · ClickHouse, dbt, Python</div>
+              <div class="author-local mono">Sorocaba, SP · Brasil</div>
+            </div>
+          </div>
+
+          <div class="author-links-row">
+                <a href="https://www.linkedin.com/in/pedro-henrique-lopes-datadev" target="_blank" rel="noopener">
+                  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.98 3.5C4.98 4.88 3.87 6 2.5 6S0 4.88 0 3.5 1.12 1 2.5 1 4.98 2.12 4.98 3.5zM.5 8h4V23h-4V8zm7.5 0h3.8v2.05h.05c.53-1 1.82-2.05 3.75-2.05 4 0 4.75 2.64 4.75 6.07V23h-4v-6.6c0-1.57-.03-3.6-2.2-3.6-2.2 0-2.54 1.72-2.54 3.49V23h-4V8z"/></svg>
+                  LinkedIn
+                </a>
+                <a href="https://github.com/Phenrique-DataDev" target="_blank" rel="noopener">
+                  <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                  GitHub
+                </a>
+          </div>
+
+          <div class="author-facts">
+            <div class="author-fact">
+              <div class="author-fact-key">EXPERIÊNCIA</div>
+              <ol class="author-xp">
+                <li class="author-xp-item is-atual">
+                  <div class="author-xp-topo">
+                    <span class="author-xp-cargo">Engenheiro de dados</span>
+                    <span class="author-xp-periodo mono">jan 2026 – hoje</span>
+                  </div>
+                  <div class="author-xp-empresa">Suprema Gaming</div>
+                  <p class="author-xp-desc">Pipelines ETL/ELT e modelos dbt em ClickHouse e Snowflake, incluindo a migração para o novo data warehouse em ClickHouse.</p>
+                </li>
+                <li class="author-xp-item">
+                  <div class="author-xp-topo">
+                    <span class="author-xp-cargo">Analista de dados</span>
+                    <span class="author-xp-periodo mono">fev 2024 – jan 2026</span>
+                  </div>
+                  <div class="author-xp-empresa">Máxima</div>
+                  <p class="author-xp-desc">Dashboards em Power BI e Looker e automação de relatórios para Logística, RH, Financeiro e Comercial.</p>
+                </li>
+              </ol>
+            </div>
+            <div class="author-fact">
+              <div class="author-fact-key">FORMAÇÃO E CERTIFICAÇÕES</div>
+              <ul class="author-cred">
+                <li><span class="author-cred-nome">ClickHouse Database Associate</span><span class="author-cred-meta mono">ClickHouse · 2026</span></li>
+                <li><span class="author-cred-nome">Claude Code in Action</span><span class="author-cred-meta mono">Anthropic · 2026</span></li>
+                <li><span class="author-cred-nome">Pós-graduação em Ciência de Dados</span><span class="author-cred-meta mono">UniCesumar · em curso</span></li>
+                <li><span class="author-cred-nome">Tecnólogo em Análise e Desenvolvimento de Sistemas</span><span class="author-cred-meta mono">UNIASSELVI · 2025</span></li>
+              </ul>
+            </div>
+            <div class="author-fact">
+              <div class="author-fact-key">STACK</div>
+              <ul class="author-chips">
+                <li>ClickHouse</li><li>dbt</li><li>Snowflake</li><li>SQL</li><li>Python</li><li>BigQuery</li><li>Power BI</li><li>Looker</li><li>Git</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- As contagens moram aqui desde a D-22: as provas saíram, e `commands` é afirmado também
+               pelo card social, então precisa continuar dito na página (integridade.spec.mjs). -->
+          <p class="author-closing">O Native-SDD é o estudo de caso do jeito que eu trabalho: <span class="mono" data-conta="commands">34</span> comandos, <span class="mono" data-conta="agents">11</span> agentes e <span class="mono" data-conta="rules">12</span> regras, escritos e testados por mim.</p>
+        </div>
+      </div>
+
+      <div class="pix-block reveal">
+        <div class="pix-copy">
+          <h3>Gratuito, aberto e independente.</h3>
+          <p>Mantido de forma independente. Se te poupou tempo ou te ajudou a trabalhar melhor, considere apoiar. Qualquer valor ajuda a manter o desenvolvimento.</p>
+        </div>
+        <div class="pix-actions-row">
+          <span class="pix-key" id="pixKey">b784c378-b3e4-4617-8dbb-ca6c5b722a8f</span>
+          <button type="button" class="pix-tag" id="copyPix">PIX · copiar</button>
+          <button type="button" class="pix-qr-btn" id="showPixQr" aria-label="Mostrar QR code do Pix">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM14 20h3M20 14v3M20 20h.01"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <dialog class="pix-qr-dialog" id="pixQrDialog">
+        <div class="pix-qr-head">
+          <h3>Pix via QR code</h3>
+          <button class="pix-qr-close" id="closePixQr" aria-label="Fechar" type="button">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div class="pix-qr-img-wrap">
+          <img src="assets/pix-qr.png" alt="QR code para pagamento via Pix" width="320" height="320">
+        </div>
+      </dialog>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <a class="brand" href="https://github.com/Phenrique-DataDev/Native-sdd" target="_blank" rel="noopener">
+      <span class="brand-dot" aria-hidden="true"></span>
+      <span class="brand-name mono">github.com/Phenrique-DataDev/Native-sdd →</span>
+    </a>
+    <nav class="foot-links" aria-label="Documentação do projeto">
+      <a href="https://github.com/Phenrique-DataDev/Native-sdd/blob/main/docs/VISAO.md" target="_blank" rel="noopener">Visão</a>
+      <a href="https://github.com/Phenrique-DataDev/Native-sdd/blob/main/docs/USO.md" target="_blank" rel="noopener">Uso</a>
+      <a href="https://github.com/Phenrique-DataDev/Native-sdd/blob/main/docs/HARNESS-CONTRACT.md" target="_blank" rel="noopener">Harness Contract</a>
+      <!-- Único link daqui que NÃO vai para o GitHub, e o único obrigatório: esta página envia
+           eventos ao coletor (assets/js/track.js), e a política é o que diz o quê e por quanto
+           tempo. A v1 linkava; enquanto esta landing viveu em /compiler/ ela não precisava, e
+           ao tomar a raiz em 2026-09-07 herdou a obrigação junto com o endereço. "sem cookie,
+           sem PII" ao lado é a afirmação — isto é onde ela se verifica. -->
+      <a href="privacidade.html">Privacidade</a>
+    </nav>
+    <span class="foot-meta mono">v0.10.58 · sem cookie, sem PII</span>
+  </div>
+</footer>
+
+<!-- Ordem de carga fixada pelo contrato — motion.js e track.js são
+     independentes entre si e toleram GSAP ausente. -->
+<script defer src="assets/js/gsap.min.js"></script>
+<script defer src="assets/js/ScrollTrigger.min.js"></script>
+<!-- graph-data -> graph -> motion: `defer` executa na ordem do documento, e a seção 4 do
+     motion.js só encontra as arestas do grafo se o graph.js já as tiver criado. -->
+<script defer src="assets/js/graph-data.js"></script>
+<script defer src="assets/js/graph.js"></script>
+<script defer src="assets/js/motion.js"></script>
+<script defer src="assets/js/nav.js"></script>
+<script defer src="assets/js/affordance.js"></script>
+<script defer src="assets/js/track.js"></script>
+<!-- Hero WebGL. `type="module"` não é escolha de estilo: um browser sem suporte a módulo
+     ignora a tag inteira, que é a degradação da regra 2 saindo de graça; e `import()` dentro
+     de um módulo resolve relativo ao módulo, não ao documento, o que mantém o caminho do
+     Three estável mesmo se a página mudar de lugar. Módulo já é `defer` por definição,
+     então a tag não repete o atributo.
+     Este arquivo é só o porteiro: a cena e o Three só descem se as guardas passarem. -->
+<script type="module" src="assets/js/hero3d.js"></script>
+<!-- Auditor visual: só entra com `?audit` na URL. Nenhum byte dele é baixado na visita normal,
+     por isso a injeção condicional em vez de dois <script defer> a mais. As regras são as
+     mesmas que a suíte de testes consome — fonte única em audit-regras.js. -->
+<script>
+  if (new URLSearchParams(location.search).has('audit')) {
+    ['assets/js/audit-regras.js', 'assets/js/audit-overlay.js'].forEach(function (src) {
+      var s = document.createElement('script');
+      s.src = src;
+      // `async = false` — e NÃO `defer`. Script inserido por script já nasce assíncrono, e o
+      // `defer` só vale para script que o parser encontrou no HTML: setá-lo aqui não faz nada.
+      // Sem isto os dois corriam soltos, o overlay às vezes chegava antes das regras e desistia
+      // em silêncio. Dava uma falha a cada duas rodadas da suíte.
+      s.async = false;
+      document.head.appendChild(s);
+    });
+  }
+</script>
+</body>
+</html>
