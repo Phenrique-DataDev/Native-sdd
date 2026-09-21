@@ -1,0 +1,9 @@
+# Scratch efêmero do modo MAX (rules/max-mode.md, H8) e caches locais — nunca versionar.
+.cache/
+# Visão HTML do grafo (graph-export -Html) — view local opt-in, regenerável; não versionar.
+agents/graph.html
+# Backups do -Update (.bak-<stamp>), gravados AO LADO do original para o diff ficar perto. Sem esta
+# linha eles entram no commit: cada release deixa mais uma copia quase identica de uma rule DENTRO
+# da pasta que o agente varre, e toda busca passa a ter resultado duplicado. Medido em 2026-09-19:
+# 3 updates seguidos = 3 .bak lado a lado, os tres como nao-rastreados no git status.
+*.bak-*
