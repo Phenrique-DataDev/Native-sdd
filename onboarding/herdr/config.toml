@@ -1,0 +1,68 @@
+# herdr config.toml — template Native-SDD.
+#
+# CLEAN-ROOM: campos e defaults confirmados via EXECUÇÃO REAL do binário oficial
+# `herdr-linux-x86_64` (v0.7.4, SHA-256 verificado — ver onboarding/herdr/herdr.psd1), rodado
+# num container Debian isolado (`docker run debian:bookworm-slim`, 2026-07-19) só para extrair
+# `herdr --default-config` — a própria ferramenta imprimindo seu default oficial. SEM relação com
+# nenhum uso interno de herdr por terceiros; nenhuma config de terceiro foi lida ou inferida.
+#
+# Este arquivo é um PONTO DE PARTIDA com os defaults reais do herdr, deixados comentados (o
+# comportamento já é esse sem precisar declarar nada), e só descomentados/alterados onde o
+# Native-SDD tem uma preferência explícita (marcado "ND:" = desvio do default, com motivo).
+# Para o dump completo e casado com a versão instalada: `herdr --default-config > config.toml`.
+# NÃO é instalado/copiado automaticamente pelo onboarding: fica versionado aqui como referência
+# opt-in.
+
+# Notificação de first-run / onboarding do próprio herdr. Ausente = true (mostra).
+# onboarding = true
+
+[theme]
+# name = "catppuccin"        # default real; deixe herdr escolher se omitido
+# auto_switch = false        # default real (não segue claro/escuro do host)
+
+[terminal]
+# default_shell = ""         # default real: vazio ⇒ $SHELL, depois /bin/sh
+# shell_mode    = "auto"     # default real: "auto" | "login" | "non_login"
+# new_cwd       = "follow"   # default real: "follow" | "home" | "current" | <caminho fixo>
+
+[update]
+# channel         = "stable" # default real no Linux/macOS ("preview" é o default só no Windows)
+# version_check   = true     # default real
+# manifest_check  = true     # default real
+
+[worktrees]
+# directory = "~/.herdr/worktrees"   # default real (raiz dos checkouts de worktree Git)
+
+[keys]
+# prefix = "ctrl+b"          # default real (tecla-prefixo)
+
+# ND: Native-SDD prefere não retomar sessões de agente automaticamente ao reiniciar o servidor —
+# comportamento mais previsível para quem está debugando um multiplexador novo pela primeira vez.
+# Default real do herdr é `true`. Reavaliar depois de uso real.
+[session]
+resume_agents_on_restore = false
+
+[ui.toast]
+# delivery      = "off"      # default real ("off" | "herdr" | "terminal" | "system")
+# delay_seconds = 1          # default real
+
+[advanced]
+# scrollback_limit_bytes = 10000000   # default real (~10MB por pane)
+
+[experimental]
+# allow_nested  = false      # default real
+# kitty_graphics = false     # default real
+# pane_history   = false     # default real (repetido explicitamente no dump oficial)
+
+# ─────────────────────────────────────────────────────────────────────────────────────────────
+# WORKSPACES/TABS/PANES — não existem como bloco estático de config (confirmado pela execução
+# real: `herdr --default-config` não emite nenhuma seção [workspace]/[tab]/[pane]). São
+# criados/controlados em RUNTIME via CLI/socket:
+#
+#   herdr workspace create --cwd ~/projeto --label native-sdd
+#   herdr tab create
+#   herdr pane split
+#
+# (A skill `orchestrating-agents` documenta as receitas de uso, endereçando sempre por --label,
+# nunca por id de pane/processo — mesmo padrão absorvido na Fase 0 do /peers.)
+# ─────────────────────────────────────────────────────────────────────────────────────────────
