@@ -1,0 +1,13 @@
+# supplement-hint.triggers — vocabulário do hook supplement-hint (uma linha por tema: tema<TAB>regex).
+# Lido pelos DOIS estágios: o supplement-hint.sh (grep -iE, sem pwsh) e o supplement-hint.ps1 (.NET).
+#
+# Regras da sintaxe (o mesmo texto tem de valer nos dois motores, e um teste reprova o que fugir):
+#   - só ASCII; letra acentuada vira .{1,2} (1 ou 2 bytes conforme o locale do grep). A classe [oó]
+#     NÃO casa "relatório" no grep do Git Bash (medido em 2026-10-03).
+#   - sem \b, \d nem lookaround (o grep -E não os tem em toda plataforma).
+#   - a palavra solta "design" fica de fora: é também o nome de uma fase do SDD ("siga para o DESIGN").
+# O tema tem de existir no catálogo de suplementos (tools/supplements.psd1). Linha começando com # é
+# comentário. Pode editar: o -Update do projeto preserva a sua versão.
+design	landing ?page|interface|layout|tela|frontend|front-end|css|responsiv|formul.{1,2}rio|(design|visual) (de|da|do|para) (ui|tela|p.{1,2}gina|site|app|interface)|web ?design|ui/ux|ux/ui
+reporting	relat.{1,2}rio|report|diagrama|diagram|apresenta.{1,2}.{1,2}o|slides?|explica.{1,2}.{1,2}o visual|mermaid|infogr.{1,2}fico
+data	duckdb|clickhouse|bigquery|dbt |snowflake|warehouse|parquet|\.csv|sql|ddl|modelagem (dimensional|de dados)|pipeline de dados|etl

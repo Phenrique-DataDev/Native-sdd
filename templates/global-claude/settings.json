@@ -1,0 +1,39 @@
+﻿{
+  "statusLine": {
+    "type": "command",
+    "command": "sh -c 'if command -v pwsh >/dev/null 2>&1; then exec pwsh -NoProfile -File \"$1\"; else exec bash \"$2\"; fi' _ \"{{HOME}}/.claude/statusline.ps1\" \"{{HOME}}/.claude/statusline.sh\"",
+    "padding": 0
+  },
+  "env": {
+    "SDD_WORKFLOW_HOME": "{{SDD_WORKFLOW_HOME}}"
+  },
+  "enableWorkflows": true,
+  "permissions": {
+    "defaultMode": "auto"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c 'IN=$(cat); case \"$IN\" in *[Rr][Mm]\" \"*|*[Rr][Mm]\\\\*|*[Cc][Hh][Mm][Oo][Dd]*|*[Cc][Uu][Rr][Ll]*\"|\"*|*[Ww][Gg][Ee][Tt]*\"|\"*|*[Ff][Ee][Tt][Cc][Hh]*\"|\"*|*[Gg][Ii][Tt]*[Cc][Ll][Ee][Aa][Nn]*|*[Gg][Ii][Tt]*[Rr][Ee][Ss][Tt][Oo][Rr][Ee]*|*[Gg][Ii][Tt]*[Cc][Hh][Ee][Cc][Kk][Oo][Uu][Tt]*|*[Gg][Ii][Tt]*[Ss][Tt][Aa][Ss][Hh]*|*[Gg][Ii][Tt]*[Cc][Oo][Mm][Mm][Ii][Tt]*|*[Gg][Ii][Tt]*[Pp][Uu][Ss][Hh]*|*.[Ee][Nn][Vv]*|*[Ii][Dd]_[Rr][Ss][Aa]*|*[Ii][Dd]_[Dd][Ss][Aa]*|*[Ii][Dd]_[Ee][Cc][Dd][Ss][Aa]*|*[Ii][Dd]_[Ee][Dd]25519*|*.[Pp][Ee][Mm]*|*.[Pp][Ff][Xx]*|*.[Pp]12*|*.[Kk][Ee][Yy]*|*.[Jj][Kk][Ss]*|*[Ss][Ee][Cc][Rr][Ee][Tt]*|*[Rr][Ee][Mm][Oo][Vv][Ee]-[Ii][Tt][Ee][Mm]*-[Rr]*|*[Rr][Ii]\" \"*-[Rr]*|*[Dd][Ee][Ll]\" \"*-[Rr]*|*[Ee][Rr][Aa][Ss][Ee]\" \"*-[Rr]*|*[Rr][Dd]\" \"*-[Rr]*|*[Rr][Mm][Dd][Ii][Rr]*-[Rr]*|*[Ii][Ee][Xx]*|*[Ii][Nn][Vv][Oo][Kk][Ee]-[Ee][Xx][Pp][Rr][Ee][Ss][Ss][Ii][Oo][Nn]*) ;; *) exit 0;; esac; printf \"%s\" \"$IN\" | if command -v pwsh >/dev/null 2>&1; then exec pwsh -NoProfile -File \"$1\"; else exec bash \"$2\"; fi' _ \"{{HOME}}/.claude/hooks/bash-guards.ps1\" \"{{HOME}}/.claude/hooks/bash-guards.sh\"",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c 'IN=$(cat); case \"$IN\" in *[Rr][Mm]\" \"*|*[Rr][Mm]\\\\*|*[Cc][Hh][Mm][Oo][Dd]*|*[Cc][Uu][Rr][Ll]*\"|\"*|*[Ww][Gg][Ee][Tt]*\"|\"*|*[Ff][Ee][Tt][Cc][Hh]*\"|\"*|*[Gg][Ii][Tt]*[Cc][Ll][Ee][Aa][Nn]*|*[Gg][Ii][Tt]*[Rr][Ee][Ss][Tt][Oo][Rr][Ee]*|*[Gg][Ii][Tt]*[Cc][Hh][Ee][Cc][Kk][Oo][Uu][Tt]*|*[Gg][Ii][Tt]*[Ss][Tt][Aa][Ss][Hh]*|*[Gg][Ii][Tt]*[Cc][Oo][Mm][Mm][Ii][Tt]*|*[Gg][Ii][Tt]*[Pp][Uu][Ss][Hh]*|*.[Ee][Nn][Vv]*|*[Ii][Dd]_[Rr][Ss][Aa]*|*[Ii][Dd]_[Dd][Ss][Aa]*|*[Ii][Dd]_[Ee][Cc][Dd][Ss][Aa]*|*[Ii][Dd]_[Ee][Dd]25519*|*.[Pp][Ee][Mm]*|*.[Pp][Ff][Xx]*|*.[Pp]12*|*.[Kk][Ee][Yy]*|*.[Jj][Kk][Ss]*|*[Ss][Ee][Cc][Rr][Ee][Tt]*|*[Rr][Ee][Mm][Oo][Vv][Ee]-[Ii][Tt][Ee][Mm]*-[Rr]*|*[Rr][Ii]\" \"*-[Rr]*|*[Dd][Ee][Ll]\" \"*-[Rr]*|*[Ee][Rr][Aa][Ss][Ee]\" \"*-[Rr]*|*[Rr][Dd]\" \"*-[Rr]*|*[Rr][Mm][Dd][Ii][Rr]*-[Rr]*|*[Ii][Ee][Xx]*|*[Ii][Nn][Vv][Oo][Kk][Ee]-[Ee][Xx][Pp][Rr][Ee][Ss][Ss][Ii][Oo][Nn]*) ;; *) exit 0;; esac; printf \"%s\" \"$IN\" | if command -v pwsh >/dev/null 2>&1; then exec pwsh -NoProfile -File \"$1\"; else exec bash \"$2\"; fi' _ \"{{HOME}}/.claude/hooks/bash-guards.ps1\" \"{{HOME}}/.claude/hooks/bash-guards.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  },
+  "//": "Baseline pessoal ~/.claude. Os guards de Bash (secret-guard + destructive-guard) rodam por UM dispatcher (bash-guards), e o dispatcher fica atras de um GATE POSIX no sh: o sh le o payload, casa contra os padroes do case e so sobe o pwsh se algum guard puder ter o que dizer (rm, chmod, curl/wget/fetch com pipe, git clean/restore/checkout/stash/commit/push, caminho de segredo). Medido em 2026-10-05: subir o bash-guards custa ~461ms POR CHAMADA DE BASH (o numero INCLUI o startup do pwsh e o trabalho do dispatcher), e o gate custa ~53ms quando pula (startup do sh + o case); em 8.175 chamadas reais (26,5 por sessao -- o numero antigo aqui, 0,9, estava errado por 30x) o gate pula 86,5%, e o hook cai de ~12,2s para ~3,0s por sessao. Os padroes vem de Get-BashGuardGatePattern (tools/hooks-lint.ps1), FONTE UNICA travada por teste como superconjunto do que os guards detectam. No Windows este command NAO e reescrito para pwsh nativo: o Claude Code roda hook pelo Git Bash dele, mesmo sem sh no PATH (medido). Os scripts individuais seguem existindo e sao a fonte da logica; adapters de harness, /guards-check e a suite Pester os invocam pelo nome do arquivo. O grupo PowerShell (2026-10-09, GUARDS_CEGOS_A_TOOL_POWERSHELL) roda a MESMA linha: no Windows com Git Bash a tool PowerShell do Claude Code vem ligada por padrao e manda o comando no mesmo tool_input.command; sem este grupo, Remove-Item/iex/Get-Content .env pela tool PowerShell passavam sem guard. E um grupo proprio, nao o matcher Bash|PowerShell, porque o merge do install casa grupo pelo matcher: um grupo novo entra sem migrar o grupo Bash de quem ja instalou."
+}
