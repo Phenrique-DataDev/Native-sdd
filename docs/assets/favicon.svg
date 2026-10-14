@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Isologo Native-sdd, variante reduzida. Geometria e razoes em docs/assets/brand/README.md.
+       A PLACA escura fica: a face esquerda da marca e clara e sumiria numa barra de abas de tema
+       claro. Medido a 16px nas duas barras antes de escolher.
+       As cores sao as da landing (accent e ink), nao as do brand book: o favicon e ativo do SITE,
+       e a 16px o laranja mais saturado sustenta melhor. Ha teste amarrando os dois. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0b1116"/>
+      <stop offset="100%" stop-color="#020304"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#bg)"/>
+  <rect x="2.5" y="2.5" width="59" height="59" rx="13.5" fill="none" stroke="#21272c" stroke-width="1"/>
+  <g fill="none" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9.483,19 L32,6 L54.517,19 L54.517,45 L32,58 M32,6 L32,32 L54.517,45" stroke="#FF5500"/>
+    <path d="M9.483,19 L9.483,45 L32,58 M32,32 L9.483,45" stroke="#F0F3F6"/>
+  </g>
+</svg>

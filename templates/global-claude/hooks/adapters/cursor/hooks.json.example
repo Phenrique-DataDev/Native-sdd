@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeShellExecution": [
+      { "command": "pwsh -NoProfile -File ./.cursor/hooks/adapter-guard.ps1" }
+    ],
+    "afterFileEdit": [
+      { "command": "pwsh -NoProfile -File ./.cursor/hooks/adapter-guard.ps1" }
+    ],
+    "sessionStart": [
+      { "command": "pwsh -NoProfile -File ./.cursor/hooks/adapter-guard.ps1" }
+    ]
+  }
+}
