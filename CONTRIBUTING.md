@@ -5,7 +5,9 @@ Obrigado por querer melhorar o Native-SDD. / *Thanks for wanting to improve Nati
 ## Como este repositório funciona
 
 Este repositório é o **espelho de distribuição**: a cada release ele é regerado a partir do
-repositório de desenvolvimento, que tem a suíte de testes e o histórico de trabalho. Por isso:
+repositório de desenvolvimento, que tem a suíte de testes e o histórico de trabalho. Aqui roda só o
+smoke do produto ([`smoke.yml`](https://github.com/Phenrique-DataDev/Native-sdd/actions/workflows/smoke.yml)): cria um projeto nos perfis `mvp` e
+`full`, em Windows e Linux, e passa o `/check` e o pre-commit anti-segredo deles. Por isso:
 
 - **Issue é o melhor caminho.** Relato de uso real, com o comando que você rodou e a saída, é o que
   mais muda o produto. Use os templates de [bug](https://github.com/Phenrique-DataDev/Native-sdd/issues/new?template=bug_report.yml) ou de
@@ -15,7 +17,7 @@ repositório de desenvolvimento, que tem a suíte de testes e o histórico de tr
 - **Vulnerabilidade não vai em issue.** Veja o [`SECURITY.md`](SECURITY.md).
 
 *This repository is a distribution mirror, regenerated on every release from the development
-repository (which holds the test suite). Issues with the exact command and output are the most useful
+repository (which holds the test suite); only the product smoke test runs here. Issues with the exact command and output are the most useful
 contribution. PRs are welcome as proposals: the change is re-applied at the source, tested there, and
 ships in the next release.*
 
@@ -37,3 +39,8 @@ ships in the next release.*
 ## Código de conduta
 
 Quem participa segue o [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
+
+## Licença
+
+O projeto é distribuído sob a [licença MIT](LICENSE), e uma contribuição entra sob a mesma licença.
+/ *The project is MIT-licensed, and contributions are accepted under the same license.*

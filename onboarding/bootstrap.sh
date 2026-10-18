@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
-# bootstrap.sh — bootstrap remoto do Native-SDD (Linux e macOS): baixa `main` do espelho público e delega
-# ao onboarding/install.sh, sem exigir repo clonado nem git/gh (só bash + curl + tar).
+# bootstrap.sh — bootstrap remoto do Native-SDD (Linux e macOS): baixa a última release (tag) do espelho
+# público e delega ao onboarding/install.sh, sem exigir repo clonado nem git/gh (só bash + curl + tar).
+#
+# Release, não main (BOOTSTRAP_BAIXA_A_MAIN, 2026-10-18): resolve a tag por
+# api.github.com/repos/<owner>/<repo>/releases/latest (tag_name, lido com sed — sem jq, como o
+# onboarding/posix/lib.sh) e baixa refs/tags/<tag> do codeload; imprime a tag baixada. Reverte a
+# Decisão 1 do DESIGN_BOOTSTRAP_REMOTO ("codeload de main, sem pinar versão"): com main, qualquer
+# push mudava o que o usuário executava. A main fica como opt-in explícito: `--ref main` (ou
+# `--ref=main`), consumido aqui e removido antes de repassar o resto ao install.sh. Se a API falhar
+# (rate limit de 60/h anônimo, rede, espelho sem release), o bootstrap FALHA citando o `--ref main` —
+# nunca cai na main em silêncio.
 #
 # Único script do onboarding pensado para rodar SEM nada em disco (curl <raw>/bootstrap.sh | bash):
 # a URL do conteúdo fica inline aqui (owner/repo fixos no espelho público — Decisão 6 do
@@ -15,6 +24,7 @@
 #
 # Sem flags:  curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboarding/bootstrap.sh | bash
 # Com flags:  curl -fsSL <mesma url> | bash -s -- --check
+# Branch main: curl -fsSL <mesma url> | bash -s -- --ref main   (combina com os demais flags)
 #
 # Erros propagam (set -euo pipefail): falha de download/extração é fatal, sem modo degradado.
 # O diretório temporário é removido ao final (trap EXIT), mesmo em falha — como o conteúdo é
@@ -57,7 +67,52 @@ echo '╔═══════════════════════�
 echo '║   Bootstrap remoto · Native-SDD           ║'
 echo '╚══════════════════════════════════════════╝'
 
-url="https://codeload.github.com/Phenrique-DataDev/Native-sdd/tar.gz/refs/heads/main"
+# --ref é do bootstrap, não do install.sh: sai da lista antes do repasse. Os demais args seguem
+# na ordem. (Expansão "${args[@]+...}" mais abaixo: bash 3.2 do macOS acusa variável não definida
+# em array vazio sob set -u.)
+ref=''
+args=()
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --ref)
+      if [ $# -lt 2 ]; then step FAIL '--ref exige um valor (ex.: --ref main)'; exit 1; fi
+      ref="$2"; shift 2 ;;
+    --ref=*) ref="${1#--ref=}"; shift ;;
+    *) args+=("$1"); shift ;;
+  esac
+done
+if [ -n "$ref" ] && ! printf '%s' "$ref" | grep -qE '^[A-Za-z0-9][A-Za-z0-9._/-]*$'; then
+  step FAIL "--ref com valor invalido: '$ref' (ex.: --ref main)"
+  exit 1
+fi
+
+owner='Phenrique-DataDev'
+repo='Native-sdd'
+if [ -n "$ref" ]; then
+  url="https://codeload.github.com/$owner/$repo/tar.gz/refs/heads/$ref"
+  step INFO "ref: branch $ref (opt-in --ref; conteudo nao versionado por release)"
+else
+  # Padrão: a última release com tag. Falha da API é fatal — nunca cai na main em silêncio.
+  api="https://api.github.com/repos/$owner/$repo/releases/latest"
+  step INFO "consultando a ultima release em $api"
+  # -S mostra o erro mesmo com -s; o 2>&1 leva o motivo (ex.: "error: 403") para a mensagem.
+  if ! release_json="$(curl -fsSL "$api" 2>&1)"; then
+    step FAIL "nao foi possivel consultar a ultima release (${release_json:-sem resposta})"
+    step INFO 'para baixar o branch main em vez da release: ... | bash -s -- --ref main'
+    exit 1
+  fi
+  # Here-string (não pipe): sem SIGPIPE sob pipefail quando o JSON é grande.
+  tag="$(sed -n -E 's/.*"tag_name"[[:space:]]*:[[:space:]]*"([A-Za-z0-9._-]+)".*/\1/p' <<<"$release_json")"
+  tag="${tag%%$'\n'*}"
+  if [ -z "$tag" ]; then
+    step FAIL "a resposta de $api nao trouxe um tag_name valido"
+    step INFO 'para baixar o branch main em vez da release: ... | bash -s -- --ref main'
+    exit 1
+  fi
+  url="https://codeload.github.com/$owner/$repo/tar.gz/refs/tags/$tag"
+  step INFO "release: $tag"
+fi
+
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 permanent="$HOME/.claude/.native-sdd-src"
@@ -85,4 +140,4 @@ mkdir -p "$(dirname "$permanent")"
 mv "$tmp" "$permanent"
 
 step INFO 'delegando a onboarding/install.sh (args repassados)'
-bash "$permanent/onboarding/install.sh" "$@"
+bash "$permanent/onboarding/install.sh" ${args[@]+"${args[@]}"}

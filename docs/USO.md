@@ -65,10 +65,11 @@ bash ./onboarding/install.sh            # --check / --dry-run / --skip-clis tamb
 ### Bootstrap remoto — instalar sem clonar (1 comando)
 
 Alternativa ao fluxo clonado acima (**não** o substitui — é camada nova em cima):
-`bootstrap.ps1`/`bootstrap.sh` baixam o conteúdo de `main` do espelho público via
-`codeload.github.com` (zip/tar.gz, sem exigir `git`/`gh`), extraem num diretório temporário e
+`bootstrap.ps1`/`bootstrap.sh` baixam o conteúdo da **última release** (tag) do espelho público
+via `codeload.github.com` (zip/tar.gz, sem exigir `git`/`gh`), extraem num diretório temporário e
 delegam ao `install.ps1`/`install.sh` — mesmo estado final, mesma idempotência versionada
-(rodar 2× não duplica nada).
+(rodar 2× não duplica nada). A tag sai da API do GitHub (`releases/latest`) e o script imprime qual
+baixou (`[INFO   ] release: vX.Y.Z`); um push na `main` não muda o que você instala.
 
 ```powershell
 # Windows (PowerShell 5.1+) — sem flags
@@ -76,6 +77,9 @@ irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboardi
 
 # com flags do install.ps1: baixa o texto, embrulha num scriptblock e aplica os parâmetros
 iex "& { $(irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboarding/bootstrap.ps1) } -Check"
+
+# branch main em vez da última release (opt-in explícito; combina com os outros flags)
+iex "& { $(irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboarding/bootstrap.ps1) } -Ref main"
 ```
 
 ```bash
@@ -84,12 +88,22 @@ curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/o
 
 # com flags do install.sh: `bash -s --` repassa os args ao script vindo do pipe
 curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboarding/bootstrap.sh | bash -s -- --check
+
+# branch main em vez da última release (opt-in explícito)
+curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboarding/bootstrap.sh | bash -s -- --ref main
 ```
 
-> **Duas URLs, papéis distintos:** as URLs acima (`raw.githubusercontent.com/...`) servem o
-> **texto do script** de bootstrap — é o que você cola no terminal. Por dentro, o script baixa o
-> **conteúdo do repositório** por outra URL (`codeload.github.com/Phenrique-DataDev/Native-sdd/...`).
-> HTTPS em toda a cadeia; sem `sudo` oculto; o temporário é removido ao final, mesmo em falha.
+> **Três URLs, papéis distintos:** as URLs acima (`raw.githubusercontent.com/...`) servem o
+> **texto do script** de bootstrap — é o que você cola no terminal, e esse texto vem da `main`.
+> Por dentro, o script pergunta a última release a `api.github.com/repos/Phenrique-DataDev/Native-sdd/releases/latest`
+> e baixa o **conteúdo do repositório** daquela tag por outra URL
+> (`codeload.github.com/Phenrique-DataDev/Native-sdd/.../refs/tags/<tag>`; com `-Ref`/`--ref`,
+> `refs/heads/<branch>`). HTTPS em toda a cadeia; sem `sudo` oculto; o temporário é removido ao
+> final, mesmo em falha.
+
+> **Se a API do GitHub falhar** (limite anônimo de 60 consultas/hora por IP, rede, espelho sem
+> release), o bootstrap **para com erro** e sugere o `-Ref main`/`--ref main` — ele nunca troca a
+> release pela `main` por conta própria.
 
 > **Limitação conhecida:** não há verificação de checksum/assinatura do conteúdo baixado — a
 > confiança é a mesma de qualquer instalador `curl\|bash`/`irm\|iex` (HTTPS + a URL ser realmente do

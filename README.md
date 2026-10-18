@@ -15,7 +15,8 @@
   <img alt="Claude Code" src="https://img.shields.io/badge/Claude%20Code-ready-D97757">
   <img alt="Spec-Driven Development" src="https://img.shields.io/badge/workflow-Spec--Driven%20Development-2EA043">
   <img alt="Plataformas: Windows, Linux e macOS" src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-0078D6">
-  <img alt="Qualidade verificável" src="https://img.shields.io/badge/quality-lint%20%2B%20Pester-22C55E">
+  <a href="https://github.com/Phenrique-DataDev/Native-sdd/actions/workflows/smoke.yml"><img alt="Smoke do produto (Windows e Linux)" src="https://github.com/Phenrique-DataDev/Native-sdd/actions/workflows/smoke.yml/badge.svg"></a>
+  <a href="LICENSE"><img alt="Licença MIT" src="https://img.shields.io/badge/license-MIT-blue"></a>
 </p>
 
 ---
@@ -38,8 +39,9 @@ projetos. Ele reúne quatro coisas num só lugar:
 - **Scaffold SDD** — todo projeto novo nasce com `.claude/` pronto para as 5 fases do SDD.
 - **Curadoria / auto-otimização** — o scaffold genérico **se especializa** no projeto: cura os
   agentes certos, treina a KB do domínio e mantém os índices coerentes.
-- **Padrões verificáveis** — nada é "pronto" sem lint/testes reais; toda lógica é coberta por
-  **Pester** no **CI**.
+- **Padrões verificáveis** — nada é "pronto" sem lint/testes reais: a suíte **Pester** roda no CI
+  do repositório de desenvolvimento, e o **smoke do produto** roda no CI deste repositório (Windows
+  e Linux: cria um projeto `mvp` e um `full`, passa o `/check` e o pre-commit anti-segredo deles).
 
 > **Visão completa** em [`docs/VISAO.md`](docs/VISAO.md) · **Guia de uso ponta a ponta** em
 > [`docs/USO.md`](docs/USO.md) · **O que já foi medido**, cada número com o comando que o mediu, em
@@ -291,7 +293,7 @@ O quadro vive em `.claude/.cache/peers/` (efêmero, **fora do git**); peers inat
 ├── onboarding/     Instalador automático e criação de projetos (Windows · Linux · macOS)
 │   ├── install.ps1         entrypoint Windows: prepara a máquina + ~/.claude
 │   ├── install.sh          entrypoint Linux/macOS (POSIX): detecta o SO e delega
-│   ├── bootstrap.ps1/.sh   instala sem clonar (baixa main, delega ao install.*)
+│   ├── bootstrap.ps1/.sh   instala sem clonar (baixa a última release, delega ao install.*)
 │   ├── new-project.ps1     cria/atualiza um projeto com o scaffold (New-SddProject / nsp)
 │   ├── windows/            impl. real: apply, install-clis, install-mcp/plugins, lib.ps1
 │   ├── herdr/              opt-in: manifest PINADO do multiplexador (SHA-256 por asset)
@@ -493,6 +495,14 @@ O projeto é mantido de forma **independente**. Se ele te poupou tempo, consider
 ```
 b784c378-b3e4-4617-8dbb-ca6c5b722a8f
 ```
+
+## Licença / License
+
+[MIT](LICENSE): você pode usar, modificar e redistribuir, inclusive em uso comercial, desde que o
+aviso de copyright vá junto.
+
+*MIT-licensed: use, modify and redistribute, commercially included, as long as the copyright notice
+is kept.*
 
 ## Autor / Author
 

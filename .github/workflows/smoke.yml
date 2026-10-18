@@ -1,0 +1,85 @@
+# smoke do PRODUTO — roda no repositorio PUBLICO (espelho), nao no de desenvolvimento.
+#
+# Fonte: tools/mirror/smoke.yml no repositorio de desenvolvimento. O tools/publish.ps1 copia este
+# arquivo para .github/workflows/smoke.yml do espelho (MirrorFiles do manifesto). Ele NAO mora em
+# .github/workflows/ do repositorio de desenvolvimento de proposito: la rodaria a cada push e
+# gastaria a cota do Actions de um repositorio privado (ESPELHO_ESCONDE_TESTES_E_CI, 2026-10-18).
+#
+# O que prova: com SO o que o espelho distribui, um projeto novo nasce nos dois perfis (mvp e full),
+# passa no /check do proprio projeto e o pre-commit anti-segredo bloqueia um commit com credencial.
+# As suites Pester sao infra de desenvolvimento e nao vem para ca: rodam no CI do repositorio de
+# desenvolvimento.
+#
+# Sem segredo, sem `claude` CLI, sem rede alem do checkout. Todo caminho chamado aqui precisa estar
+# no subset publicado — um teste do repositorio de desenvolvimento reprova se nao estiver.
+name: smoke
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: smoke (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      # O -Git do new-project faz o commit inicial do projeto; o runner nasce sem identidade git.
+      - name: Identidade git do runner
+        shell: pwsh
+        run: |
+          git config --global user.name 'smoke'
+          git config --global user.email 'smoke@example.invalid'
+
+      - name: Criar projetos (mvp e full)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          foreach ($perfil in 'mvp', 'full') {
+            $proj = Join-Path $env:RUNNER_TEMP "smoke-$perfil"
+            pwsh -NoProfile -NonInteractive -File ./onboarding/new-project.ps1 -Path $proj -Profile $perfil -Git
+            if ($LASTEXITCODE -ne 0) { throw "new-project.ps1 -Profile $perfil saiu $LASTEXITCODE" }
+            if (-not (Test-Path -LiteralPath (Join-Path $proj '.claude/.scaffold-version'))) { throw "$perfil sem .claude/.scaffold-version" }
+          }
+
+      # O mesmo painel que o /check imprime dentro do projeto (tools/project-check.ps1 e biblioteca).
+      - name: /check dos projetos gerados
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $lib = Join-Path $env:GITHUB_WORKSPACE 'tools/project-check.ps1'
+          foreach ($perfil in 'mvp', 'full') {
+            $proj = Join-Path $env:RUNNER_TEMP "smoke-$perfil"
+            pwsh -NoProfile -NonInteractive -Command ". '$lib'; `$r = Get-ProjectCheckReport -Root '$proj'; Format-ProjectCheckReport `$r | Write-Host; if (`$r.Verdict -ne 'ok') { exit 1 }"
+            if ($LASTEXITCODE -ne 0) { throw "/check do projeto $perfil nao deu CONFORME" }
+          }
+
+      # A credencial e montada em runtime: escrita literal, ela dispararia os scanners de segredo.
+      - name: pre-commit anti-segredo
+        shell: pwsh
+        run: |
+          $chave = 'AKIA' + ('Q' * 16)
+          foreach ($perfil in 'mvp', 'full') {
+            $proj = Join-Path $env:RUNNER_TEMP "smoke-$perfil"
+            Set-Content -LiteralPath (Join-Path $proj 'vazamento.txt') -Value "aws_key=$chave"
+            git -C $proj add vazamento.txt
+            git -C $proj commit -q -m 'smoke: commit com segredo'
+            if ($LASTEXITCODE -eq 0) { throw "$perfil : o pre-commit DEIXOU passar um commit com credencial" }
+            git -C $proj rm -q --cached vazamento.txt
+            Remove-Item -LiteralPath (Join-Path $proj 'vazamento.txt')
+            Set-Content -LiteralPath (Join-Path $proj 'limpo.txt') -Value 'nada a esconder'
+            git -C $proj add limpo.txt
+            git -C $proj commit -q -m 'smoke: commit limpo'
+            if ($LASTEXITCODE -ne 0) { throw "$perfil : o pre-commit bloqueou um commit limpo (exit $LASTEXITCODE)" }
+          }
+          exit 0

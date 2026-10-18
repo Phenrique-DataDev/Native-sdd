@@ -1,13 +1,16 @@
 <#
 .SYNOPSIS
-  Bootstrap remoto do Native-SDD (Windows, PowerShell 5.1+): baixa "main" do espelho publico e
-  delega ao onboarding/install.ps1 - sem exigir repo clonado nem git/gh instalados.
+  Bootstrap remoto do Native-SDD (Windows, PowerShell 5.1+): baixa a ultima release (tag) do
+  espelho publico e delega ao onboarding/install.ps1 - sem exigir repo clonado nem git/gh
+  instalados. A main so com opt-in explicito (-Ref main).
 
 .DESCRIPTION
   Unico script do onboarding pensado para rodar SEM nada em disco (e baixado sozinho via
   "irm <raw>/bootstrap.ps1 | iex"). Por isso NAO faz dot-source de lib.ps1/bootstrap-lib.ps1 nem
-  da cascata tools/ - a logica de montar a URL fica inline neste arquivo (duplicacao intencional
-  de Get-BootstrapDownloadUrl; ver DESIGN_BOOTSTRAP_REMOTO, Decisao 6 + nota de auto-suficiencia).
+  da cascata tools/ - as funcoes puras (Split-BootstrapArgs, Get-BootstrapTagName,
+  Get-BootstrapDownloadUrl, Test-BootstrapNonInteractive) ficam inline neste arquivo, copias
+  exatas das de bootstrap-lib.ps1 (duplicacao intencional; ver DESIGN_BOOTSTRAP_REMOTO, Decisao 6
+  + nota de auto-suficiencia). O teste de paridade compara as duas copias pelo AST.
 
   APENAS CARACTERES ASCII NESTE ARQUIVO (excecao deliberada as convencoes pt-BR do resto do repo):
   e o unico script buscado como texto cru via HTTP e avaliado com Invoke-Expression ANTES de
@@ -19,7 +22,11 @@
   problema se reproduz. Por isso: nada de acento, travessao, aspas curvas ou caixa de desenho
   (bloco Unicode) aqui - nem em comentario, nem em string.
 
-  Fluxo: baixa o zip de refs/heads/main via codeload.github.com (HTTPS, anonimo), extrai num
+  Fluxo: resolve a ultima release pela API do GitHub (releases/latest, campo tag_name), baixa o
+  zip de refs/tags/<tag> via codeload.github.com (HTTPS, anonimo) e imprime a tag. Com -Ref
+  <branch> (opt-in explicito, ex.: -Ref main) pula a API e baixa refs/heads/<branch>. Se a API
+  falhar (rate limit, rede, espelho sem release), o bootstrap FALHA citando o -Ref main - nunca
+  cai na main em silencio. O -Ref e consumido aqui; os demais args vao ao install.ps1. Extrai num
   diretorio temporario e MOVE o conteudo extraido para um cache permanente em
   "~/.claude/.native-sdd-src" (substitui qualquer conteudo anterior) ANTES de delegar ao
   install.ps1 - depois disso sim delega, a partir do cache permanente, e remove o temporario
@@ -38,8 +45,16 @@
     irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboarding/bootstrap.ps1 | iex
   Com flags (embrulha num scriptblock e aplica os parametros do install.ps1):
     iex "& { $(irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboarding/bootstrap.ps1) } -Check"
+  Branch main em vez da ultima release (opt-in; combina com os demais flags):
+    iex "& { $(irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboarding/bootstrap.ps1) } -Ref main"
 
 .NOTES
+  Release, nao main (BOOTSTRAP_BAIXA_A_MAIN, 2026-10-18): reverte a Decisao 1 do
+  DESIGN_BOOTSTRAP_REMOTO ("codeload de main, sem pinar versao"). Com main, qualquer push mudava o
+  que o usuario executava. O custo aceito e o que a Decisao 1 evitava: uma chamada anonima a
+  api.github.com (limite de 60/h por IP) e um modo de falha a mais - tratado falhando alto, com a
+  saida -Ref main na mensagem.
+
   Sem Set-StrictMode/$ErrorActionPreference globais de proposito: via "irm | iex" o texto roda no
   ESCOPO DA SESSAO do usuario - preferencias globais vazariam para o shell dele. Erros sao
   garantidos por -ErrorAction Stop em cada chamada + try/catch cobrindo o corpo inteiro, que fixa
@@ -67,8 +82,57 @@
 # trocar o destino exige editar este arquivo, nunca um parametro/env solto.
 $bootstrapOwner = 'Phenrique-DataDev'
 $bootstrapRepo = 'Native-sdd'
-$bootstrapRef = 'main'
-$bootstrapUrl = "https://codeload.github.com/$bootstrapOwner/$bootstrapRepo/zip/refs/heads/$bootstrapRef"
+$bootstrapApiUrl = "https://api.github.com/repos/$bootstrapOwner/$bootstrapRepo/releases/latest"
+
+# Copia exata de Split-BootstrapArgs em bootstrap-lib.ps1 (o teste de paridade compara as duas).
+function Split-BootstrapArgs {
+    # Separa o opt-in "-Ref <branch>" (consumido aqui) dos args que seguem para o install.ps1.
+    # Sem -Ref, Ref volta vazio = ultima release. "-Ref:main" chega como "-Ref:" + "main" (medido
+    # em 2026-10-18 no pwsh 7 e no 5.1), por isso os dois tokens levam o valor seguinte.
+    param([object[]]$InputArgs)
+    $ref = ''
+    $rest = @()
+    $list = @($InputArgs)
+    for ($i = 0; $i -lt $list.Count; $i++) {
+        $token = $list[$i]
+        if ($token -is [string] -and ($token -eq '-Ref' -or $token -eq '-Ref:')) {
+            if ($i + 1 -ge $list.Count) { throw '-Ref exige um valor (ex.: -Ref main)' }
+            $i++
+            $ref = [string]$list[$i]
+            if ($ref -notmatch '^[A-Za-z0-9][A-Za-z0-9._/-]*$') { throw "-Ref com valor invalido: '$ref' (ex.: -Ref main)" }
+            continue
+        }
+        $rest += , $token
+    }
+    return @{ Ref = $ref; Rest = $rest }
+}
+
+# Copia exata de Get-BootstrapTagName em bootstrap-lib.ps1 (o teste de paridade compara as duas).
+function Get-BootstrapTagName {
+    # tag_name do JSON de /releases/latest da API do GitHub, ou $null se faltar ou for invalido.
+    # Regex (nao ConvertFrom-Json) de proposito: e a mesma leitura do bootstrap.sh (sed, sem jq).
+    param([string]$Json)
+    if ($Json -match '"tag_name"\s*:\s*"([A-Za-z0-9._-]+)"') { return $Matches[1] }
+    return $null
+}
+
+# Copia exata de Get-BootstrapDownloadUrl em bootstrap-lib.ps1 (o teste de paridade compara as duas).
+function Get-BootstrapDownloadUrl {
+    # URL do codeload.github.com: refs/tags/<Tag> (o padrao, a ultima release) ou refs/heads/<Branch>
+    # (opt-in explicito, -Ref main). Pura: so monta string, nunca lanca, sempre https:// (AT-004).
+    # Sem Tag nem Branch devolve $null - nunca cai na main por omissao. Owner/Repo default = espelho
+    # publico (Decisao 6: o default nunca aponta ao canonico privado).
+    param(
+        [string]$Owner = 'Phenrique-DataDev',
+        [string]$Repo = 'Native-sdd',
+        [string]$Tag = '',
+        [string]$Branch = '',
+        [string]$Format = 'zip'
+    )
+    if ($Branch) { return "https://codeload.github.com/$Owner/$Repo/$Format/refs/heads/$Branch" }
+    if ($Tag) { return "https://codeload.github.com/$Owner/$Repo/$Format/refs/tags/$Tag" }
+    return $null
+}
 
 Write-Host ''
 Write-Host '=============================================='
@@ -79,13 +143,36 @@ $tmp = Join-Path $env:TEMP ('native-sdd-' + [guid]::NewGuid())
 $permanent = Join-Path $env:USERPROFILE '.claude\.native-sdd-src'
 $exitCode = 0
 try {
+    # -Ref e do bootstrap, nao do install.ps1: sai da lista antes do repasse.
+    $bootstrapArgs = Split-BootstrapArgs -InputArgs $args
+    $installArgs = $bootstrapArgs.Rest
     New-Item -ItemType Directory -Path $tmp -ErrorAction Stop | Out-Null
     $zip = Join-Path $tmp 'native-sdd.zip'
-    Write-Host "[INFO   ] baixando $bootstrapUrl"
-    # -UseBasicParsing: compat 5.1; progress bar desligada so durante o download (restaurada no finally).
+    # -UseBasicParsing: compat 5.1; progress bar desligada so durante a rede (restaurada no finally).
     $prevProgress = $ProgressPreference
     $ProgressPreference = 'SilentlyContinue'
     try {
+        if ($bootstrapArgs.Ref) {
+            $bootstrapUrl = Get-BootstrapDownloadUrl -Owner $bootstrapOwner -Repo $bootstrapRepo -Branch $bootstrapArgs.Ref
+            Write-Host "[INFO   ] ref: branch $($bootstrapArgs.Ref) (opt-in -Ref; conteudo nao versionado por release)"
+        }
+        else {
+            # Padrao: a ultima release com tag. Falha da API e fatal - nunca cai na main em silencio.
+            Write-Host "[INFO   ] consultando a ultima release em $bootstrapApiUrl"
+            try {
+                $releaseJson = (Invoke-WebRequest -Uri $bootstrapApiUrl -UseBasicParsing -ErrorAction Stop).Content
+            }
+            catch {
+                throw "nao foi possivel consultar a ultima release ($($_.Exception.Message)). Para baixar o branch main em vez da release, rode de novo com -Ref main"
+            }
+            $bootstrapTag = Get-BootstrapTagName -Json $releaseJson
+            if (-not $bootstrapTag) {
+                throw "a resposta de $bootstrapApiUrl nao trouxe um tag_name valido. Para baixar o branch main em vez da release, rode de novo com -Ref main"
+            }
+            $bootstrapUrl = Get-BootstrapDownloadUrl -Owner $bootstrapOwner -Repo $bootstrapRepo -Tag $bootstrapTag
+            Write-Host "[INFO   ] release: $bootstrapTag"
+        }
+        Write-Host "[INFO   ] baixando $bootstrapUrl"
         Invoke-WebRequest -Uri $bootstrapUrl -OutFile $zip -UseBasicParsing -ErrorAction Stop
     }
     finally { $ProgressPreference = $prevProgress }
@@ -104,8 +191,8 @@ try {
     }
 
     # Move (nao copia) o conteudo extraido para o cache permanente - substitui qualquer versao
-    # anterior (sempre reflete o ultimo bootstrap rodado, mesma filosofia da Decisao 1: codeload
-    # de main, sem pinar versao). Ver .DESCRIPTION acima para o motivo (shim do $PROFILE).
+    # anterior (sempre reflete o ultimo bootstrap rodado: a release resolvida, ou o -Ref pedido).
+    # Ver .DESCRIPTION acima para o motivo (shim do $PROFILE).
     Write-Host "[INFO   ] persistindo em $permanent"
     if (Test-Path -LiteralPath $permanent) {
         Remove-Item -Recurse -Force -LiteralPath $permanent -ErrorAction Stop
@@ -117,7 +204,7 @@ try {
     Write-Host '[INFO   ] delegando a onboarding/install.ps1 (args repassados)'
     # Subprocesso com -ExecutionPolicy Bypass (nao "&" in-process - ver .NOTES acima).
     $psHost = (Get-Process -Id $PID).Path
-    & $psHost -ExecutionPolicy Bypass -NoProfile -File $installScript @args
+    & $psHost -ExecutionPolicy Bypass -NoProfile -File $installScript @installArgs
     $exitCode = $LASTEXITCODE
 }
 catch {
@@ -155,7 +242,10 @@ function Test-BootstrapNonInteractive {
 # refletir a falha. Sessao interativa (o "irm | iex" colado no terminal): o exit fecharia a janela
 # de quem colou e levaria junto a mensagem de erro, entao so o $LASTEXITCODE recebe o codigo.
 $bootstrapExits = Test-BootstrapNonInteractive -CommandLineArgs ([Environment]::GetCommandLineArgs())
-Remove-Item -Path Function:\Test-BootstrapNonInteractive -ErrorAction SilentlyContinue
+# Via "irm | iex" as funcoes caem na sessao do usuario: sai tudo que este script definiu.
+foreach ($bootstrapFn in 'Test-BootstrapNonInteractive', 'Split-BootstrapArgs', 'Get-BootstrapTagName', 'Get-BootstrapDownloadUrl') {
+    Remove-Item -Path "Function:\$bootstrapFn" -ErrorAction SilentlyContinue
+}
 if ($bootstrapExits) { exit $exitCode }
 $global:LASTEXITCODE = $exitCode
 if ($exitCode -ne 0) {
