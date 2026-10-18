@@ -45,7 +45,8 @@ projetos. Ele reúne quatro coisas num só lugar:
 
 > **Visão completa** em [`docs/VISAO.md`](docs/VISAO.md) · **Guia de uso ponta a ponta** em
 > [`docs/USO.md`](docs/USO.md) · **O que já foi medido**, cada número com o comando que o mediu, em
-> [`docs/MEDICOES.md`](docs/MEDICOES.md).
+> [`docs/MEDICOES.md`](docs/MEDICOES.md) · **Comparado com o Spec Kit e o OpenSpec** em
+> [`docs/VISAO.md`](docs/VISAO.md#alternativas-spec-kit-e-openspec).
 
 ## SDD em 30 segundos / SDD in a nutshell
 
@@ -72,6 +73,17 @@ flowchart LR
 ```
 
 ### 1 · Instalar — deixa a máquina pronta (deps + `~/.claude` pessoal)
+
+O bootstrap instala a **última release com tag**, não o que estiver na `main`: ele resolve a tag,
+mostra qual baixou (`release: vX.Y.Z`) e falha com mensagem clara se não conseguir. As versões e o
+que mudou em cada uma estão em [Releases](https://github.com/Phenrique-DataDev/Native-sdd/releases).
+Para instalar a `main`, peça explicitamente (`-Ref main` / `--ref main`; a sintaxe completa está no
+[`docs/USO.md`](docs/USO.md)). Dá para ler o script antes de rodar:
+[`bootstrap.ps1`](onboarding/bootstrap.ps1) · [`bootstrap.sh`](onboarding/bootstrap.sh).
+
+*The bootstrap installs the **latest tagged release**, not `main` (opt in with `-Ref main` /
+`--ref main`). See [Releases](https://github.com/Phenrique-DataDev/Native-sdd/releases) for
+versions and notes.*
 
 ```powershell
 # Windows — sem clonar, num PowerShell
