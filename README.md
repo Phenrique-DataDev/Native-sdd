@@ -20,8 +20,8 @@
 </p>
 
 <p align="center">
-  <strong>Versão atual: v1.0.6</strong> ·
-  <a href="https://github.com/Phenrique-DataDev/Native-sdd/releases/tag/v1.0.6">o que mudou nela</a> ·
+  <strong>Versão atual: v1.0.7</strong> ·
+  <a href="https://github.com/Phenrique-DataDev/Native-sdd/releases/tag/v1.0.7">o que mudou nela</a> ·
   <a href="https://github.com/Phenrique-DataDev/Native-sdd/releases">todas as releases</a>
 </p>
 
@@ -45,8 +45,13 @@
   os suplementos por tema e o herdr.
 - **Antes de instalar, dá para ver o que muda:** `-Check` só relata, e `-DryRun` lista cada ação
   sem executar; nenhum dos dois altera a sua configuração. Ver [Instalar](#1--instalar--deixa-a-máquina-pronta-deps--claude-pessoal).
-- **Não é para você se:** você não usa o Claude Code, ou quer só um `CLAUDE.md` e meia dúzia de
-  comandos. Para outras ferramentas, veja a [comparação com Spec Kit e OpenSpec](docs/VISAO.md#alternativas-spec-kit-e-openspec).
+- **Ferramentas:** nativo no Claude Code; medido ao vivo no Codex (GPT), no Copilot e no Antigravity
+  (Gemini), com o guard de comando destrutivo nos três (no Antigravity ele não pergunta quando as
+  permissões estão puladas). Cursor e OpenCode têm só o guard como hook, sem rodada ao vivo. Ver
+  [Ferramentas suportadas](#ferramentas-suportadas--supported-tools).
+- **Não é para você se:** você quer só um `CLAUDE.md` e meia dúzia de comandos, ou precisa de suporte
+  medido numa ferramenta que ainda não foi verificada. Veja também a
+  [comparação com Spec Kit e OpenSpec](docs/VISAO.md#alternativas-spec-kit-e-openspec).
 
 *In one minute: one command sets up the machine; each new project gets the SDD phases, `/dev`,
 `/check` and a secret-blocking pre-commit. Start with the default `mvp` profile; everything else is
@@ -481,7 +486,8 @@ Todos auto-contidos, em `.claude/commands/`. Detalhe de roteamento em `.claude/r
 3. **SDD como espinha de execução.** Features grandes passam pelas 5 fases; tarefas pequenas usam o
    Dev Loop.
 4. **Claude-first, portável.** Otimizado para Claude Code (commands, hooks, MCP), com artefatos (SDD,
-   KB, regras, `AGENTS.md`) estruturados para portar a outras ferramentas.
+   KB, regras, `AGENTS.md`) estruturados para portar a outras ferramentas. O que já porta, e como
+   foi medido, está em [Ferramentas suportadas](#ferramentas-suportadas--supported-tools).
 5. **Qualidade verificável.** Nada é "pronto" sem verificação real (lint, testes, critérios de
    aceite). Não inventar dados; não versionar segredos.
 6. **Segurança em camadas, sem barrar.** A rede é **hook-based**, não prompt-based: git **pre-commit**
@@ -522,6 +528,32 @@ pwsh tools/e2e-linux.ps1        # só no repositório de desenvolvimento: sobe c
 > Before opening a PR, run the **same checks as CI** locally: `pwsh tools/check.ps1` aggregates
 > PSScriptAnalyzer, the conformance lints and Pester (`-SkipPester` for a fast lints-only pass).
 > Green here = green in CI — the workflow calls the same script.
+
+## Ferramentas suportadas / Supported tools
+
+O suporte é por **ferramenta**, a CLI que roda o modelo, e não por modelo. Todas leem o mesmo
+contrato, o `AGENTS.md` do projeto. O que muda é quanto do resto (skills, hooks, papéis de agente)
+chega a cada uma.
+
+| Ferramenta | Modelos | Nível | O que chega | Como foi verificado |
+|---|---|---|---|---|
+| **Claude Code** | Claude | nativo | tudo: commands, skills, hooks, subagents, rules com `paths:` | o CI a cada release e o [smoke](https://github.com/Phenrique-DataDev/Native-sdd/actions/workflows/smoke.yml) deste repositório |
+| **Codex CLI** | GPT | medido ao vivo | `AGENTS.md`, skills e papéis de agente exportados, e o guard de comando destrutivo como hook | e2e 3/3 com `gpt-5.6-terra`, com o guard bloqueando de verdade ([`MEDICOES.md`](docs/MEDICOES.md#o-scaffold-fora-do-claude-code-codex)) |
+| **Hermes Agent** | vários | medido ao vivo | `AGENTS.md` e as rules num `.hermes.md`; as skills exigem configurar `skills.external_dirs` | A/B com `gpt-5.6-terra`: 0/2 sem o `.hermes.md`, 2/2 com ele |
+| **Cursor**, **OpenCode** | vários | só fixtures | o guard de comando destrutivo como hook (opt-in) | testes com payloads tirados da documentação de cada um, sem rodada ao vivo |
+| **GitHub Copilot CLI** | GPT e outros | medido ao vivo | `AGENTS.md`, `CLAUDE.md`, as rules e as 32 skills e commands, direto de `.claude/`, sem export. Os hooks do projeto rodam pelo campo `powershell` no Windows. O instalador grava o guard em `~/.copilot/hooks/` quando acha o `copilot` | contrato e skills passaram com `gpt-5.6-luna`; o guard pediu confirmação com a razão, mesmo com `--allow-all-tools`, e a pasta ficou intacta (Windows, 2026-10-18) |
+| **Antigravity CLI** (sucessor do Gemini CLI) | Gemini e outros | medido ao vivo | `AGENTS.md` e as 32 skills depois do `Export-CodexHarness`. O instalador grava o guard no `~/.gemini/config/hooks.json` quando acha o `agy` | contrato e skills passaram com `gemini-3.8-flash-high`; o guard responde `force_ask` com a razão, mas com `dangerouslySkipPermissions` ou no `agy -p` o agy aprova sozinho e o comando roda (medido). Com permissões normais, não medido |
+
+Para o Codex e o Hermes, rode no projeto `Export-CodexHarness -ProjectRoot .` (de
+`tools/harness-export.ps1`). Ele gera o `.agents/skills/`, o `.codex/hooks.json` e o `.hermes.md`.
+É opt-in, e é preciso reexportar quando os commands, as skills ou as rules mudarem. O instalador só
+instala o Claude Code: as outras CLIs ficam por sua conta. Se o `copilot` ou o `agy` já estiver no
+PATH, ele grava o guard para cada um (passo A2k; `-Check`/`-DryRun` mostram o que seria gravado).
+
+*Support is per tool (the CLI that runs the model), not per model: native in Claude Code; measured
+live in Codex (GPT), Hermes, GitHub Copilot and Antigravity (Gemini), with the destructive-command
+guard in Codex, Copilot and Antigravity (Antigravity does not prompt when permissions are skipped);
+fixture-tested hook adapters for Cursor and OpenCode.*
 
 ## Requisitos / Requirements
 

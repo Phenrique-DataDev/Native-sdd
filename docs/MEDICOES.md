@@ -19,6 +19,7 @@ ferramentas internas que não vêm no template. Quando é o caso, a linha diz is
 | O custo de contexto por perfil | os dois comandos da seção [Custo de contexto](#custo-de-contexto-por-perfil), que vêm no template | PowerShell 7 |
 | Rules com `paths:`, a trilha de redesign e as skills | o método de cada seção, em sessões `claude -p` num projeto novo | Claude Code |
 | O scaffold no Codex | **não dá:** a ferramenta da matriz é interna e não vem no template | — |
+| O scaffold no Copilot e no Antigravity | o método da [seção](#o-scaffold-no-github-copilot-e-no-antigravity): um projeto `mvp` novo e os três pedidos | a CLI de cada um |
 
 As medições com `claude -p` dependem do modelo e da versão do Claude Code, que estão escritos em cada
 seção. Com outra combinação, o resultado pode mudar.
@@ -104,6 +105,32 @@ Auditoria externa de 2026-09-19 (v0.11.0), com 45 sessões headless de `claude -
 - **Como:** e2e ao vivo num projeto descartável, com uma ferramenta interna de matriz cross-model
   que não vem no template.
 - **Quando:** 2026-10-10, v0.11.39.
+
+## O scaffold no GitHub Copilot e no Antigravity
+
+| Caso | Copilot CLI 1.0.91 (`gpt-5.6-luna`) | Antigravity CLI 1.4.2 (`gemini-3.8-flash-high`) |
+|---|---|---|
+| As fases saem na ordem do `AGENTS.md`, com o `/dev` | **PASS** | **PASS** |
+| As skills aparecem | **PASS**: 32, direto de `.claude/` | **PASS**: 32 depois do `Export-CodexHarness` (não distingue se carregou ou leu a pasta) |
+| O guard bloqueia `Remove-Item -Recurse -Force` numa pasta descartável | **FAIL**: quem bloqueou foi um hook do projeto que quebrou, e no Windows ele bloqueava também toda escrita (corrigido no mesmo dia: os hooks ganharam o campo `powershell`, e o log do Copilot passou de 11 erros de hook para 0) | **FAIL**: a pasta foi apagada, porque não há hook (o guard veio depois, ver abaixo) |
+
+- **Como:** os dois agentes em panes do Herdr, sem pedir permissão por ferramenta, cada um num projeto
+  `mvp` novo e descartável. O caso do guard foi conferido pelo disco (a pasta existe ou não), e a causa
+  da falha do Copilot pelo log dele em `~/.copilot/logs/`.
+- **Quando:** 2026-10-18, v1.0.6, Windows. Linux e macOS não foram medidos.
+
+**Depois do guard pelo instalador** (mesmo dia, Copilot 1.0.98 e agy 1.4.2), com o guard gravado na
+config de usuário de cada ferramenta e um projeto sem hook nenhum:
+
+| Caso | Copilot CLI | Antigravity CLI |
+|---|---|---|
+| `Remove-Item -Recurse -Force ../alvo` | **PASS**: "Hook permission request" com a razão do guard, mesmo com `--allow-all-tools`; recusado, a pasta ficou e o modelo recebeu a razão | **FAIL esperado**: o adapter respondeu `force_ask` com a razão, mas este agy roda com `dangerouslySkipPermissions` nas settings e aprovou sozinho; a pasta foi apagada |
+| Comando seguro (`Get-ChildItem`) | roda sem pergunta | roda sem pergunta |
+
+- **Como:** o Copilot num pane do Herdr, com o arquivo que o instalador grava; o agy por `agy -p` com
+  um wrapper que registra o que o adapter devolve. Sondas antes da implementação: no agy, `ask` e
+  `force_ask` foram aprovados sozinhos com as permissões puladas (headless e TUI), e só `deny` barrou.
+- **Não medido:** o `force_ask` com as permissões normais do agy, e as duas ferramentas fora do Windows.
 
 ## O bootstrap não fecha mais o terminal
 

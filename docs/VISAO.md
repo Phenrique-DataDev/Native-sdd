@@ -34,7 +34,9 @@ próprios projetos.
 3. **SDD como espinha de execução.** Features maiores passam por brainstorm → define →
    spec → build → ship; tarefas pequenas usam o Dev Loop.
 4. **Claude-first, portável.** Otimizado para Claude Code (commands, skills, hooks, MCP),
-   mas com artefatos (SDD, KB, regras) estruturados para portar a outras ferramentas.
+   mas com artefatos (SDD, KB, regras) estruturados para portar a outras ferramentas. A meta é
+   rodar nas principais ferramentas dos modelos de fronteira; o que já está medido, e o que não
+   está, fica na tabela de [ferramentas suportadas](../README.md#ferramentas-suportadas--supported-tools).
 5. **Qualidade verificável.** Nada é "pronto" sem verificação real (lint, testes, critérios
    de aceite). Não inventar dados.
 
@@ -70,7 +72,7 @@ mesma data.
 | | Spec Kit | OpenSpec | Native-SDD |
 |---|---|---|---|
 | **Instalação** | `uv tool install specify-cli`; pede Python 3.11+ e uv | `npm install -g @fission-ai/openspec`; pede Node.js 20.19+ (ou Homebrew) | um comando instala as CLIs, o Claude Code e o `~/.claude` (`onboarding/install`), e o `new-project` cria cada projeto |
-| **Agentes** | vários, por "integration" (o exemplo usa o GitHub Copilot) | "30+" ferramentas, segundo o README | Claude-first. No Codex, o guard, as skills e o `AGENTS.md` passaram num e2e (3/3, em [`MEDICOES.md`](MEDICOES.md)); nenhuma outra ferramenta foi medida |
+| **Agentes** | vários, por "integration" (o exemplo usa o GitHub Copilot) | "30+" ferramentas, segundo o README | nativo no Claude Code; medido ao vivo no Codex (e2e 3/3, em [`MEDICOES.md`](MEDICOES.md)), no Hermes, no Copilot e no Antigravity (o guard chega aos dois; no Antigravity não pergunta com as permissões puladas); só fixtures no Cursor e no OpenCode. Tabela completa no [README](../README.md#ferramentas-suportadas--supported-tools) |
 | **Fluxo** | `constitution` uma vez; `specify → plan → tasks → implement → converge` por feature; extensões de bug e de avaliação de ideia | `explore`, `propose`, `apply`, `archive`; o README diz "no rigid phase gates" | `/brainstorm → /define → /spec → /build → /ship`, uma fase por vez, e o `/dev` para tarefa pequena |
 | **Extensão** | extensions, presets, workflows, bundles e catálogos (inclusive privados) | profiles, schemas da comunidade e "stores" (beta) para planejar entre repositórios | curadoria por projeto (`/audit-agents`, `/train-kb`), suplementos opt-in e `/adapt` para projeto existente |
 | **Runtime** | CLI em Python | CLI em Node.js; coleta estatística anônima de uso, com opt-out | PowerShell 7+ em Windows, Linux e macOS |

@@ -77,6 +77,19 @@ function Get-HookDispatchCommand {
     return "sh -c 'if $SkipIf; then cat >/dev/null 2>&1; exit 0; fi; $dispatch' _ `"$PsPath`" `"$ShPath`" `"$SkipArg`""
 }
 
+# PURA: o `powershell` de cada hook do settings.json do scaffold (COPILOT_HOOKS_DO_PROJETO_BLOQUEIAM_TUDO,
+# 2026-10-18). O GitHub Copilot CLI le os hooks do `.claude/settings.json` do repositorio e, no
+# Windows, roda o `command` pelo PowerShell: ali nao ha `sh`, e o `${CLAUDE_PROJECT_DIR}` chega vazio.
+# Como ele e' fail-closed, o PreToolUse quebrado negava TODA escrita. O campo `powershell` (alias
+# por SO do `command`, documentado no Copilot) toma o lugar do `command` la. O caminho e' relativo
+# porque o hook roda com cwd na raiz do projeto, e a variavel nao existe fora do Claude Code.
+# O Claude Code ignora o campo e segue no `command` (medido: claude -p num projeto com ele roda os
+# hooks, e o `claude doctor` nao acusa nada). Sem gate de custo: quem paga o pwsh e' so o Copilot.
+function Get-HookPowerShellCommand {
+    param([Parameter(Mandatory)][string]$HookName)
+    "pwsh -NoProfile -File .claude/hooks/$HookName.ps1"
+}
+
 # PURA: um literal -> padrao de `case` POSIX que o acha em qualquer caixa, em qualquer posicao.
 # Os guards casam com `-match` (sem diferenciar caixa), entao o gate tambem nao pode diferenciar.
 # Letra vira classe (`r` -> `[Rr]`); espaco e `|` vao entre aspas duplas (o script do `sh -c` esta

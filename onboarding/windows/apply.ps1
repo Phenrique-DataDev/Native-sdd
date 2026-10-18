@@ -233,6 +233,25 @@ else {
     Invoke-Context7Setup -Summary $summary -Check:$Check -DryRun:$DryRun
 }
 
+# --- A2k: guards no Copilot e no Antigravity (NÃO bloqueante) --------------
+# Os dois não leem o ~/.claude, então o guard de comando destrutivo não chegava a eles. Só grava
+# para a CLI que está no PATH, e aponta para os guards que o A2 acabou de instalar no ~/.claude.
+Write-Host ''
+if ($upToDate) {
+    Write-Step SKIP 'A2k (guards Copilot/Antigravity) pulado — já atualizado'
+    $summary.Skipped++
+}
+elseif ($ProjectOnly) {
+    # Os guards apontam para o ~/.claude, que o -ProjectOnly não monta.
+    Write-Step SKIP 'A2k (guards Copilot/Antigravity) pulado por -ProjectOnly'
+    $summary.Skipped++
+}
+else {
+    Write-Step INFO 'Guards no GitHub Copilot e no Antigravity'
+    . (Join-Path $PSScriptRoot 'install-harness-guards.ps1')
+    Invoke-HarnessGuardsSetup -Summary $summary -UserHome $userHome -Check:$Check -DryRun:$DryRun
+}
+
 # --- A2e: suplementos extra (OPT-IN via -ExtraPlugins, NÃO bloqueante) ------
 # Instala suplementos (plugins/skills) de DOMÍNIO/superfície opcional user-scoped ("global
 # dormente"): disponíveis em todo projeto, auto-ativam só no trabalho da categoria. Opt-in de

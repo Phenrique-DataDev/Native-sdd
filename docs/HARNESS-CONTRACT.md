@@ -298,6 +298,21 @@ Como o OpenCode não expõe um evento de processo, o plugin **é** o adapter: el
 linhas de JS a ponte que os outros dois harnesses fazem via `hooks.json` + script tradutor, mas o
 **script de decisão em si continua sendo o mesmo `.ps1`/`.sh`** — só muda quem o invoca.
 
+### GitHub Copilot CLI e Antigravity CLI — medidos ao vivo (2026-10-18, Windows)
+
+Nenhum dos dois lê o `~/.claude`. O passo A2k do instalador (`onboarding/windows/install-harness-guards.ps1`)
+grava o guard na config de usuário de cada um, só quando a CLI está no PATH.
+
+| | Copilot CLI 1.0.98 | Antigravity CLI 1.4.2 |
+|---|---|---|
+| Onde | `~/.copilot/hooks/native-sdd-guards.json` (arquivo nosso) | chave `native-sdd-guard` do `~/.gemini/config/hooks.json` (as outras chaves ficam) |
+| Entrada | evento em PascalCase `PreToolUse` → o payload do Claude Code: `tool_name: "Bash"` (também para a tool powershell do Windows), `tool_input.command`, `cwd` | `toolCall.name: "run_command"`, `toolCall.args.CommandLine`, `toolCall.args.Cwd`; sem nome de evento no payload |
+| Adapter | **nenhum**: roda o `bash-guards.ps1` do Claude Code | `adapters/antigravity/adapter-guard.ps1` |
+| Saída | aceita o `hookSpecificOutput.permissionDecision` "ask" e abre o "Hook permission request" com a razão, inclusive com `--allow-all-tools`; ao recusar, o modelo recebe a razão | `{"decision": "force_ask", "reason": ...}` (o "ask" do guard vira `force_ask` por decisão do mantenedor). Com `dangerouslySkipPermissions` (flag ou settings) e no `agy -p`, `ask` e `force_ask` são aprovados sozinhos: só `deny` barrou ali |
+| Falha do hook | fail-closed (doc) | o agy recusa o comando (medido: exit 64). Por isso a linha não leva aspas, que o agy repassa literais ao pwsh, e home com espaço não recebe o hook |
+
+Não medido: Copilot e Antigravity no Linux e no macOS, e o `force_ask` com as permissões normais do agy.
+
 ### Seam `Read-NormalizedEvent`
 
 A primeira tarefa do `/build` (Abordagem B do brainstorm) foi extrair, em cada script, uma

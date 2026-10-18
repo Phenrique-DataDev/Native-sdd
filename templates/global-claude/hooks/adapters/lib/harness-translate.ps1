@@ -1,7 +1,7 @@
 ﻿<#
 .SYNOPSIS
     Lib pura de traducao harness-nativo <-> contrato canonico (H5, docs/HARNESS-CONTRACT.md).
-    Dot-sourceada pelos adapters de Cursor/Codex. NAO le stdin nem spawna processo -- isso e'
+    Dot-sourceada pelos adapters de Cursor/Codex/Antigravity. NAO le stdin nem spawna processo -- isso e'
     responsabilidade do adapter que a consome (mesma separacao I/O x pura dos hooks originais).
 
 .DESCRIPTION
@@ -204,6 +204,68 @@ function ConvertTo-CodexOutput {
         return (@{ hookSpecificOutput = @{ hookEventName = $CodexEventName; additionalContext = $ctx } } | ConvertTo-Json -Compress -Depth 5)
     }
     return $null
+}
+
+# ================================================================================================
+# ANTIGRAVITY (antigravity.google/docs/hooks, fetch 2026-10-18; payload MEDIDO no agy 1.4.2)
+# ================================================================================================
+
+function ConvertTo-CanonicalFromAntigravity {
+    <#
+    .SYNOPSIS
+        Mapeia um payload PreToolUse do Antigravity CLI para o canonico. $null = nao e' comando de
+        shell (o adapter nao atua).
+    .DESCRIPTION
+        O payload NAO traz o nome do evento: o adapter so e' registrado em PreToolUse, e o que
+        identifica o caso e' o `toolCall`. Medido no agy 1.4.2 (2026-10-18): o shell e' a tool
+        `run_command`, com o comando em `args.CommandLine` e o diretorio em `args.Cwd`.
+        Sem `Cwd`, cai para o 1o `workspacePaths` -- mesma aproximacao do afterFileEdit do Cursor.
+    #>
+    param([Parameter(Mandatory)][AllowNull()]$AntigravityPayload)
+    if ($null -eq $AntigravityPayload) { return $null }
+    $call = Get-PropOrNull $AntigravityPayload 'toolCall'
+    if ([string](Get-PropOrNull $call 'name') -ne 'run_command') { return $null }
+
+    $a = Get-PropOrNull $call 'args'
+    $cwd = [string](Get-PropOrNull $a 'Cwd')
+    if (-not $cwd) {
+        $roots = @(Get-PropOrNull $AntigravityPayload 'workspacePaths')
+        if ($roots.Count -gt 0) { $cwd = [string]$roots[0] }
+    }
+    return [pscustomobject]@{
+        hook_event_name = 'PreToolUse'
+        tool_name       = 'Bash'
+        tool_input      = [pscustomobject]@{ command = [string](Get-PropOrNull $a 'CommandLine'); file_path = '' }
+        cwd             = $cwd
+    }
+}
+
+function ConvertTo-AntigravityOutput {
+    <#
+    .SYNOPSIS
+        Traduz o stdout canonico do script-alvo para o shape do Antigravity: {decision, reason}.
+        $null = nada a imprimir (o Antigravity segue o fluxo normal de permissao).
+    .DESCRIPTION
+        "ask" do guard vira "force_ask", nao "ask": pela doc, o "ask" respeita o "Always Allow" do
+        usuario, e o guard existe justamente para perguntar no destrutivo mesmo assim. Decisao do
+        mantenedor (2026-10-18), contra o "deny" dos adapters Codex/Cursor. LIMITE MEDIDO no agy 1.4.2:
+        com `dangerouslySkipPermissions` (flag ou settings) e em `agy -p`, "ask" e "force_ask" sao
+        aprovados sozinhos e o comando roda; so "deny" barrou ali.
+    #>
+    param([AllowNull()][string]$CanonicalStdout)
+
+    if ([string]::IsNullOrWhiteSpace($CanonicalStdout)) { return $null }
+
+    try { $decision = $CanonicalStdout | ConvertFrom-Json }
+    catch {
+        return (@{ decision = 'force_ask'; reason = 'adapter: saida do guard ilegivel' } | ConvertTo-Json -Compress)
+    }
+
+    $perm = [string](Get-PropOrNull (Get-PropOrNull $decision 'hookSpecificOutput') 'permissionDecision')
+    $reason = [string](Get-PropOrNull (Get-PropOrNull $decision 'hookSpecificOutput') 'permissionDecisionReason')
+    if (-not $perm) { return $null }
+    if ($perm -eq 'ask') { $perm = 'force_ask' }
+    return (@{ decision = $perm; reason = $reason } | ConvertTo-Json -Compress)
 }
 
 # --- Resolucao do script-alvo (cascata tooling.md adaptada p/ os adapters) ---------------------

@@ -267,10 +267,13 @@ function Invoke-PesterParallel {
         # Suíte verde sem teste executado não mede nada (a mesma regra que os workflows aplicavam à mão).
         $total = @($recs | ForEach-Object { $_.Passed + $_.Failed + $_.Skipped } | Measure-Object -Sum)[0].Sum
         if ($ordem.Count -gt 0 -and -not $total) { $containers.Add('nenhum teste executou: o gate não mediu nada') }
+        # `Measure-Object -Property` sem entrada não emite nada, e o `.Sum` lançaria sob StrictMode
+        # quando nenhum worker grava resultado; a forma sem -Property sempre emite (Sum = 0).
+        $soma = { param($Campo) [int](@($recs | ForEach-Object { $_.$Campo } | Measure-Object -Sum)[0].Sum) }
         [pscustomobject]@{
-            PassedCount           = [int](($recs | Measure-Object -Property Passed -Sum).Sum)
-            FailedCount           = [int](($recs | Measure-Object -Property Failed -Sum).Sum)
-            SkippedCount          = [int](($recs | Measure-Object -Property Skipped -Sum).Sum)
+            PassedCount           = & $soma 'Passed'
+            FailedCount           = & $soma 'Failed'
+            SkippedCount          = & $soma 'Skipped'
             FailedContainersCount = $containers.Count
             FailedContainerNames  = $containers.ToArray()
             FailedTests           = @($recs | ForEach-Object { @($_.FailedTests) } | Where-Object { $_ })
