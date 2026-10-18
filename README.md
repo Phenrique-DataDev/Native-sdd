@@ -19,6 +19,12 @@
   <a href="LICENSE"><img alt="Licença MIT" src="https://img.shields.io/badge/license-MIT-blue"></a>
 </p>
 
+<p align="center">
+  <strong>Versão atual: v1.0.6</strong> ·
+  <a href="https://github.com/Phenrique-DataDev/Native-sdd/releases/tag/v1.0.6">o que mudou nela</a> ·
+  <a href="https://github.com/Phenrique-DataDev/Native-sdd/releases">todas as releases</a>
+</p>
+
 ---
 
 > Um **scaffold genérico e sem contexto de tarefa** que se **auto-otimiza** na inicialização
@@ -27,6 +33,24 @@
 >
 > *A generic, task-context-free scaffold that self-optimizes on init (curates agents + trains a
 > domain KB) to run Spec-Driven Development with speed, consistency and quality.*
+
+## Em 1 minuto / In one minute
+
+- **O que você ganha:** um comando prepara a máquina, e cada projeto novo nasce com as fases do SDD
+  (`/brainstorm` → `/define` → `/spec` → `/build` → `/ship`), o `/dev` para tarefa pequena, o
+  `/check` e um pre-commit que bloqueia segredo antes do commit.
+- **O mínimo para começar:** instalar, criar o projeto com `nsp <pasta>` (perfil `mvp`, o padrão),
+  abrir o Claude Code nele e rodar `/setup`. Os passos estão no [Início rápido](#início-rápido--quickstart).
+- **O resto é opcional e só entra se você pedir:** o perfil `full` (orquestração, `/max`, `/peers`),
+  os suplementos por tema e o herdr.
+- **Antes de instalar, dá para ver o que muda:** `-Check` só relata, e `-DryRun` lista cada ação
+  sem executar; nenhum dos dois altera a sua configuração. Ver [Instalar](#1--instalar--deixa-a-máquina-pronta-deps--claude-pessoal).
+- **Não é para você se:** você não usa o Claude Code, ou quer só um `CLAUDE.md` e meia dúzia de
+  comandos. Para outras ferramentas, veja a [comparação com Spec Kit e OpenSpec](docs/VISAO.md#alternativas-spec-kit-e-openspec).
+
+*In one minute: one command sets up the machine; each new project gets the SDD phases, `/dev`,
+`/check` and a secret-blocking pre-commit. Start with the default `mvp` profile; everything else is
+opt-in. `-Check` / `-DryRun` show what would change before anything is written.*
 
 ---
 
@@ -84,6 +108,26 @@ Para instalar a `main`, peça explicitamente (`-Ref main` / `--ref main`; a sint
 *The bootstrap installs the **latest tagged release**, not `main` (opt in with `-Ref main` /
 `--ref main`). See [Releases](https://github.com/Phenrique-DataDev/Native-sdd/releases) for
 versions and notes.*
+
+**Antes de instalar, veja o que muda.** O instalador mexe no `~/.claude` e no profile do shell, e dá
+para conferir isso antes:
+
+| Quero… | Windows | Linux e macOS |
+|---|---|---|
+| só ver o que falta, sem escrever nada | `iex "& { $(irm <url do bootstrap.ps1>) } -Check"` | `curl -fsSL <url do bootstrap.sh> \| bash -s -- --check` |
+| ver cada ação, sem executar | `... } -DryRun"` | `... \| bash -s -- --dry-run` |
+| não mexer na minha configuração do `~/.claude` | `... } -ProjectOnly"` | `... \| bash -s -- --project-only` |
+
+Nos três casos, o bootstrap ainda guarda o código baixado em `~/.claude/.native-sdd-src`, que é o
+cache de onde o instalador roda. A configuração (`settings.json`, rules, commands) e o profile do
+shell não mudam com `-Check` nem com `-DryRun`. Na instalação normal, o instalador faz backup antes de
+sobrescrever (`<arquivo>.bak-<data>`, ao lado do original). O `-ProjectOnly` instala só as CLIs e o
+atalho `nsp`: os guards que moram no `~/.claude` ficam de fora, e o projeto fica só com o pre-commit
+anti-segredo (a saída avisa).
+
+*Before installing: `-Check` only reports, `-DryRun` lists each action, and `-ProjectOnly` leaves
+your `~/.claude` configuration alone. The bootstrap still caches the downloaded source in
+`~/.claude/.native-sdd-src`. A normal install backs up what it overwrites (`.bak-<date>`).*
 
 ```powershell
 # Windows — sem clonar, num PowerShell

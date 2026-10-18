@@ -10,6 +10,19 @@ um comportamento acontece, não para estimar uma taxa. O modelo das sessões vem
 e o resultado pode mudar com outro modelo ou outra versão do Claude Code. Alguns números saíram de
 ferramentas internas que não vêm no template. Quando é o caso, a linha diz isso.
 
+## O que dá para conferir sem confiar no autor
+
+| O quê | Como você confere | Precisa de |
+|---|---|---|
+| O produto instala e cria projetos que passam no `/check`, em Windows e Linux | os runs públicos do [`smoke.yml`](https://github.com/Phenrique-DataDev/Native-sdd/actions/workflows/smoke.yml), um por release | só o navegador |
+| Qual versão o bootstrap instala | rode o bootstrap com `-Check` (`--check`): ele imprime `release: vX.Y.Z` e não muda a sua configuração (só guarda o código baixado em `~/.claude/.native-sdd-src`) | PowerShell ou bash |
+| O custo de contexto por perfil | os dois comandos da seção [Custo de contexto](#custo-de-contexto-por-perfil), que vêm no template | PowerShell 7 |
+| Rules com `paths:`, a trilha de redesign e as skills | o método de cada seção, em sessões `claude -p` num projeto novo | Claude Code |
+| O scaffold no Codex | **não dá:** a ferramenta da matriz é interna e não vem no template | — |
+
+As medições com `claude -p` dependem do modelo e da versão do Claude Code, que estão escritos em cada
+seção. Com outra combinação, o resultado pode mudar.
+
 ## O que ainda não está medido
 
 Nenhuma medição compara projetos feitos com o fluxo contra projetos feitos sem ele. O que está aqui
