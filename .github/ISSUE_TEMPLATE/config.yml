@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Vulnerabilidade de segurança / Security vulnerability
+    url: https://github.com/Phenrique-DataDev/Native-sdd/security/advisories/new
+    about: Reporte em privado, não numa issue pública. / Report privately, not in a public issue.

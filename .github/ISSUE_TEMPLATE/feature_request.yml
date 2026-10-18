@@ -1,0 +1,15 @@
+name: Ideia / Feature
+description: Uma dor de uso real que o framework não resolve. / A real-use pain the framework doesn't solve.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: dor
+    attributes:
+      label: A dor / The pain
+      description: O que você tentou fazer, e onde travou. Relato de uso real pesa mais que solução pronta.
+    validations:
+      required: true
+  - type: textarea
+    id: proposta
+    attributes:
+      label: Proposta (opcional) / Proposal (optional)

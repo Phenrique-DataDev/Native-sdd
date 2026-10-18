@@ -1,0 +1,37 @@
+name: Bug
+description: Algo não funciona como o README ou o USO.md dizem. / Something doesn't work as documented.
+labels: [bug]
+body:
+  - type: textarea
+    id: o-que-aconteceu
+    attributes:
+      label: O que aconteceu / What happened
+      description: O comando que você rodou e a saída, inteira. / The command you ran and its full output.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: esperado
+    attributes:
+      label: O que você esperava / What you expected
+    validations:
+      required: true
+  - type: input
+    id: versao
+    attributes:
+      label: Versão / Version
+      description: Saída de `Get-Content ~/.claude/.native-sdd-version` e, se for num projeto, de `.claude/.scaffold-version`.
+    validations:
+      required: true
+  - type: dropdown
+    id: so
+    attributes:
+      label: Sistema / OS
+      options: [Windows, Linux, macOS]
+    validations:
+      required: true
+  - type: input
+    id: ambiente
+    attributes:
+      label: Shell e Claude Code / Shell and Claude Code
+      description: Ex. `pwsh 7.5`, `Windows PowerShell 5.1`, `bash`; e a saída de `claude --version`.

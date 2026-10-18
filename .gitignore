@@ -1,0 +1,39 @@
+# ─── Dependências / Dependencies ───
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pnp/
+dist/
+build/
+
+# ─── Ambiente / Environment ───
+.env
+.env.local
+*.local
+
+# ─── Editores / Editors ───
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+
+# ─── SO / OS ───
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# ─── Logs / temporários ───
+*.log
+tmp/
+.cache/
+
+# ─── Visão HTML do grafo (graph-export -Html) — view local opt-in, regenerável ───
+graph.html
+testResults.xml
+
+# Cache de sessão do plugin impeccable (copy-edit). NUNCA deve vazar para o template distribuído:
+# o new-project copia do DISCO, então lixo aqui nasce dentro de todo projeto novo (v0.8.23).
+# Só o CACHE — `.impeccable/config.json` (as regras de detecção confirmadas) é versionado de propósito.
+.impeccable/hook.cache.json
