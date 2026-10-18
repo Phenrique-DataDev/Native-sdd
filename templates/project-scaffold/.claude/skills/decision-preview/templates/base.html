@@ -1,0 +1,162 @@
+<title>Mensagem de erro de upload</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<!--
+  Reference template for the decision-preview skill.
+  Purpose: compare 2-4 variants of an undecided choice, side by side, each grounded in real
+  project data, closing with an explicit choice. Domain-agnostic — the example content below
+  (an error-message wording decision) is illustrative only; replace it, don't ship it.
+
+  Written for the native `Artifact` tool: no <!DOCTYPE>/<html>/<head>/<body> of its own (the
+  tool wraps those at publish time). The <title> above is the artifact's name in the gallery:
+  a short noun phrase for the decision, never "Decision: ...".
+
+  Key patterns demonstrated:
+  - Tokens on :root (light), redefined for dark under prefers-color-scheme guarded by
+    :root:not([data-theme="light"]) and again under :root[data-theme="dark"], so the viewer's
+    toggle wins both ways; body sets an explicit background (a transparent body shows the host)
+  - Side gutter that clears a phone's system bar (max(16px, env(safe-area-inset-*)))
+  - Responsive variant grid (auto-fit, 2 to 4 cards, never horizontal scroll)
+  - Two content slots per variant: .dp-content (text, code, schema) and .dp-shots (screenshots
+    by width, for UI variants — e.g. the PNGs from the visual-check skill as data: URIs). Keep the
+    one that fits, delete the other
+  - Each variant has an annotation slot: what it optimizes for and what it costs
+  - Closing "Escolha" section: explicit question + options, so the artifact stands on its own
+    even without an interactive AskUserQuestion follow-up
+-->
+<style>
+  :root {
+    --bg: #f7f7f5;
+    --surface: #ffffff;
+    --border: rgba(0, 0, 0, 0.10);
+    --text: #1a1a18;
+    --text-dim: #5f5f58;
+    --accent: #3d5a80;
+    --accent-bg: rgba(61, 90, 128, 0.08);
+    --radius: 12px;
+    --font: system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: ui-monospace, "Cascadia Code", Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #17181a; --surface: #202226; --border: rgba(255, 255, 255, 0.10);
+      --text: #ece9e4; --text-dim: #a3a29c; --accent: #8fb4dd; --accent-bg: rgba(143, 180, 221, 0.10);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #17181a; --surface: #202226; --border: rgba(255, 255, 255, 0.10);
+    --text: #ece9e4; --text-dim: #a3a29c; --accent: #8fb4dd; --accent-bg: rgba(143, 180, 221, 0.10);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    line-height: 1.5;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+
+  .decision-preview { max-width: 1100px; margin: 0 auto; padding-block: 2.5rem; display: grid; gap: 2rem; }
+
+  .dp-header { display: grid; gap: 0.4rem; max-width: 70ch; }
+  .dp-eyebrow {
+    font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--accent); font-weight: 600; margin: 0;
+  }
+  .dp-header h1 { font-size: 1.6rem; line-height: 1.3; margin: 0; text-wrap: balance; }
+  .dp-header p { margin: 0; color: var(--text-dim); }
+
+  .dp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+    gap: 1.25rem;
+  }
+  .dp-variant {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    min-width: 0;
+  }
+  .dp-variant h2 { font-size: 0.95rem; margin: 0; display: flex; align-items: center; gap: 0.5rem; }
+  .dp-tag {
+    font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent);
+    background: var(--accent-bg); padding: 0.15rem 0.45rem; border-radius: 6px;
+  }
+  .dp-content {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 1rem; font-size: 0.95rem; line-height: 1.5; overflow-x: auto;
+  }
+  /* Capturas por largura: a estreita ocupa 1 parte, a larga ~2. A largura no figcaption é a W
+     calibrada pelo visual-check, não o tamanho pedido. */
+  .dp-shots { display: grid; grid-template-columns: 1fr 2.2fr; gap: 0.6rem; align-items: start; }
+  .dp-shots figure { margin: 0; display: grid; gap: 0.3rem; min-width: 0; }
+  .dp-shots img {
+    display: block; width: 100%; max-width: 100%; height: auto;
+    border: 1px solid var(--border); border-radius: 6px;
+  }
+  .dp-shots figcaption {
+    font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
+  }
+  .dp-annotation { font-size: 0.85rem; color: var(--text-dim); margin: 0; line-height: 1.45; }
+  .dp-annotation strong { color: var(--text); }
+
+  .dp-choice {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 1.5rem;
+  }
+  .dp-choice h2 { font-size: 1rem; margin: 0 0 0.6rem; }
+  .dp-choice p { margin: 0 0 0.9rem; color: var(--text-dim); font-size: 0.9rem; }
+  .dp-choice ul { margin: 0; padding-left: 1.2rem; font-size: 0.9rem; line-height: 1.7; }
+  .dp-choice li strong { color: var(--text); }
+</style>
+
+<div class="decision-preview">
+  <header class="dp-header">
+    <p class="dp-eyebrow">Decisão</p>
+    <!-- EXEMPLO — substitua por 1 frase real do que está sendo decidido -->
+    <h1>Qual redação usar na mensagem de erro de upload falho?</h1>
+    <p>De onde vêm os dados de cada variante, em uma linha.</p>
+  </header>
+
+  <div class="dp-grid">
+    <!-- EXEMPLO — 1 <article> por variante, 2 a 4 no total -->
+    <article class="dp-variant">
+      <h2><span class="dp-tag">A</span> Direta</h2>
+      <div class="dp-content">"Falha ao enviar o arquivo. Tente novamente."</div>
+      <p class="dp-annotation"><strong>Otimiza:</strong> curta, sem culpar ninguém. <strong>Custa:</strong> não diz o que fazer se tentar de novo não resolver.</p>
+    </article>
+    <article class="dp-variant">
+      <h2><span class="dp-tag">B</span> Acionável</h2>
+      <div class="dp-content">"Não foi possível enviar o arquivo (limite: 10 MB). Reduza o tamanho e tente novamente."</div>
+      <p class="dp-annotation"><strong>Otimiza:</strong> dá o motivo provável e uma ação. <strong>Custa:</strong> mais longa, e assume que o limite é sempre o problema.</p>
+    </article>
+    <!-- VARIANTE DE UI — troque .dp-content por .dp-shots; uma <figure> por largura, src em data: URI
+    <article class="dp-variant">
+      <h2><span class="dp-tag">C</span> Nome da direção</h2>
+      <div class="dp-shots">
+        <figure><img src="data:image/png;base64,..." alt="Direção C em 375 px" width="375" height="800"><figcaption>W=375</figcaption></figure>
+        <figure><img src="data:image/png;base64,..." alt="Direção C em 1280 px" width="1280" height="800"><figcaption>W=1280</figcaption></figure>
+      </div>
+      <p class="dp-annotation"><strong>Otimiza:</strong> … <strong>Custa:</strong> …</p>
+    </article>
+    -->
+  </div>
+
+  <section class="dp-choice">
+    <h2>Escolha</h2>
+    <!-- EXEMPLO — pergunta explícita + as opções, para review mesmo sem sessão interativa -->
+    <p>Qual redação vai para a mensagem de erro de upload?</p>
+    <ul>
+      <li><strong>A — Direta:</strong> mais curta, genérica.</li>
+      <li><strong>B — Acionável:</strong> mais específica, orienta a próxima ação.</li>
+    </ul>
+  </section>
+</div>
