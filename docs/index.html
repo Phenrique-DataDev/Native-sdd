@@ -12,7 +12,7 @@
 <!-- A versão do site, para o track.js carimbar no hit (coluna `rel` do coletor). Fica aqui e não
      no JS porque o HTML já é a fonte da versão exibida, e a segunda cópia é a que envelhece.
      Amarrada ao VERSION por tools/site-tests/specs/integridade.spec.mjs. -->
-<meta name="site-version" content="1.0.9">
+<meta name="site-version" content="1.0.10">
 
 <meta property="og:type" content="website">
 <meta property="og:title" content="Native-SDD — Spec-to-Artifact Compiler">
@@ -702,7 +702,7 @@
             <span class="term-titlebar-name mono">pwsh — native-sdd</span>
             <div class="term-titlebar-meta">
               <span>branch: main</span>
-              <span>v1.0.9</span>
+              <span>v1.0.10</span>
             </div>
           </div>
 
@@ -946,7 +946,7 @@
           <dd>toda fase lê e grava</dd>
         </dl>
         <div class="blueprint-rev mono">
-          <span>REV // 1.0.9</span>
+          <span>REV // 1.0.10</span>
           <span class="ok">STATUS: COMPILADO</span>
         </div>
       </div>
@@ -962,7 +962,7 @@
                do card existe, igual, no README` amarra os dois). Cada radio carrega o comando do
                seu sistema em `data-copy`, e o botão copia o do radio marcado. Só a instalação vai
                para a área de transferência: o `nsp` do passo 2 existe apenas num terminal NOVO. -->
-          <input type="radio" name="qsOs" id="osWin" class="qs-os-radio" checked data-copy="pwsh -NoProfile -Command &quot;irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboarding/bootstrap.ps1 | iex&quot;">
+          <input type="radio" name="qsOs" id="osWin" class="qs-os-radio" checked data-copy="irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboarding/bootstrap.ps1 | iex">
           <input type="radio" name="qsOs" id="osLin" class="qs-os-radio" data-copy="curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboarding/bootstrap.sh | bash">
           <div class="qs-os-toggle" role="group" aria-label="Sistema operacional do quickstart">
             <label for="osWin" data-os-toggle="windows">Windows</label>
@@ -976,8 +976,8 @@
                 <p class="qs-titulo">Instale</p>
                 <p class="qs-desc">Prepara a máquina: as ferramentas de linha de comando, o Claude Code e a sua configuração pessoal. Leva alguns minutos.</p>
                 <div class="quickstart-route" id="routeWin">
-                  <div class="quickstart-block" translate="no" tabindex="0" role="region" aria-label="Comando de instalação no Windows, role na horizontal"><span class="pr">$</span> pwsh -NoProfile -Command "irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboarding/bootstrap.ps1 | iex"</div>
-                  <p class="qs-req">Rode num PowerShell 7 (<span class="mono">pwsh</span>).</p>
+                  <div class="quickstart-block" translate="no" tabindex="0" role="region" aria-label="Comando de instalação no Windows, role na horizontal"><span class="pr">$</span> irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboarding/bootstrap.ps1 | iex</div>
+                  <p class="qs-req">Cole num PowerShell (5.1 ou 7).</p>
                 </div>
                 <div class="quickstart-route" id="routeLin">
                   <div class="quickstart-block" translate="no" tabindex="0" role="region" aria-label="Comando de instalação no Linux e no macOS, role na horizontal"><span class="pr">$</span> curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboarding/bootstrap.sh | bash</div>
@@ -1005,7 +1005,7 @@
           </ol>
 
           <div class="quickstart-cta-row">
-            <button type="button" class="btn btn-primary" id="copyQs" data-copy="pwsh -NoProfile -Command &quot;irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboarding/bootstrap.ps1 | iex&quot;">
+            <button type="button" class="btn btn-primary" id="copyQs" data-copy="irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboarding/bootstrap.ps1 | iex">
               <span>COPIAR INSTALAÇÃO</span>
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M1 7H13M13 7L7 1M13 7L7 13" stroke="currentColor" stroke-width="1.75" stroke-linecap="square"/></svg>
             </button>
@@ -1147,7 +1147,7 @@
            sem PII" ao lado é a afirmação — isto é onde ela se verifica. -->
       <a href="privacidade.html">Privacidade</a>
     </nav>
-    <span class="foot-meta mono">v1.0.9 · sem cookie, sem PII</span>
+    <span class="foot-meta mono">v1.0.10 · sem cookie, sem PII</span>
   </div>
 </footer>
 
