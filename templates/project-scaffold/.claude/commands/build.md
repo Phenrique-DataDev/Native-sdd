@@ -23,7 +23,10 @@ Implementar o que o DESIGN especifica e registrar o resultado.
    call-sites de uma vez, nenhuma fatia vertical fecha verde; use **expand → migrate em lotes →
    contract** e leia a §*A forma da fatia* de `.claude/postures/orchestration.md` antes de sequenciar.
 2. Implemente seguindo a stack e convenções de `project-context.md`.
-3. **Verifique de verdade** a cada parte: lint, type-check e testes da stack do projeto.
+3. **Verifique de verdade** a cada parte, com os comandos da seção `## Verificação` do
+   `project-context.md` (lint e teste); type-check e teste específico da tarefa entram além deles,
+   não no lugar. Sem teste declarado lá, registre no BUILD_REPORT o comando que deduziu e ofereça
+   gravá-lo.
    Não marque como pronto com testes falhando.
 4. Cubra os **Acceptance Tests** do DEFINE.
 5. **Prove o teste por mutação** — a suíte verde não prova cobertura, só ausência de falha:

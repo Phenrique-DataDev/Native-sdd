@@ -110,13 +110,17 @@ Sem itens `Additive` (ou sem baseline resolvido), pule direto para o Passo 3.
 
 1. A partir da **stack inferida**, monte um rascunho do `.claude/rules/project-context.md`
    (linguagem/runtime/dados/infra preenchidos com os sinais detectados; domínio fica para o
-   usuário).
+   usuário). A seção `## Verificação` segue a regra do passo 4 do [`/setup`](setup.md): só entra
+   comando rodado aqui, com a saída mostrada.
 2. **Peça confirmação** (`AskUserQuestion`): *"Detectei {stack}. Gravar este contexto?"* →
    (a) aceitar e gravar · (b) ajustar antes · (c) cancelar.
 3. Ao aceitar, **grave** o arquivo com o marcador `<!-- status: active -->`. **Nunca** grave
    sem confirmação — a detecção é heurística.
 4. Apresente as **retro-ondas** (do relatório) como backlog de higiene das dimensões em falta
    (testes/CI/docs) — são **recomendações**, não correções automáticas.
+   **Exceção do CI:** com `$hygiene.HasCI` falso, siga o passo 6 do [`/setup`](setup.md): ele mede
+   com `Test-CiOfferApplicable` se a oferta cabe (remote no GitHub, fora de monorepo, stack sem
+   credencial) e só então pergunta. Onde não cabe, a lacuna fica como recomendação, com o motivo.
 
 ---
 

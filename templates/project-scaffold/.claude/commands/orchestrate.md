@@ -198,7 +198,10 @@ avança pela sua resposta.
 ## Passo 4 — Validar (gate)
 
 Monte o `Result` da task a partir de verificação **real** (testes/lint/conformidade) e, se quiser o
-gate semântico, do veredito do **`code-reviewer`** (`ReviewApproved`). A saída bruta já está no disco
+gate semântico, do veredito do **`code-reviewer`** (`ReviewApproved`). `TestsGreen`/`LintClean`
+saem do exit code dos comandos da seção `## Verificação` do `project-context.md`, não de um comando escolhido na
+hora (`. "$toolsRoot/verification.ps1"; Get-VerificationCommand -Root .` devolve a linha e os
+critérios; `$null` = nada declarado, e aí diga que deduziu). A saída bruta já está no disco
 (passo 3.3) — julgue a partir dela, não da memória da conversa:
 
 ```text

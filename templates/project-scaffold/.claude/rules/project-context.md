@@ -31,6 +31,17 @@
 - Testes: `<framework>`
 - Versionamento: `<SemVer, Conventional Commits?>`
 
+## Verificação
+
+Comandos que provam que o projeto está verde, confirmados rodando. `/dev`, `/build`, `/iterate`, o
+gate do `/orchestrate` e o CI usam estes, não deduzem outros. Sem a etapa, `—`.
+
+| Etapa | Comando |
+|-------|---------|
+| install | `<comando ou —>` |
+| lint | `<comando ou —>` |
+| test | `<comando>` |
+
 ---
 
 ## Como os agentes usam este arquivo

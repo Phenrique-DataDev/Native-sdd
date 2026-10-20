@@ -25,6 +25,9 @@
       - skills            : Get-SkillInventory+Get-SkillHealth (update-skills.ps1) — orphan/malformed
       - index             : Build-KbIndex/Build-AgentMap (sync-context.ps1) — gerado ≠ em disco
       - reflect / learn   : KB acima do budget · lições candidatas acumuladas
+      - ci                : Test-CiNudgeApplicable (ci-workflow.ps1) — remote no GitHub, teste
+                            declarado, nenhum CI e sem recusa: a oferta que o /setup não pôde fazer
+                            antes do primeiro push.
 
     NUNCA altera .claude/kb|agents|rules. O único arquivo escrito é o marcador de cooldown
     .claude/.cache/nudge-state.json (transitório; .gitignore cobre .cache/).
@@ -180,6 +183,14 @@ function Get-StalenessSignals {
         $detail = [string](Get-PropOrNull $Snapshot 'LessonsDetail')
         if (-not $detail) { $detail = 'lições candidatas acumuladas no acervo' }
         $signals += [pscustomobject]@{ Signal = 'learn'; Detail = $detail; Command = '/learn' }
+    }
+
+    if ([bool](Get-PropOrNull $Snapshot 'CiOffer')) {
+        $signals += [pscustomobject]@{
+            Signal  = 'ci'
+            Detail  = 'remote no GitHub, teste declarado e nenhum CI: o verde do agente só existe local -- ofereça o CI ao usuário'
+            Command = 'o passo 6 do /setup (só esse passo; o "não" grava .claude/ci-offer-declined)'
+        }
     }
 
     return @($signals)
@@ -507,6 +518,15 @@ function Get-CurationSnapshot {
         }
     }
     catch { Write-Verbose "sinal learn indisponível: $($_.Exception.Message)" }
+
+    # 6) CI que ficou para depois (CI_NAO_REOFERECIDO_APOS_O_PUSH, 2026-10-19): o /setup roda antes do
+    #    remote existir e recusa por "sem remote". Aqui só o predicado BARATO (sem varrer a árvore);
+    #    o passo 6 do /setup mede o resto antes de perguntar, e o "não" vira .claude/ci-offer-declined.
+    try {
+        . (Join-Path $toolsDir 'ci-workflow.ps1')
+        $snap | Add-Member -NotePropertyName CiOffer -NotePropertyValue ([bool](Test-CiNudgeApplicable -Root $Root)) -Force
+    }
+    catch { Write-Verbose "sinal ci indisponível: $($_.Exception.Message)" }
 
     return $snap
 }

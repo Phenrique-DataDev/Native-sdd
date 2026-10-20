@@ -95,6 +95,8 @@ normal (`/simulate` + humano para schema/IaC/dados; `/orchestrate` ou o loop pri
 $ver = Test-IterateVerifiable -ProjectRoot . -Verifier "<cmd opcional>"
 ```
 
+Sem `-Verifier`, o comando vem da seção `## Verificação` do `project-context.md` (lint `&&` teste,
+via `Get-VerificationCommand`); só sem ela o detector deduz por arquivo de teste.
 `Verifiable = $false` → **DEGRADA**: *"sem sinal verde/vermelho — adicione testes/lint ou itere à mão"*.
 **Nunca** loop cego. Caso contrário, use `$ver.Verifier` (comando) e `$ver.Required` (critérios do gate).
 

@@ -7,9 +7,25 @@ argument-hint: "<FEATURE>"
 
 Fechar a feature `$ARGUMENTS`: arquivar artefatos e capturar aprendizado.
 
-## Pré-condição
-O `BUILD_REPORT` da feature deve estar **completo e verificado** (status ✅). Se não
-estiver, volte ao `/build`.
+## Pré-condição — o gate roda, ninguém afirma
+Antes de qualquer arquivo, resolva `$toolsRoot` pela cascata de [`rules/tooling.md`](../rules/tooling.md)
+e rode o gate:
+
+```powershell
+. "$toolsRoot/ship-gate.ps1"
+$gate = Test-ShipReady -Root . -Feature '<FEATURE>'   # Ready · Failures · Warnings · Verifier
+```
+
+Ele confere que todo `BUILD_REPORT` da feature em `reports/` está **✅ COMPLETE** com o
+`## Não exercitado` preenchido, e **roda agora** os comandos da seção `## Verificação` do
+`project-context.md`.
+
+- **`Ready` falso → pare.** Mostre cada item de `Failures`. Se a verificação reprovou, rode o
+  `Verifier` de novo à vista para mostrar a saída real, e volte ao `/build`. Não escreva o SHIPPED.
+- **`Warnings`** (ex.: nada declarado em `## Verificação`) → diga ao usuário que a verificação não
+  rodou e siga só com o "sim" dele.
+- **Sem `$toolsRoot`**: degradação consciente: confira o ✅ e rode os testes à mão, e diga que o gate
+  não rodou.
 
 ## Faça
 1. Leia o template `.claude/sdd/templates/SHIPPED_TEMPLATE.md`.
@@ -78,7 +94,7 @@ estiver, volte ao `/build`.
 
 ## O que NÃO fazer
 
-- Escrever o SHIPPED com o BUILD_REPORT em 🔄/❌.
+- Escrever o SHIPPED com o BUILD_REPORT em 🔄/❌, ou com o `Test-ShipReady` em `Ready` falso.
 - Deixar qualquer `BUILD_REPORT_<FEATURE>*` em `reports/` depois de arquivar (passo 3) — é o que
   faz o `/status` mentir; o `sdd-lint` acusa `orphan-build-report`.
 - Afirmar Success Criteria atingidos sem evidência.

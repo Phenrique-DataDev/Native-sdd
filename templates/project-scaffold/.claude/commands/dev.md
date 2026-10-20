@@ -16,7 +16,9 @@ prefira o SDD: comece por `/brainstorm` ou `/define`.
 1. Confirme o objetivo de `$ARGUMENTS` em 1 frase e os critérios de "pronto".
 2. Leia `project-context.md` para respeitar stack e convenções.
 3. Implemente de forma enxuta, em branch de trabalho.
-4. **Verifique:** rode lint/testes pertinentes; mostre a saída real.
+4. **Verifique:** rode os comandos da seção `## Verificação` do `project-context.md` (lint, depois
+   teste); mostre a saída real. Sem a seção ou sem teste declarado, diga que deduziu o comando, rode
+   o que deduziu e ofereça gravá-lo lá.
 5. Resuma o que mudou e os arquivos afetados.
 
 ## Trilha de redesign de tela

@@ -31,6 +31,9 @@ if (-not (Test-Path -LiteralPath $script:IterateOrchestratePath -PathType Leaf))
 }
 . $script:IterateOrchestratePath
 
+# Comandos que o projeto DECLAROU (project-context.md, `## Verificação`) vêm antes do detector de sinais.
+. (Join-Path $PSScriptRoot 'verification.ps1')
+
 # Classes PROIBIDAS no auto-loop (D-005): sinais (regex, case-insensitive) por classe. Dados, não lógica.
 # Guarda COARSE e honesta: a defesa real é em camadas (guarda + humano confirma + sandbox em worktree).
 $script:ForbiddenClasses = [ordered]@{
@@ -82,6 +85,13 @@ function Test-IterateVerifiable {
         return [pscustomobject]@{ Verifiable = $false; Verifier = ''; Required = @() }
     }
 
+    # Declarado no project-context.md vence a dedução: é o comando que o /setup rodou e confirmou.
+    $declared = Get-VerificationCommand -Root $ProjectRoot
+    if ($declared) {
+        return [pscustomobject]@{ Verifiable = $true; Verifier = [string]$declared.Verifier; Required = @($declared.Required) }
+    }
+
+    # Fallback: sinais de arquivo (projeto antigo, ou /setup que não registrou a seção).
     foreach ($sig in $script:VerifierSignals) {
         $hit = Get-ChildItem -LiteralPath $ProjectRoot -Filter $sig.Glob -File -Recurse -ErrorAction SilentlyContinue |
             Select-Object -First 1
