@@ -39,12 +39,28 @@
 > **Falsificador** = a condição concreta sob a qual o AT **reprova**. É o que o `/build` reintroduz
 > na verificação por mutação. Obrigatório em AT de **comportamento executável**; `N/A` **declarado**
 > (com o que verifica no lugar) em AT de doc/redação/estrutura. Vazio não é opção — ver `/define`.
+> AT cujo `Then` depende da **saída de um modelo** (LLM) não tem resultado exato: o Falsificador é o
+> limiar do `## Eval Set` (ex.: "reprova se a acurácia < 0,9 nos 50 casos").
 
 | ID | Cenário | Given | When | Then | Falsificador — reprova se… |
 |----|---------|-------|------|------|-----------------------------|
 | AT-001 | {happy path} | {estado} | {ação} | {resultado esperado} | {ex.: "o campo X deixar de ser validado"} |
 | AT-002 | {erro} | {…} | {…} | {…} | {…} |
 | AT-003 | {edge case} | {…} | {…} | {…} | {…} |
+
+## Eval Set (só se `Componente LLM` = sim — senão apague a seção)
+
+> Saída de modelo varia entre rodadas: o AT dela é uma **taxa sobre N casos fixos**, nunca uma
+> rodada só. O código em volta do modelo (parse, retry, roteamento, tool) continua nos AT de cima,
+> com o modelo stubado. Ver `/define`.
+
+| Campo | Valor |
+|-------|-------|
+| **Casos** | {caminho do dataset versionado} · N = {nº de casos} |
+| **Métrica e limiar** | {ex.: acurácia ≥ 0,9 · JSON válido em 100%} |
+| **Baseline** | {o degrau mais simples (ex.: um prompt só) e a métrica dele — a complexidade a mais tem de superá-lo} |
+| **Juiz** | {determinístico (match, schema, execução) > rubrica > LLM-judge de outro modelo} |
+| **Como roda** | {comando · modelo e versão · temperatura/seed, se o provedor deixar · custo por rodada} |
 
 ## Out of Scope
 - {o que NÃO faremos agora}
@@ -63,6 +79,7 @@
 | **Localização do código** | {src/ \| scripts/ \| models/ \| …} | {por quê} |
 | **Domínios de KB** | {ex.: sql, python, dbt, warehouse} | {padrões a consultar} |
 | **Impacto de infra/IaC** | {novo \| modifica \| nenhum \| TBD} | {…} |
+| **Componente LLM** | {não \| sim: o que o modelo decide} | {sim pede o `## Eval Set` acima} |
 
 ## Assumptions
 

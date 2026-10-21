@@ -11,7 +11,7 @@
  * Carregado por <script defer> ANTES de graph.js (que consome window.__AGENT_GRAPH__).
  */
 window.__AGENT_GRAPH__ ={
-  "generatedAt": "2026-10-18",
+  "generatedAt": "2026-10-21",
   "source": "templates/project-scaffold/.claude/agents/graph.json + agents/*.md (frontmatter) + skills/<nome>/SKILL.md + tools/supplements.psd1",
   "nodes": [
     {
@@ -147,7 +147,7 @@ window.__AGENT_GRAPH__ ={
       "id": "security-reviewer",
       "type": "Agent",
       "role": "security",
-      "description": "Revisão de segurança em profundidade (AppSec) guiada por fronteira de confiança — OWASP Top 10 (2021/2025) e ASVS, injeção/SSRF/desserialização/IDOR, authn/authz, cripto, supply-chain (SLSA, lockfiles/pinning), segredos no working-tree e no histórico git (pickaxe, gitleaks/trufflehog) e audit de deps (osv-scanner/pip-audit/npm audit). Read-only.",
+      "description": "Revisão de segurança em profundidade (AppSec) guiada por fronteira de confiança — OWASP Top 10 (2021/2025) e ASVS, injeção/SSRF/desserialização/IDOR, authn/authz, cripto, supply-chain (SLSA, lockfiles/pinning), prompt injection e agência excessiva em sistema com LLM, segredos no working-tree e no histórico git (pickaxe, gitleaks/trufflehog) e audit de deps (osv-scanner/pip-audit/npm audit). Read-only.",
       "tools": [
         "Read",
         "Grep",

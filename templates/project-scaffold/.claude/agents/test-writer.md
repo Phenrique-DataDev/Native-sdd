@@ -34,6 +34,7 @@ Não existe shape único; estruture por **velocidade, custo e escopo**, não por
 - **Ordem/estado:** cada teste isola o próprio estado, sem depender de ordem nem de dado compartilhado mutável — o risco cresce com paralelismo. **Prove** rodando em ordem embaralhada (o runner tem essa flag; confirme qual).
 - **Recurso-afetado:** parte da flakiness varia com CPU/memória/IO — não codifique timeout justo calibrado na sua máquina.
 - **Detecção:** suspeitou → rode **N vezes** em ordem aleatória. Rerun existe para *diagnóstico*, nunca para mascarar.
+- **Chamada a modelo (LLM):** no unit e na integração, **stub do modelo** (resposta gravada como fixture). Parse, retry, roteamento e tool ficam determinísticos, e a regra acima vale inteira. A variação do modelo se mede no **Eval Set** do DEFINE (taxa sobre N casos), não com retry no teste.
 
 > Não vira cerimônia universal: teste puro, sem I/O, tempo, rede, concorrência nem RNG, **não precisa** de fake clock nem seed. Aplique onde estão as fontes reais de intermitência.
 

@@ -39,6 +39,11 @@ Implementar o que o DESIGN especifica e registrar o resultado.
    Reverta a mutação com **cópia do arquivo**, nunca com `git checkout` — o checkout leva junto
    qualquer trabalho não commitado.
 
+   **AT do Eval Set** (saída de modelo, ver o DEFINE): rode o eval com o N declarado e registre a
+   taxa. A mutação vale para ele também: degrade o componente (troque o prompt pelo baseline,
+   tire o exemplo, desligue o validador de saída) e confirme que a métrica cai abaixo do limiar.
+   No lugar do nome do teste, anote a métrica antes e depois.
+
 ## Delegar trabalho mecânico a uma sessão headless (`claude -p`) — opt-in
 
 Parte do BUILD é **mecânica e verificável por máquina**: ler o log de uma suíte que reprovou por

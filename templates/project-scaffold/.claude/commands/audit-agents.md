@@ -68,7 +68,7 @@ as áreas que fazem sentido para *este* projeto e proponha agentes específicos.
 | **Stack simulável** (dbt, SQL, migrações, IaC) | **Simular mudança antes de aplicar** (`/simulate`) | `dbt-simulator`, `sql-simulator`, `terraform-simulator` (`role: simulation`) |
 | Frontend (React/Vue/Next) | Componentes e UX | `frontend-specialist` |
 | Backend/API | Serviços e contratos | `api-specialist` |
-| IA/LLM/RAG | Prompt eng. e avaliação | `llm-specialist` |
+| IA/LLM/RAG | Prompt eng. e avaliação | `llm-specialist` (lente: `postures/llm-systems.md`) |
 | Infra/IaC (Terraform/Docker/CI) | Infra como código | `infra-specialist` |
 | Domínio regulado (fintech, saúde) | Compliance | `compliance-reviewer` |
 | Regras de negócio complexas | Especialista de domínio | `<dominio>-domain-expert` |

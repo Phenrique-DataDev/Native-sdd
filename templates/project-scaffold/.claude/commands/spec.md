@@ -51,12 +51,16 @@ Gere `.claude/sdd/features/DESIGN_<FEATURE>.md` com:
 - **Componentes** (responsabilidade + tecnologia)
 - **Data Flow** e **Integration Points**
 - **Testing Strategy** (que testes provam os Acceptance Tests do DEFINE)
+- **Componente LLM** — só quando o DEFINE diz `Componente LLM` = sim (senão `N/A` declarado): padrão
+  escolhido e o degrau rejeitado, fronteira código × modelo, tools e limites (ver a regra abaixo)
 - **Error Handling**, **Security**, **Observability**
 - **Conhecimento da KB consultado** (entradas que ancoraram o design — do passo *Aterrar na KB*)
 - **Localização do código** (onde os arquivos vão morar) e impacto de infra/IaC
 
 ## Regras
 - Respeite as Constraints do DEFINE.
+- **`Componente LLM` = sim no DEFINE** → antes de escolher a arquitetura, leia `.claude/postures/llm-systems.md`
+  (ferramenta `Read`): a escada de padrões, as armadilhas e por que subir de degrau pede número do Eval Set.
 - Cada Success Criterion deve ter um caminho claro de verificação no design.
 - Aplique YAGNI: o design mais simples que satisfaz os requisitos.
 

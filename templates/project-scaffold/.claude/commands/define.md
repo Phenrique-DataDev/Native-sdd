@@ -19,6 +19,7 @@ Gere `.claude/sdd/features/DEFINE_<FEATURE>.md` com:
 - **Goals** priorizados (`MUST` / `SHOULD` / `COULD`)
 - **Success Criteria** mensuráveis (com números)
 - **Acceptance Tests** (Given/When/Then) — ver o critério de falsificabilidade abaixo
+- **Eval Set** — só quando `Componente LLM` = sim no Contexto técnico; senão a seção sai
 - **Out of Scope**, **Constraints**, **Assumptions**
 - **Clarity Score** (0–3 por: Problema, Usuários, Goals, Success, Scope)
 
@@ -40,6 +41,24 @@ Escreva `N/A` no Falsificador e diga o que verifica no lugar (lint que lê o arq
 |----|---------|-----------------|-----------------------------|
 | AT-001 | {happy path} | {…} | {ex.: "a validação de `email` for removida"} |
 | AT-002 | {doc/redação} | {…} | `N/A` — {o que verifica no lugar} |
+| AT-003 | {saída do modelo} | {…} | {ex.: "a acurácia ficar < 0,9 nos 50 casos do Eval Set"} |
+
+## Saída de modelo: o AT é uma taxa
+
+**Predicado:** o `Then` depende do que um modelo (LLM) responde: classificar, extrair, resumir,
+escolher a tool. Marque `Componente LLM` = sim no Contexto técnico e preencha o `## Eval Set`.
+A mesma entrada pode render saídas diferentes, então um `Then` exato numa rodada só passa ou
+reprova por sorte. Em vez disso:
+
+- **N casos fixos e versionados**, métrica e limiar. O Falsificador é *"métrica abaixo do limiar"*.
+- **Baseline:** a métrica do degrau mais simples (um prompt só, sem tool, sem agente). Cadeia,
+  roteador ou agente só entram se superarem esse número no mesmo Eval Set.
+- **Juiz, nesta preferência:** determinístico (match exato, schema, execução do código gerado) >
+  rubrica escrita > LLM-judge de **outro** modelo. Modelo julgando a própria saída tende a aprová-la.
+- **O resto continua AT comum.** Parse, retry, fallback, roteamento e chamada de tool são código:
+  com o modelo stubado eles têm `Then` exato e Falsificador de sempre.
+
+Sem caso, métrica e limiar, "o modelo responde bem" é a mesma frase que "deve ser rápido".
 
 ## Gate
 **Clarity Score mínimo: 12/15.** **Abaixo disso o instrumento é obrigatório**, não uma sugestão:
@@ -71,6 +90,7 @@ cobriu — e o teste que ele escrever vai passar de qualquer jeito.
 - Inventar requisito que o usuário não confirmou — pergunte.
 - Deixar o **Falsificador** vazio num AT de comportamento executável — `N/A` só vale declarado
   e justificado, para AT de doc/redação/estrutura.
+- Escrever AT de saída de modelo com `Then` exato e uma rodada só — é taxa sobre o Eval Set.
 
 ## Telemetria (opcional, não bloqueia)
 Ao fechar a fase, registre as iterações de re-trabalho (piloto B6 — consolidado em `/telemetry`):

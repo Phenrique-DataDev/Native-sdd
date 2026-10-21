@@ -11,3 +11,4 @@
 design	landing ?page|interface|layout|tela|frontend|front-end|css|responsiv|formul.{1,2}rio|(design|visual) (de|da|do|para) (ui|tela|p.{1,2}gina|site|app|interface)|web ?design|ui/ux|ux/ui
 reporting	relat.{1,2}rio|report|diagrama|diagram|apresenta.{1,2}.{1,2}o|slides?|explica.{1,2}.{1,2}o visual|mermaid|infogr.{1,2}fico
 data	duckdb|clickhouse|bigquery|dbt |snowflake|warehouse|parquet|\.csv|sql|ddl|modelagem (dimensional|de dados)|pipeline de dados|etl
+ai	agent ?sdk|mcp ?server|servidor mcp|claude code plugin|plugin (do|para o) claude code

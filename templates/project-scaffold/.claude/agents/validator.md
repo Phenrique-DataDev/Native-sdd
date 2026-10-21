@@ -64,6 +64,8 @@ Validar com **WIP local** (arquivo não-commitado, config alterada, cache sujo, 
 | **Acceptance** | cumpre os critérios do DEFINE? | sim | o grosso do trabalho: 1 AT ↔ 1 cenário |
 | **E2E** | a jornada integrada funciona? | conforme o AT | quando o AT descreve o fluxo ponta-a-ponta |
 
+**AT de saída de modelo (Eval Set do DEFINE):** o veredito é a **taxa** — rode o eval com o N, o modelo e a configuração declarados e reporte `x/N`, a métrica, o limiar e o comando. Uma rodada isolada não decide, e rodar de novo até cruzar o limiar é escolher o resultado. Taxa colada no limiar, ou que cruza de um lado para o outro entre duas rodadas, é ⚠️ com o número das duas. Eval Set sem N, métrica ou limiar é gap do DEFINE: aponte, não invente o limiar.
+
 Smoke verde **não é conformidade** — só diz que vale continuar. E um **verde intermitente não é verde**: teste que passa e falha no mesmo commit é flaky. Rode o cenário crítico **2×**; alternou, é ⚠️ com a nota "flaky". Re-rodar até passar mascara instabilidade e vira regressão real disfarçada de ruído — se um AT só passa na segunda tentativa, isso é achado, não verde. A causa (estado compartilhado, ordem, relógio, rede, race) você **reporta**; isolar é do `debugger`.
 
 ## Regras críticas (faça / não faça)
