@@ -1,7 +1,7 @@
 ---
 name: visual-check
-description: Renderiza uma UI em larguras comprovadas, lê o screenshot e confere contra a intenção ou uma fonte (Figma/print). Use antes de afirmar que um layout está certo — responsivo, fidelidade, anti-slop. Sem rota de captura calibrada, declara que não rodou.
-argument-hint: "<URL ou arquivo HTML> [larguras] [fonte: link do Figma ou print]"
+description: Renderiza uma UI (página ou jogo Godot) em larguras comprovadas, lê o screenshot e confere contra a intenção ou uma fonte (Figma/print). Use antes de afirmar que um layout está certo — responsivo, fidelidade, anti-slop. Sem rota de captura calibrada, declara que não rodou.
+argument-hint: "<URL, arquivo HTML ou projeto Godot> [larguras] [fonte: link do Figma ou print]"
 metadata:
   maintained_by: native-sdd (internal — not a third-party marketplace skill)
   version: "1.0.0"
@@ -25,7 +25,8 @@ só o subagente (ex.: `designer`), que não pode perguntar, devolve "não rodou 
 - **Uma URL renderizável:** a que o chamador passou, um servidor que já está rodando, ou `file://`
   de um HTML estático. **Não suba dev server por conta própria** — processo em background dentro de
   subagente fica órfão, e o comando depende da stack. Sem URL: "não rodou (sem URL)", com o comando
-  que o usuário rodaria para subir o servidor.
+  que o usuário rodaria para subir o servidor. Jogo Godot é a exceção: o alvo é o projeto (seção
+  **Janela de engine: Godot**).
 - **Uma rota de captura que calibre** (seção **Calibração**). Sem nenhuma: "não rodou (sem rota calibrada)".
 - **Nunca instale** navegador, Playwright ou pacote para conseguir rodar. Se faltar, sugira ao
   usuário o comando (ex.: `npm i -D playwright`, ou baixar o `chrome-headless-shell` do Chrome for
@@ -58,6 +59,42 @@ Rotas, na ordem em que vale tentar (todas passam pela calibração):
   No Windows ele calibrou exato em 375/768/1280 (2026-10-17).
 - **Navegador instalado por CLI** (`--headless --screenshot --window-size`): só se a calibração der
   exato na largura — no Windows não dá.
+
+## Janela de engine: Godot
+
+Jogo web (Phaser, Three.js) é página: use as rotas acima. Jogo **Godot 4** se captura pelo Movie
+Maker da própria engine, e a calibração tem o mesmo papel da do navegador.
+
+- **Pré-condições.** O binário `godot` (ou `Godot_v4*_console.exe`) já resolvível; sem ele, "não
+  rodou (sem Godot)". Nunca instale: sugira ao usuário baixar o da versão do projeto. A rota abre
+  uma **janela de verdade** (`--headless` desliga a renderização). No Linux sem tela, um `xvfb-run`
+  já instalado dá uma, com `--rendering-driver opengl3 --audio-driver Dummy` na linha de captura
+  (medido em container Ubuntu 22.04 com Mesa, 2026-10-22). Sem tela e sem Xvfb, "não rodou".
+- **O tamanho vai num `override.cfg`, não em `--resolution`.** Medido com o Godot 4.7.2 no Windows
+  (2026-10-22): com `--resolution 375x800` o jogo monta 375×800, mas o PNG sai no tamanho do
+  `project.godot` (1152×648) e em branco, sem erro. Com o `override.cfg` sai exato. Ele fica na raiz
+  do projeto do usuário: se já existir um, **não sobrescreva** ("não rodou (override.cfg do
+  projeto)"); crie, capture e apague no mesmo passo, e diga no relatório que ele existiu.
+
+  ```ini
+  [display]
+  window/size/viewport_width=375
+  window/size/viewport_height=800
+  ```
+
+- **Captura:** `godot --path <projeto> --write-movie <tmp>/f.png --fixed-fps 10 --quit-after 5
+  [res://<cena>.tscn]`. Sai uma sequência `f00000000.png`…; leia a **última** (a primeira pode vir
+  antes da cena montar). Sem a cena, roda a `main_scene` do projeto.
+- **Calibração:** copie `assets/godot-calibrar/` para a pasta temporária (rodar cria `.godot/` e
+  `*.uid`, nunca dentro da skill), ponha nela o mesmo `override.cfg` e capture pela mesma linha. O
+  PNG escreve `W=… H=…`: igual ao pedido, a rota vale para esse tamanho. **O tamanho do arquivo não
+  prova nada:** em 2560×1440, do tamanho da tela, o PNG saiu 2560×1440 e o jogo montou 2560×1421,
+  porque a barra de tarefas cortou a janela. Registre o `W×H` observado.
+- A calibração prova a janela, não o stretch: `stretch/mode` e `aspect` são design do jogo, e o PNG
+  mostra o que o jogador vê naquela janela.
+
+Unity e Unreal não têm rota aqui: a captura delas pede script no projeto ou comando de console do
+editor, e nada disso foi medido. Diga "não rodou (sem rota calibrada)" e o que faltou.
 
 ## Onde gravar
 

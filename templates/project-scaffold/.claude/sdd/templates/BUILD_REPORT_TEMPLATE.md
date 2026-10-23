@@ -43,6 +43,7 @@
 |----|-----------|-----------|
 | AT-001 | ✅/❌ | {teste/log que prova} |
 | AT-002 | ✅/❌ | {…} |
+| JH-001 | ⏳/✅/❌ | {só se o DEFINE tem `## Julgamento humano`: juiz, data e o que ele respondeu — ⏳ até lá} |
 
 ## Não exercitado (mapa de cobertura, obrigatória)
 

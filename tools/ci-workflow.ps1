@@ -42,6 +42,10 @@ $script:CiRunners = @('ubuntu-24.04', 'windows-2025')
 $script:CiCredentialStacks = [ordered]@{
     dbt       = 'o dbt test precisa de conexão com o warehouse'
     terraform = 'o plan/validate com provider precisa de credencial de cloud'
+    # Engine (STACK_SEM_ENGINE_DE_JOGO): o Unity ativa a licença da conta no runner (o GameCI pede o
+    # .ulf e as credenciais como secrets); a Unreal não está no runner e vem de conta Epic.
+    unity     = 'o teste no runner precisa da licença Unity da conta como secret (ex.: GameCI)'
+    unreal    = 'a engine não está no runner hospedado e o download depende de conta Epic; o CI pede runner próprio'
 }
 
 # Tech (Get-StackSignals) → step de setup. dbt é Python. Versão "flutuante" de propósito (3.x, lts/*,
@@ -121,6 +125,7 @@ function Test-CiOfferApplicable {
         if ($script:CiCredentialStacks.Contains($t)) { $reasons.Add("stack ${t}: $($script:CiCredentialStacks[$t])") }
     }
     if ($tech -contains 'docker') { $caveats.Add('há Docker/compose: pergunte se os testes sobem algum serviço (banco, API); se sim, não ofereça') }
+    if ($tech -contains 'godot') { $caveats.Add('há Godot: o runner não tem a engine; o job precisa baixar o binário (e os export templates, se o teste exporta) antes do comando de teste') }
     if ($tech.Count -eq 0) { $caveats.Add('nenhuma stack reconhecida: o runner não ganha setup de runtime') }
 
     return [pscustomobject]@{

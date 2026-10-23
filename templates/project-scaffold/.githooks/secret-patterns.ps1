@@ -65,6 +65,12 @@ function Test-IsSecretFilePath {
     return $false
 }
 
+# --- PURA: uma passada de UM padrao (funcao propria para o teste contar as passadas) ----------
+function Get-SecretRegexMatch {
+    param([string]$Text, [string]$Regex)
+    return , [regex]::Matches($Text, $Regex)
+}
+
 # --- PURA: encontra segredos num texto -> lista de achados (mascarados) ------------------------
 function Find-SecretMatch {
     # -MinConfidence: 'High' ignora padroes 'Medium'. Default 'Medium' (pega tudo).
@@ -74,10 +80,17 @@ function Find-SecretMatch {
     )
     $found = New-Object System.Collections.Generic.List[object]
     if ([string]::IsNullOrEmpty($Text)) { return , @($found.ToArray()) }
-    foreach ($pat in (Get-SecretPattern)) {
-        if ($MinConfidence -eq 'High' -and $pat.Confidence -ne 'High') { continue }
+    $pats = @(Get-SecretPattern | Where-Object { $MinConfidence -ne 'High' -or $_.Confidence -eq 'High' })
+    # Pre-filtro: UMA passada com os padroes alternados. A uniao nao casa se, e so se, nenhum padrao
+    # casa, entao o texto limpo sai aqui sem mudar o resultado. Cada regex varrendo o texto inteiro
+    # custava ~0,8 s numa cena de 14 MB (11 regex = 9,2 s); a uniao, ~1,1 s (medido 2026-10-22).
+    # Texto com achado segue para o laco abaixo, que monta a lista como sempre.
+    $union = ($pats | ForEach-Object { "(?:$($_.Regex))" }) -join '|'
+    try { if (-not [regex]::IsMatch($Text, $union)) { return , @($found.ToArray()) } }
+    catch { }   # uniao defeituosa cai no laco, que isola o padrao ruim
+    foreach ($pat in $pats) {
         try {
-            $hits = [regex]::Matches($Text, $pat.Regex)
+            $hits = Get-SecretRegexMatch -Text $Text -Regex $pat.Regex
         }
         catch { continue }   # padrao defeituoso nunca derruba o chamador
         foreach ($m in $hits) {

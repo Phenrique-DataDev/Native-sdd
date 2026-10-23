@@ -12,7 +12,7 @@
 <!-- A versão do site, para o track.js carimbar no hit (coluna `rel` do coletor). Fica aqui e não
      no JS porque o HTML já é a fonte da versão exibida, e a segunda cópia é a que envelhece.
      Amarrada ao VERSION por tools/site-tests/specs/integridade.spec.mjs. -->
-<meta name="site-version" content="1.0.12">
+<meta name="site-version" content="1.0.15">
 
 <meta property="og:type" content="website">
 <meta property="og:title" content="Native-SDD — Spec-to-Artifact Compiler">
@@ -376,6 +376,46 @@
 </section>
 
 <!-- ============================================================
+     03b · PÚBLICO — para quem é, pelo que o scaffold já sabe
+     Cada linha só afirma o que existe no produto (conferido no README, 2026-10-22).
+     ============================================================ -->
+<section id="publico" class="section" data-track-section="publico">
+  <div class="section-grid">
+    <div class="section-body">
+      <div class="section-head reveal">
+        <div>
+          <h2 data-motion="split">O mesmo ciclo, com o que o seu projeto pede.</h2>
+        </div>
+        <p class="lede">O scaffold reconhece o tipo de projeto e traz o que ele precisa. Estes são os casos que ele já conhece.</p>
+      </div>
+
+      <dl class="publico-lista reveal">
+        <div class="publico-item">
+          <dt class="mono">JOGO // UNITY · GODOT · UNREAL</dt>
+          <dd>O <span class="mono">/adapt</span> reconhece a engine, o <span class="mono">/supplements</span> traz os plugins oficiais da Unity e da Epic e o DEFINE guarda o critério que só um jogador julga. A <span class="mono">visual-check</span> fotografa a janela Godot.</dd>
+        </div>
+        <div class="publico-item">
+          <dt class="mono">SISTEMA COM LLM</dt>
+          <dd>O aceite do modelo vira taxa sobre N casos fixos, com baseline e juiz, e o <span class="mono">security-reviewer</span> trata a saída do modelo como entrada não confiável.</dd>
+        </div>
+        <div class="publico-item">
+          <dt class="mono">DADOS</dt>
+          <dd>O <span class="mono">/adapt</span> detecta Python e dbt, e o <span class="mono">/supplements</span> traz o data-agent-kit e as skills de ClickHouse e DuckDB.</dd>
+        </div>
+        <div class="publico-item">
+          <dt class="mono">INTERFACE WEB</dt>
+          <dd>O <span class="mono">designer</span> refina, segue o Figma ou cria do zero, e a <span class="mono">visual-check</span> confere a tela em larguras comprovadas.</dd>
+        </div>
+        <div class="publico-item">
+          <dt class="mono">CÓDIGO QUE JÁ EXISTE</dt>
+          <dd>O <span class="mono">/adapt</span> lê a stack e absorve o <span class="mono">.claude/</span> que já existir sem sobrescrever.</dd>
+        </div>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
      04 · MOTOR — Phases.dc.html
      ============================================================ -->
 <section id="motor" class="section" data-track-section="motor">
@@ -702,7 +742,7 @@
             <span class="term-titlebar-name mono">pwsh — native-sdd</span>
             <div class="term-titlebar-meta">
               <span>branch: main</span>
-              <span>v1.0.12</span>
+              <span>v1.0.15</span>
             </div>
           </div>
 
@@ -946,7 +986,7 @@
           <dd>toda fase lê e grava</dd>
         </dl>
         <div class="blueprint-rev mono">
-          <span>REV // 1.0.12</span>
+          <span>REV // 1.0.15</span>
           <span class="ok">STATUS: COMPILADO</span>
         </div>
       </div>
@@ -1140,6 +1180,7 @@
       <a href="https://github.com/Phenrique-DataDev/Native-sdd/blob/main/docs/VISAO.md" target="_blank" rel="noopener">Visão</a>
       <a href="https://github.com/Phenrique-DataDev/Native-sdd/blob/main/docs/USO.md" target="_blank" rel="noopener">Uso</a>
       <a href="https://github.com/Phenrique-DataDev/Native-sdd/blob/main/docs/HARNESS-CONTRACT.md" target="_blank" rel="noopener">Harness Contract</a>
+      <a href="https://github.com/Phenrique-DataDev/Native-sdd/blob/main/README.en.md" target="_blank" rel="noopener" hreflang="en" lang="en">English</a>
       <!-- Único link daqui que NÃO vai para o GitHub, e o único obrigatório: esta página envia
            eventos ao coletor (assets/js/track.js), e a política é o que diz o quê e por quanto
            tempo. A v1 linkava; enquanto esta landing viveu em /compiler/ ela não precisava, e
@@ -1147,7 +1188,7 @@
            sem PII" ao lado é a afirmação — isto é onde ela se verifica. -->
       <a href="privacidade.html">Privacidade</a>
     </nav>
-    <span class="foot-meta mono">v1.0.12 · sem cookie, sem PII</span>
+    <span class="foot-meta mono">v1.0.15 · sem cookie, sem PII</span>
   </div>
 </footer>
 

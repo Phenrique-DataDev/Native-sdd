@@ -38,8 +38,10 @@ Format-AdaptReport -Stack $stack -Hygiene $hygiene -Workspace $workspace
 ```
 
 - `Get-StackSignals` infere a stack por **presença de manifestos** (`pyproject.toml`,
-  `package.json`, `dbt_project.yml`, `go.mod`, `*.csproj`, `Dockerfile`, `*.tf`, `schema.prisma`…)
-  — vazio se nada reconhecido (**não inventa**).
+  `package.json`, `dbt_project.yml`, `go.mod`, `*.csproj`, `Dockerfile`, `*.tf`, `schema.prisma`…;
+  engine de jogo por `ProjectSettings/ProjectVersion.txt`, `project.godot`, `*.uproject`)
+  — vazio se nada reconhecido (**não inventa**). Em repo git, lista pelo git e respeita o
+  `.gitignore` (o `Library/` do Unity não vira `node`).
 - `Get-WorkspaceLayout` reconhece **monorepo** (`pnpm-workspace.yaml`, `turbo.json` ou `workspaces`
   no `package.json` da raiz) e lista os pacotes um a um, com a stack de cada. Sem marcador, devolve
   `$null` e o relatório fica como antes. Num monorepo, o rascunho do Passo 3 descreve a stack **por

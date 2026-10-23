@@ -136,6 +136,26 @@
             Theme  = 'ai'
             Reason = 'desenvolver plugins do Claude Code: hooks, commands, agents, skills (Anthropic). O teste do plugin pronto é o nativo claude plugin eval'
         }
+        # --- Desenvolvimento de jogos (marketplace oficial) — skills do fornecedor da engine ---
+        # 2026-10-21 (CATALOGO_SEM_PLUGINS_DE_ENGINE): julgados no clone dos dois repositórios.
+        # unity: 32 skills, sem MCP e sem hook. unreal: 3 skills + hook SessionStart; o MCP não vem
+        # no plugin (sem .mcp.json), o usuário o liga no editor seguindo a skill unreal-mcp.
+        @{
+            Type   = 'plugin'
+            Name   = 'unity'
+            Source = 'anthropics/claude-plugins-official'
+            Id     = 'claude-plugins-official'
+            Theme  = 'gamedev'
+            Reason = 'skills do Unity: UI Toolkit/uGUI, 2D, URP, física, áudio, Shader Graph, pacotes (Unity Technologies, beta). Instala sem conta; as skills de IAP, LevelPlay, Vivox e multiplayer pedem serviço da Unity com conta, e a unity-cli usa a CLI unity. Licença Unity Companion (projeto que usa Unity)'
+        }
+        @{
+            Type   = 'plugin'
+            Name   = 'unreal-engine-skills-for-claude-code'
+            Source = 'anthropics/claude-plugins-official'
+            Id     = 'claude-plugins-official'
+            Theme  = 'gamedev'
+            Reason = 'controlar o Unreal Editor pelo MCP do próprio editor (Epic Games, MIT). Ligado, roda um hook bash em SessionStart que só fala dentro de projeto Unreal (.uproject); o MCP o usuário configura no .uproject e no editor, guiado pela skill'
+        }
         # --- Skill autoral (vendorizada em templates/supplements/skills/, Type=skill) ---
         @{
             Type   = 'skill'

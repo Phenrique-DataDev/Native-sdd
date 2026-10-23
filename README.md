@@ -7,7 +7,8 @@
 <p align="center">
   <a href="docs/VISAO.md">Visão</a> ·
   <a href="docs/USO.md">Uso</a> ·
-  <a href="docs/HARNESS-CONTRACT.md">Harness Contract</a>
+  <a href="docs/HARNESS-CONTRACT.md">Harness Contract</a> ·
+  <a href="README.en.md"><strong>English</strong></a>
 </p>
 
 <p align="center">
@@ -20,8 +21,8 @@
 </p>
 
 <p align="center">
-  <strong>Versão atual: v1.0.12</strong> ·
-  <a href="https://github.com/Phenrique-DataDev/Native-sdd/releases/tag/v1.0.12">o que mudou nela</a> ·
+  <strong>Versão atual: v1.0.15</strong> ·
+  <a href="https://github.com/Phenrique-DataDev/Native-sdd/releases/tag/v1.0.15">o que mudou nela</a> ·
   <a href="https://github.com/Phenrique-DataDev/Native-sdd/releases">todas as releases</a>
 </p>
 
@@ -56,6 +57,18 @@
 *In one minute: one command sets up the machine; each new project gets the SDD phases, `/dev`,
 `/check` and a secret-blocking pre-commit. Start with the default `mvp` profile; everything else is
 opt-in. `-Check` / `-DryRun` show what would change before anything is written.*
+
+## Para quem é / Who it's for
+
+| Se você constrói… | O que o scaffold te dá |
+|---|---|
+| **Um jogo** (Unity, Godot, Unreal) | O `/adapt` reconhece a engine pelo marcador do projeto, e a oferta de CI diz por que recusa Unity e Unreal. O `/supplements gamedev` instala os plugins oficiais da Unity e da Epic Games. O DEFINE tem a seção **Julgamento humano** para o que nenhum número decide (game feel, dificuldade), com quem julga e o que conta como aprovado. A `visual-check` tira screenshot de uma janela Godot num tamanho que ela prova antes. |
+| **Algo em cima de um LLM** | Declarar o componente LLM no DEFINE transforma o AT dele numa **taxa sobre N casos fixos**, com baseline e juiz, em vez de uma rodada de sorte. O DESIGN registra que passo o código decide e qual o modelo decide. O `security-reviewer` trata saída do modelo, documento recuperado e resultado de tool como entrada não confiável (OWASP Top 10 for LLM Applications). O `/supplements ai` traz Agent SDK, MCP server e plugins. |
+| **Pipeline de dados** | O `/adapt` detecta projeto Python e dbt. O `/supplements data` traz o data-agent-kit, as boas práticas de ClickHouse e as skills de DuckDB. |
+| **Uma interface web** | O agente `designer` em três modos (refinar uma tela, seguir uma fonte do Figma, criar do zero), a `visual-check`, que fotografa a página em larguras comprovadas antes de alguém dizer "pronto", e a trilha de redesign do `/dev`, que mostra antes e depois para aprovação antes de mexer no código. |
+| **Num código que já existe** | O `/adapt` detecta a stack e a higiene (testes, CI, docs), absorve o `.claude/` que já existir sem sobrescrever e passa ao `/curate`. |
+
+*English version of this page, including who it's for: [README.en.md](README.en.md).*
 
 ---
 

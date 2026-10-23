@@ -41,6 +41,8 @@
 > (com o que verifica no lugar) em AT de doc/redação/estrutura. Vazio não é opção — ver `/define`.
 > AT cujo `Then` depende da **saída de um modelo** (LLM) não tem resultado exato: o Falsificador é o
 > limiar do `## Eval Set` (ex.: "reprova se a acurácia < 0,9 nos 50 casos").
+> Critério que **só uma pessoa julga** (game feel, dificuldade, tom de texto, clareza da UX) não tem
+> Falsificador: vai para o `## Julgamento humano`, com quem julga e o que conta como aprovado.
 
 | ID | Cenário | Given | When | Then | Falsificador — reprova se… |
 |----|---------|-------|------|------|-----------------------------|
@@ -61,6 +63,17 @@
 | **Baseline** | {o degrau mais simples (ex.: um prompt só) e a métrica dele — a complexidade a mais tem de superá-lo} |
 | **Juiz** | {determinístico (match, schema, execução) > rubrica > LLM-judge de outro modelo} |
 | **Como roda** | {comando · modelo e versão · temperatura/seed, se o provedor deixar · custo por rodada} |
+
+## Julgamento humano (só se algum critério só uma pessoa julga — senão apague a seção)
+
+> O que vira número fica nos AT de cima: tempo de frame, altura do pulo, cliques até a tela X. Aqui
+> entra só o resto, e cada linha diz **quem** julga, **como** e o que conta como **aprovado**. O
+> `validator` não julga por ninguém: a linha fica ⏳ até o julgamento ser registrado no
+> BUILD_REPORT. Ver `/define`.
+
+| ID | Critério | Por que não vira métrica | Juiz | Como | Aprovado se… |
+|----|----------|--------------------------|------|------|--------------|
+| JH-001 | {ex.: o pulo "responde" ao controle} | {o que já virou AT (altura, coyote time) e o que sobra} | {quem: papel, nº de pessoas} | {ex.: playtest de 10 min com roteiro, na build X} | {ex.: 4 de 5 jogadores dizem que sim sem ajuda} |
 
 ## Out of Scope
 - {o que NÃO faremos agora}

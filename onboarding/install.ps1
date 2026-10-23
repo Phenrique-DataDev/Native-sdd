@@ -35,13 +35,13 @@
 
 .PARAMETER ExtraPlugins
   Opt-in: instala suplementos extra user-scoped do repertório curado (tools/supplements.psd1), por
-  disciplina: design, reporting, data, security, docs, meta, ai, orchestration. Os PLUGINS nascem
+  disciplina: design, reporting, data, security, docs, meta, ai, orchestration, gamedev. Os PLUGINS nascem
   DESABILITADOS: ficam no disco sem custar contexto, e você liga o que for usar pelo /plugin (o que
   tiver MCP termina em /mcp). Skills do repertório não têm esse estado e entram ativas. Off por
   padrão p/ manter o scaffold context-free. Não bloqueante (WARN).
 
 .PARAMETER Themes
-  Filtra os suplementos por tema (design | reporting | data | security | docs | meta | ai | orchestration). Vazio = todos.
+  Filtra os suplementos por tema (design | reporting | data | security | docs | meta | ai | orchestration | gamedev). Vazio = todos.
   Usado junto de -ExtraPlugins (-ExtraPlugins sozinho = todos, retrocompat).
 
 .PARAMETER WithHerdr

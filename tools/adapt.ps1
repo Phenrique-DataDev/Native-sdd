@@ -44,6 +44,11 @@ $script:StackMap = [ordered]@{
     docker    = @('Dockerfile', 'compose.yml', 'compose.yaml', 'docker-compose.yml')
     terraform = @('*.tf')
     prisma    = @('schema.prisma')
+    # Engine de jogo (STACK_SEM_ENGINE_DE_JOGO, 2026-10-21): o marcador que só a engine grava.
+    # O do Unity leva a pasta porque ProjectVersion.txt sozinho é nome genérico.
+    unity     = @('ProjectSettings/ProjectVersion.txt')
+    godot     = @('project.godot')
+    unreal    = @('*.uproject')
 }
 
 # Monorepo (ADAPT_STACK_PLANA_EM_MONOREPO, 2026-10-17): marcadores na raiz que dizem "isto é um
@@ -91,27 +96,73 @@ $script:CommandPhase = @{
     ship       = 'fase 4 (Ship)'
 }
 
+function Get-GitFileList {
+    <#
+    .SYNOPSIS
+        Arquivos (relativos a -Root, com /) que o git enxerga: rastreados + não rastreados que o
+        .gitignore não exclui. $null se -Root não está num repo git ou o git não lista nada; aí o
+        chamador volta à varredura do disco.
+    .NOTES
+        ADAPT_DETECTA_UNITY_COMO_NODE (2026-10-21): a varredura lia Library/PackageCache do Unity e
+        relatava node. A lista do git também não desce na pasta ignorada, que no Unity é a maior.
+        Submódulo aparece como uma entrada só (o git não lista o conteúdo dele junto com --others).
+    #>
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Root)
+
+    if (-not (Get-Command git -ErrorAction SilentlyContinue)) { return $null }
+    # -z evita o escape de nome com acento; a saída do git é UTF-8 e o console pode não ser.
+    $prevEnc = [Console]::OutputEncoding
+    try {
+        [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+        $raw = & git -C $Root ls-files -z --cached --others --exclude-standard 2>$null
+        $rc = $LASTEXITCODE
+    } finally {
+        [Console]::OutputEncoding = $prevEnc
+    }
+    if ($rc -ne 0 -or -not $raw) { return $null }
+    $files = @(($raw -join "`0") -split "`0" | Where-Object { $_ })
+    if ($files.Count -eq 0) { return $null }
+    return $files
+}
+
 function Get-FilesMatching {
     <#
     .SYNOPSIS
         Nomes de arquivo (relativos a -Root) que casam um glob, recursivo. Read-only e ordenado.
         Ignora ruído comum (.git, node_modules, .venv) para não inflar a evidência.
+        Com -FileList (saída do Get-GitFileList), casa o glob no nome de cada entrada em vez de
+        varrer o disco, e com isso respeita o .gitignore.
+        Glob com / (ex.: ProjectSettings/ProjectVersion.txt) casa o fim do caminho, não só o nome.
     .OUTPUTS
         [string[]]
     #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)][string]$Root,
-        [Parameter(Mandatory)][string]$Pattern
+        [Parameter(Mandatory)][string]$Pattern,
+        [string[]]$FileList
     )
 
     if (-not (Test-Path -LiteralPath $Root -PathType Container)) { return @() }
 
+    $leaf = ($Pattern -split '/')[-1]
+    $byPath = { param($rel) $Pattern -notmatch '/' -or $rel -like $Pattern -or $rel -like "*/$Pattern" }
+
+    if ($FileList) {
+        # Entrada do índice apagada do disco não é evidência.
+        $hits = $FileList |
+            Where-Object { ($_ -split '/')[-1] -like $leaf -and (& $byPath $_) -and "/$_/" -notmatch '/(\.git|node_modules|\.venv|venv|__pycache__|dist|build)/' } |
+            Where-Object { Test-Path -LiteralPath (Join-Path $Root $_) -PathType Leaf }
+        return @($hits | Sort-Object -Unique)
+    }
+
     $ignore = '\\(\.git|node_modules|\.venv|venv|__pycache__|dist|build)\\'
     $rootFull = (Resolve-Path -LiteralPath $Root).Path
-    $hits = Get-ChildItem -LiteralPath $Root -Filter $Pattern -File -Recurse -ErrorAction SilentlyContinue |
+    $hits = Get-ChildItem -LiteralPath $Root -Filter $leaf -File -Recurse -ErrorAction SilentlyContinue |
         Where-Object { $_.FullName -notmatch $ignore } |
-        ForEach-Object { $_.FullName.Substring($rootFull.Length).TrimStart('\', '/') -replace '\\', '/' }
+        ForEach-Object { $_.FullName.Substring($rootFull.Length).TrimStart('\', '/') -replace '\\', '/' } |
+        Where-Object { & $byPath $_ }
     return @($hits | Sort-Object -Unique)
 }
 
@@ -126,9 +177,10 @@ function Get-StackSignals {
     [CmdletBinding()]
     param([Parameter(Mandatory)][string]$Root)
 
+    $list = Get-GitFileList -Root $Root
     $result = foreach ($tech in $script:StackMap.Keys) {
         $evidence = foreach ($pat in $script:StackMap[$tech]) {
-            Get-FilesMatching -Root $Root -Pattern $pat
+            Get-FilesMatching -Root $Root -Pattern $pat -FileList $list
         }
         $evidence = @($evidence | Sort-Object -Unique)
         if ($evidence.Count -gt 0) {
@@ -162,8 +214,9 @@ function Get-WorkspaceLayout {
     }
     if ($markers.Count -eq 0) { return $null }
 
+    $list = Get-GitFileList -Root $Root
     $dirs = foreach ($pat in $script:PackageManifests) {
-        foreach ($f in @(Get-FilesMatching -Root $Root -Pattern $pat)) {
+        foreach ($f in @(Get-FilesMatching -Root $Root -Pattern $pat -FileList $list)) {
             $dir = ($f -replace '/?[^/]+$', '')
             if ($dir) { $dir }   # a raiz é o workspace, não um pacote
         }
@@ -194,17 +247,18 @@ function Get-ProjectHygiene {
     param([Parameter(Mandatory)][string]$Root)
 
     # Testes: pasta tests/ OU arquivos de teste comuns.
+    $list = Get-GitFileList -Root $Root
     $testHits = @()
     if (Test-Path -LiteralPath (Join-Path $Root 'tests') -PathType Container) { $testHits += 'tests/' }
     foreach ($pat in '*.Tests.ps1', '*_test.go', 'test_*.py', '*_test.py', '*.test.js', '*.spec.ts') {
-        $testHits += Get-FilesMatching -Root $Root -Pattern $pat
+        $testHits += Get-FilesMatching -Root $Root -Pattern $pat -FileList $list
     }
     $testHits = @($testHits | Sort-Object -Unique)
 
     # CI: pipelines comuns.
     $ciHits = @()
-    $ciHits += Get-FilesMatching -Root $Root -Pattern '*.yml' | Where-Object { $_ -match '^\.github/workflows/' }
-    $ciHits += Get-FilesMatching -Root $Root -Pattern '*.yaml' | Where-Object { $_ -match '^\.github/workflows/' }
+    $ciHits += Get-FilesMatching -Root $Root -Pattern '*.yml' -FileList $list | Where-Object { $_ -match '^\.github/workflows/' }
+    $ciHits += Get-FilesMatching -Root $Root -Pattern '*.yaml' -FileList $list | Where-Object { $_ -match '^\.github/workflows/' }
     foreach ($f in '.gitlab-ci.yml', 'azure-pipelines.yml') {
         if (Test-Path -LiteralPath (Join-Path $Root $f) -PathType Leaf) { $ciHits += $f }
     }

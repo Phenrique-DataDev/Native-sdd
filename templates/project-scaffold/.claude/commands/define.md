@@ -20,6 +20,7 @@ Gere `.claude/sdd/features/DEFINE_<FEATURE>.md` com:
 - **Success Criteria** mensuráveis (com números)
 - **Acceptance Tests** (Given/When/Then) — ver o critério de falsificabilidade abaixo
 - **Eval Set** — só quando `Componente LLM` = sim no Contexto técnico; senão a seção sai
+- **Julgamento humano** — só para o critério que só uma pessoa julga; senão a seção sai
 - **Out of Scope**, **Constraints**, **Assumptions**
 - **Clarity Score** (0–3 por: Problema, Usuários, Goals, Success, Scope)
 
@@ -60,6 +61,21 @@ reprova por sorte. Em vez disso:
 
 Sem caso, métrica e limiar, "o modelo responde bem" é a mesma frase que "deve ser rápido".
 
+## Critério que só uma pessoa julga: juiz no lugar do Falsificador
+
+**Predicado:** o critério depende de percepção humana e nenhum número o decide: game feel,
+dificuldade, diversão, tom de um texto, clareza de uma tela. Ele vai para o `## Julgamento humano`.
+
+- **Primeiro decomponha.** "O pulo é bom" costuma esconder partes mensuráveis: altura, tempo de
+  subida, janela de coyote time, frame time. Essas viram AT com Falsificador. Só o resto que
+  continua dependendo de alguém vai para a seção, e a coluna *Por que não vira métrica* diz o que
+  já foi medido e o que sobra.
+- **Cada linha tem juiz, protocolo e régua.** Quem julga (papel e quantas pessoas), como (sessão,
+  roteiro, build exata) e o que conta como aprovado (*"4 de 5 jogadores…"*). Sem isso, a linha é
+  a mesma frase vaga de antes, mudada de lugar.
+- **Quem constrói não julga.** O agente entrega o que o juiz precisa e registra a resposta dele;
+  o veredito não sai de leitura de código nem de o agente rodar o jogo.
+
 ## Gate
 **Clarity Score mínimo: 12/15.** **Abaixo disso o instrumento é obrigatório**, não uma sugestão:
 carregue a skill [`grill-me`](../skills/grill-me/SKILL.md) (tool `Skill`) e feche as lacunas em
@@ -91,6 +107,8 @@ cobriu — e o teste que ele escrever vai passar de qualquer jeito.
 - Deixar o **Falsificador** vazio num AT de comportamento executável — `N/A` só vale declarado
   e justificado, para AT de doc/redação/estrutura.
 - Escrever AT de saída de modelo com `Then` exato e uma rodada só — é taxa sobre o Eval Set.
+- Pôr no `## Julgamento humano` um critério que tem número, unidade ou condição binária — é AT
+  com Falsificador. A seção não é saída para AT vago.
 
 ## Telemetria (opcional, não bloqueia)
 Ao fechar a fase, registre as iterações de re-trabalho (piloto B6 — consolidado em `/telemetry`):

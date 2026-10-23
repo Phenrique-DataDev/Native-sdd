@@ -11,7 +11,7 @@
  * Carregado por <script defer> ANTES de graph.js (que consome window.__AGENT_GRAPH__).
  */
 window.__AGENT_GRAPH__ ={
-  "generatedAt": "2026-10-21",
+  "generatedAt": "2026-10-22",
   "source": "templates/project-scaffold/.claude/agents/graph.json + agents/*.md (frontmatter) + skills/<nome>/SKILL.md + tools/supplements.psd1",
   "nodes": [
     {
@@ -297,10 +297,10 @@ window.__AGENT_GRAPH__ ={
       "id": "visual-check",
       "type": "Skill",
       "role": "",
-      "description": "Renderiza uma UI em larguras comprovadas, lê o screenshot e confere contra a intenção ou uma fonte (Figma/print). Use antes de afirmar que um layout está certo — responsivo, fidelidade, anti-slop. Sem rota de captura calibrada, declara que não rodou.",
+      "description": "Renderiza uma UI (página ou jogo Godot) em larguras comprovadas, lê o screenshot e confere contra a intenção ou uma fonte (Figma/print). Use antes de afirmar que um layout está certo — responsivo, fidelidade, anti-slop. Sem rota de captura calibrada, declara que não rodou.",
       "scope": "project",
       "status": "valid",
-      "argumentHint": "\"<URL ou arquivo HTML> [larguras] [fonte: link do Figma ou print]\""
+      "argumentHint": "\"<URL, arquivo HTML ou projeto Godot> [larguras] [fonte: link do Figma ou print]\""
     },
     {
       "id": "visual-explainer",

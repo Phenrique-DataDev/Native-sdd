@@ -260,6 +260,22 @@ main [tabindex="-1"]:focus { outline: none; }
   color: var(--ink-soft);
 }
 
+/* §publico: rótulo mono à esquerda, prosa à direita; no mobile o rótulo sobe para cima do texto. */
+.publico-lista { margin: 56px 0 0; border-top: 1px solid var(--line); }
+.publico-item {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 40px;
+  padding: 22px 0;
+  border-bottom: 1px solid var(--line);
+}
+.publico-item dt { padding-top: 4px; font-size: var(--fs-rotulo); letter-spacing: 0.2em; color: var(--muted); }
+.publico-item dd { margin: 0; max-width: 68ch; line-height: 1.66; color: var(--ink-soft); }
+@media (max-width: 768px) {
+  .publico-lista { margin-top: 32px; }
+  .publico-item { grid-template-columns: minmax(0, 1fr); gap: 6px; padding: 16px 0; }
+}
+
 /* -------------------------------------------------------------------------
    Header / navegação
    ------------------------------------------------------------------------- */

@@ -127,7 +127,7 @@ pesquisa, mapeamento). Fica **no loop principal** (onde o humano atende o `ask`/
 | Doc de lib/framework/CLI versionável | **context7** (`resolve`→`query`) | bounded (nome de lib/tópico) | **auto-fire** |
 | Buscar/ler local, mapear código | `Read`/`Grep`/`Glob`/`Bash` read-only | local | **auto-fire** |
 | Diagrama/relatório/plano visual | **visual-explainer** (HTML local) | local (scratch/`docs`, não publica) | **auto-fire** |
-| Trabalho de **disciplina** com suplemento no repertório (design · data · security · reporting · docs · ai · meta) | **suplemento do tema** (`/supplements`, skills opt-in, `-ExtraPlugins -Themes`) | local | **auto-fire só na disciplina do tema** |
+| Trabalho de **disciplina** com suplemento no repertório (design · data · security · reporting · docs · ai · meta · gamedev) | **suplemento do tema** (`/supplements`, skills opt-in, `-ExtraPlugins -Themes`) | local | **auto-fire só na disciplina do tema** |
 | Pesquisa web multi-fonte | **deep-research** | **outward** (query do contexto → exfiltração) | **confirmar** |
 | Navegar/agir em página | **browser/chrome** | **outward** + efeito | **confirmar** |
 | Publicar/compartilhar (share-page, push, PR, release) | — | **outward** | **confirmar** |
@@ -138,7 +138,7 @@ pesquisa, mapeamento). Fica **no loop principal** (onde o humano atende o `ask`/
 > **Repertório de suplementos (`/supplements`) é opt-in e por-disciplina.** Skills/plugins curados
 > (`tools/supplements.psd1`) instalados user-scoped sob `-ExtraPlugins -Themes` (ou `/supplements <tema>`):
 > `design` (impeccable/ui-ux-pro-max), `reporting` (visual-explainer), `data`, `security`, `docs`
-> (gerador-de-manuais), `ai`, `meta`.
+> (gerador-de-manuais), `ai`, `meta`, `gamedev` (unity/unreal).
 > **Auto-surgem pela `description` da skill** só quando a tarefa é **daquela disciplina** — num projeto sem a
 > superfície (ex.: sem UI num projeto de dados) ficam **inertes**; não force tooling fora do domínio. Se não
 > instalados, simplesmente não estão no arsenal. **Não instalar conector que peça credencial/MCP** sem confirmar

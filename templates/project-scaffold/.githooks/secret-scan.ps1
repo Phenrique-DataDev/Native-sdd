@@ -51,11 +51,10 @@ function Get-StagedFile {
 function Get-StagedAddedLine {
     $d = & git diff --cached --unified=0 2>$null
     if ($LASTEXITCODE -ne 0) { return '' }
-    $text = ($d -join "`n")
-    $added = foreach ($line in ($text -split "`r?`n")) {
-        if ($line.StartsWith('+') -and -not $line.StartsWith('+++')) { $line.Substring(1) }
-    }
-    return ($added -join "`n")
+    # Filtro vetorizado (-match/-replace sobre o array): o laco linha a linha em PowerShell custava
+    # 5,3 s numa cena de 14 MB; isto, 0,9 s (medido 2026-10-22). O @() segura o caso de uma linha so,
+    # em que $d e string e -match devolveria bool.
+    return ((@($d) -match '^\+(?!\+\+)') -replace '^\+', '') -join "`n"
 }
 
 # --- Avaliacao (PURA em relacao a saida: devolve os problemas, NAO decide o exit) ---------------
