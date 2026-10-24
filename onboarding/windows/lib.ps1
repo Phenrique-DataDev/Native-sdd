@@ -1095,8 +1095,21 @@ function Install-ManagedPolicy {
         Write-Step INFO "managed policy ($state)"
         return
     }
+    # O dry-run segue a MESMA decisão da execução real: antes ele anunciava "aplicaria" sem olhar o
+    # -Decision, e o -NonInteractive (que vira No no apply.ps1) mostrava uma escrita em caminho de
+    # sistema que não aconteceria (MANAGED_POLICY_DRYRUN_ANUNCIA_O_QUE_NAO_FARIA).
     if ($DryRun) {
-        Write-Step DRY "aplicaria managed policy em $destPath"
+        $vaiPular = ($Decision -eq 'No') -or ($Decision -eq 'Ask' -and -not [Environment]::UserInteractive)
+        if ($vaiPular) {
+            Write-Step SKIP 'managed policy: pularia (opt-in não aceito nesta execução)'
+            $Summary.Skipped++
+        }
+        elseif ($Decision -eq 'Ask') {
+            Write-Step DRY "perguntaria se aplica a managed policy em $destPath (opt-in)"
+        }
+        else {
+            Write-Step DRY "aplicaria managed policy em $destPath"
+        }
         return
     }
 

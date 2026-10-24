@@ -14,6 +14,7 @@ Conteúdo que vai para `~/.claude/` (aplica-se a **todos** os projetos).
 | `hooks/lib/secret-patterns.ps1` / `.sh` | `~/.claude/hooks/lib/` | **Fonte única** de detecção de segredos (regex + paths), compartilhada por hooks e pre-commit |
 | `hooks/lib/destructive-patterns.ps1` / `.sh` | `~/.claude/hooks/lib/` | Padrões do destructive-guard |
 | `hooks/adapters/` | `~/.claude/hooks/adapters/` | Adapters dos guards para Cursor, Codex e OpenCode — ver [`docs/HARNESS-CONTRACT.md`](../../docs/HARNESS-CONTRACT.md) |
+| `skills/native-sdd-*/` | `~/.claude/skills/` | Porta de entrada fora de um projeto: `native-sdd-novo-projeto` (roda o `new-project.ps1`), `native-sdd-doctor` (`install -Check`) e `native-sdd-atualizar` (`pull --ff-only` + `-DryRun`; só por `/`, com `disable-model-invocation`). Acham o checkout por `SDD_WORKFLOW_HOME` |
 | `settings.json` | `~/.claude/settings.json` | Liga `statusLine`, `env.SDD_WORKFLOW_HOME`, `enableWorkflows`, `permissions.defaultMode: "auto"` e o hook `PreToolUse` do Bash (instalado por **merge**, sem apagar sua config) |
 
 > **`.json` = merge:** o instalador mescla `settings.json` na sua config existente (com
