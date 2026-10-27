@@ -46,8 +46,9 @@ Implementar o que o DESIGN especifica e registrar o resultado.
 
    **Critério de julgamento humano** (`## Julgamento humano` do DEFINE): não tem teste nem
    mutação. Entregue o que o juiz precisa (a build exata, o roteiro) e registre a linha como ⏳ no
-   BUILD_REPORT. Quem julgou, quando e o resultado entram ali quando o juiz responder; o agente
-   não preenche o veredito no lugar dele.
+   BUILD_REPORT. Com qualquer ⏳ na tabela (juiz que não respondeu, AT que exige o que esta máquina
+   não tem), o Geral fica 🔄 e o `/ship` reprova. Quem julgou, quando e o resultado entram ali
+   quando o juiz responder; o agente não preenche o veredito no lugar dele.
 
 ## Delegar trabalho mecânico a uma sessão headless (`claude -p`) — opt-in
 

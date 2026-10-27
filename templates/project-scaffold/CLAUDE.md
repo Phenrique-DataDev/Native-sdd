@@ -98,6 +98,10 @@ recusa por declararem `disable-model-invocation: true`: `/supplements` e `/updat
 máquina, fora do projeto) e `/simulate`, `/reflect` e `/learn` (pull-only). Para esses, sugira que o
 usuário digite.
 
+Uma skill de usuário com o mesmo nome vence o command no `Skill` (o gstack tem `spec`, `ship` e
+`learn`; o `/check` acusa a colisão). Se o conteúdo devolvido não for a fase deste projeto, não o siga:
+leia `.claude/commands/<fase>.md` e siga esse arquivo.
+
 Poder disparar não é pular fase ([`workflow-sdd.md`](.claude/rules/workflow-sdd.md)): `/build` sem
 DESIGN continua fora. Antes de um command que escreve, arquiva ou custa (`/build`, `/ship`,
 `/train-kb`, `/iterate`), diga o que vai rodar e por quê; os read-only (`/status`, `/check`,

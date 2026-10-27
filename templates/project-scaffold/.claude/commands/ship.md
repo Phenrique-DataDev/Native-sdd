@@ -16,8 +16,8 @@ e rode o gate:
 $gate = Test-ShipReady -Root . -Feature '<FEATURE>'   # Ready · Failures · Warnings · Verifier
 ```
 
-Ele confere que todo `BUILD_REPORT` da feature em `reports/` está **✅ COMPLETE** com o
-`## Não exercitado` preenchido, e **roda agora** os comandos da seção `## Verificação` do
+Ele confere que todo `BUILD_REPORT` da feature em `reports/` está **✅ COMPLETE**, sem AT nem JH em
+⏳, com o `## Não exercitado` preenchido, e **roda agora** os comandos da seção `## Verificação` do
 `project-context.md`.
 
 - **`Ready` falso → pare.** Mostre cada item de `Failures`. Se a verificação reprovou, rode o

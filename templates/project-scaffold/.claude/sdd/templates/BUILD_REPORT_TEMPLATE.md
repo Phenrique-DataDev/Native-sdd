@@ -117,4 +117,4 @@ item novo** no checklist do projeto.
 
 ---
 
-**Próximo passo (quando ✅):** `/ship <FEATURE>`
+**Próximo passo (quando ✅):** `/ship <FEATURE>`. Com AT ou JH em ⏳ não é ✅: o gate reprova.

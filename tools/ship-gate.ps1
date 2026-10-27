@@ -9,6 +9,7 @@
     afirmasse o ✅ seguia para o SHIPPED. Aqui ninguém afirma; o gate lê e roda.
 
       - Get-BuildReportStatus : `**Geral:**` do relatório → complete / in-progress / blocked / unfilled.
+      - Get-PendingCriteria   : AT/JH com ⏳ na tabela; reprova mesmo com o ✅ na linha Geral.
       - Get-FeatureBuildReports : os BUILD_REPORT da feature em `reports/`, pelo mesmo casamento por
                                   segmentos do /ship (`Resolve-ReportOwnerKey`): `F_LEVA2` é de F,
                                   `FZ` não.
@@ -46,6 +47,25 @@ function Get-BuildReportStatus {
     return 'unfilled'
 }
 
+function Get-PendingCriteria {
+    <#
+    .SYNOPSIS
+        IDs das linhas `| AT-nnn |`/`| JH-nnn |` cuja célula de status tem ⏳. A célula do template
+        (`⏳/✅/❌`, várias opções) não conta: aí o status já sai `unfilled`.
+    .OUTPUTS
+        [string[]]
+    #>
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][AllowEmptyCollection()][AllowEmptyString()][string[]]$Lines)
+
+    foreach ($l in $Lines) {
+        if ($l -notmatch '^\s*\|\s*((?:AT|JH)-\d+)\s*\|([^|]*)\|') { continue }
+        $cell = $Matches[2]
+        $options = @('✅', '⏳', '❌' | Where-Object { $cell.Contains($_) }).Count
+        if ($cell.Contains('⏳') -and $options -eq 1) { $Matches[1] }
+    }
+}
+
 function Get-FeatureBuildReports {
     <#
     .SYNOPSIS  Os BUILD_REPORT_*.md em `reports/` que pertencem à feature (todas as levas).
@@ -67,7 +87,7 @@ function Test-ShipReady {
     <#
     .SYNOPSIS
         A feature pode ser shipada? Reprova (Failures) se: não há BUILD_REPORT dela em `reports/`;
-        algum não está ✅; algum tem o mapa `## Não exercitado` ausente ou vazio; a verificação
+        algum não está ✅; algum tem AT/JH em ⏳; algum tem o mapa `## Não exercitado` ausente ou vazio; a verificação
         declarada no project-context.md reprova agora. Sem verificação declarada, avisa (Warnings) e
         não reprova: o projeto antigo não tem a seção.
     .OUTPUTS
@@ -93,6 +113,9 @@ function Test-ShipReady {
         $lines = @(Get-Content -LiteralPath $r -Encoding utf8 -ErrorAction SilentlyContinue)
         $status = Get-BuildReportStatus -Lines $lines
         if ($status -ne 'complete') { $failures.Add("${name}: status $status, não ✅ COMPLETE") }
+        # ⏳ = AT não rodado ou juiz que não respondeu: o ✅ da linha Geral não vale por cima disso
+        $pending = @(Get-PendingCriteria -Lines $lines)
+        if ($pending.Count -gt 0) { $failures.Add("${name}: critério pendente (⏳): $($pending -join ', ')") }
         foreach ($f in @(Get-CoverageMapFindings -Path $r -Lines $lines)) {
             $failures.Add("${name}: $($f.Rule)")
         }

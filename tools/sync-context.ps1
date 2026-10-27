@@ -244,21 +244,25 @@ function Get-ArchiveSummary {
     )
 
     $seenH1 = $false
+    # O parágrafo inteiro, não a 1ª linha física: o Resumo pede 2–3 frases e o agente quebra a linha.
+    $para = [System.Collections.Generic.List[string]]::new()
     # Mesmo motivo do Get-DocTitle: `return` no meio de `foreach` sobre ReadLines vaza o handle.
     $reader = [System.IO.StreamReader]::new($Path)
     try {
         while ($null -ne ($line = $reader.ReadLine())) {
             if (-not $seenH1) { if ($line -match '^#\s+') { $seenH1 = $true }; continue }
             $s = ($line.Trim() -replace '^>\s*', '').Trim()
-            if (-not $s -or $s -match '^(\||#|---|```|\[)' -or $s -match '^(?i)feature encerrada') { continue }
-            $s = [regex]::Replace($s, '\[([^\]]*)\]\([^)]*\)', '$1')
-            $s = (($s -replace '[*`]', '') -replace '\s+', ' ').Trim()
-            if (-not $s) { continue }
-            if ($s.Length -gt $MaxLength) { $s = $s.Substring(0, $MaxLength).TrimEnd() + '…' }
-            return $s
+            $structural = (-not $s) -or $s -match '^(\||#|---|```|\[)'
+            if ($para.Count -gt 0) { if ($structural) { break }; $para.Add($s); continue }
+            if ($structural -or $s -match '^(?i)feature encerrada') { continue }
+            $para.Add($s)
         }
     } finally { $reader.Dispose() }
-    return ''
+    $s = $para -join ' '
+    $s = [regex]::Replace($s, '\[([^\]]*)\]\([^)]*\)', '$1')
+    $s = (($s -replace '[*`]', '') -replace '\s+', ' ').Trim()
+    if ($s.Length -gt $MaxLength) { $s = $s.Substring(0, $MaxLength).TrimEnd() + '…' }
+    return $s
 }
 
 function Get-ArchiveInventory {

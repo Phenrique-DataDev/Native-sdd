@@ -21,8 +21,8 @@
 </p>
 
 <p align="center">
-  <strong>Versão atual: v1.0.16</strong> ·
-  <a href="https://github.com/Phenrique-DataDev/Native-sdd/releases/tag/v1.0.16">o que mudou nela</a> ·
+  <strong>Versão atual: v1.0.17</strong> ·
+  <a href="https://github.com/Phenrique-DataDev/Native-sdd/releases/tag/v1.0.17">o que mudou nela</a> ·
   <a href="https://github.com/Phenrique-DataDev/Native-sdd/releases">todas as releases</a>
 </p>
 

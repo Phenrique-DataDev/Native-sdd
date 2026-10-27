@@ -34,7 +34,10 @@
 ## Verificação
 
 Comandos que provam que o projeto está verde, confirmados rodando. `/dev`, `/build`, `/iterate`, o
-gate do `/orchestrate` e o CI usam estes, não deduzem outros. Sem a etapa, `—`.
+gate do `/orchestrate` e o CI usam estes, não deduzem outros. Sem a etapa, `—`. Cada célula roda
+sozinha em `pwsh -NoProfile -Command` (PowerShell 7, em qualquer SO): escreva o comando completo
+nessa sintaxe, sem variável definida fora dele, sem nota na célula e sem `<...>` (lido como campo
+não preenchido), e confirme rodando assim.
 
 | Etapa | Comando |
 |-------|---------|

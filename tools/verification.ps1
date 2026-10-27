@@ -10,7 +10,7 @@
 
       - Get-ProjectVerification : tabela `| etapa | `comando` |` → { Install; Lint; Test; Declared }.
                                   Célula com `—`, `-`, vazia ou placeholder `<...>` vale $null.
-      - Get-VerificationCommand : Lint e Test numa linha só (`lint && test`, pwsh 7) + os critérios do
+      - Get-VerificationCommand : Lint e Test numa linha só (cada célula num pwsh filho, `&&`) + os critérios do
                                   gate (LintClean/TestsGreen). $null sem teste declarado.
 
     Compatível com PowerShell 7+.
@@ -62,7 +62,7 @@ function Get-ProjectVerification {
 function Get-VerificationCommand {
     <#
     .SYNOPSIS
-        A linha que verifica o projeto (lint antes do teste, `&&` do pwsh 7) e os critérios que ela
+        A linha que verifica o projeto (lint antes do teste, cada um num pwsh filho) e os critérios que ela
         decide no gate. $null quando não há teste declarado.
     .OUTPUTS
         [pscustomobject] { Verifier; Required[] } ou $null
@@ -73,7 +73,10 @@ function Get-VerificationCommand {
     $v = Get-ProjectVerification -Root $Root
     if (-not $v.Declared) { return $null }
     if ($v.Lint) {
-        return [pscustomobject]@{ Verifier = "$($v.Lint) && $($v.Test)"; Required = @('LintClean', 'TestsGreen') }
+        # Cada célula num pwsh filho: `exit 0 && teste` encerra o host antes do teste (verde falso,
+        # medido 2026-10-26), e `exit $x && $g = …` é ParserError. Base64 evita citar aspas da célula.
+        $cell = { param($c) 'pwsh -NoProfile -EncodedCommand ' + [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($c)) }
+        return [pscustomobject]@{ Verifier = "$(& $cell $v.Lint) && $(& $cell $v.Test)"; Required = @('LintClean', 'TestsGreen') }
     }
     return [pscustomobject]@{ Verifier = [string]$v.Test; Required = @('TestsGreen') }
 }

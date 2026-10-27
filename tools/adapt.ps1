@@ -148,11 +148,15 @@ function Get-FilesMatching {
 
     $leaf = ($Pattern -split '/')[-1]
     $byPath = { param($rel) $Pattern -notmatch '/' -or $rel -like $Pattern -or $rel -like "*/$Pattern" }
+    # ADAPT_LE_O_PROPRIO_SCAFFOLD (2026-10-25): o .claude/ do projeto é o scaffold, não a stack dele.
+    # O visual-check entrega um project.godot de calibração, e todo projeto virava Godot. O filtro
+    # olha o caminho relativo: o inventário de absorção chama com -Root dentro do .claude/.
+    $notScaffold = { param($rel) "/$rel/" -notmatch '/\.claude/' }
 
     if ($FileList) {
         # Entrada do índice apagada do disco não é evidência.
         $hits = $FileList |
-            Where-Object { ($_ -split '/')[-1] -like $leaf -and (& $byPath $_) -and "/$_/" -notmatch '/(\.git|node_modules|\.venv|venv|__pycache__|dist|build)/' } |
+            Where-Object { ($_ -split '/')[-1] -like $leaf -and (& $byPath $_) -and (& $notScaffold $_) -and "/$_/" -notmatch '/(\.git|node_modules|\.venv|venv|__pycache__|dist|build)/' } |
             Where-Object { Test-Path -LiteralPath (Join-Path $Root $_) -PathType Leaf }
         return @($hits | Sort-Object -Unique)
     }
@@ -162,7 +166,7 @@ function Get-FilesMatching {
     $hits = Get-ChildItem -LiteralPath $Root -Filter $leaf -File -Recurse -ErrorAction SilentlyContinue |
         Where-Object { $_.FullName -notmatch $ignore } |
         ForEach-Object { $_.FullName.Substring($rootFull.Length).TrimStart('\', '/') -replace '\\', '/' } |
-        Where-Object { & $byPath $_ }
+        Where-Object { (& $byPath $_) -and (& $notScaffold $_) }
     return @($hits | Sort-Object -Unique)
 }
 
@@ -419,14 +423,116 @@ function Resolve-AdaptBaselineRoot {
     return $null
 }
 
+function Get-ScaffoldManifestMap {
+    <#
+    .SYNOPSIS
+        Lê <Root>/.claude/.scaffold-manifest (SHA-256 de cada arquivo COMO o new-project entregou) e
+        devolve hashtable caminho relativo com / -> hash. $null se o projeto não tem manifest.
+    .NOTES
+        ADAPT_IGNORA_O_PERFIL (2026-10-25): num projeto mvp, o inventário comparava com o template
+        bruto e oferecia de volta o que o perfil corta, e dava como divergente o que o perfil
+        reescreve. O manifest já diz o que foi entregue, e com que bytes.
+    #>
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Root)
+
+    $file = Join-Path (Join-Path $Root '.claude') '.scaffold-manifest'
+    if (-not (Test-Path -LiteralPath $file -PathType Leaf)) { return $null }
+    $map = @{}
+    foreach ($line in Get-Content -LiteralPath $file) {
+        if ($line -notmatch '^([0-9A-Fa-f]{64})\s+(\S.*)$') { continue }
+        $map[($Matches[2].Trim() -replace '\\', '/')] = $Matches[1].ToUpperInvariant()
+    }
+    return $map
+}
+
+function Get-ManifestFileHash {
+    <#
+    .SYNOPSIS
+        SHA-256 de um arquivo do jeito que o .scaffold-manifest grava: texto (sem NUL nos primeiros
+        8k) tem CRLF -> LF antes do hash. Espelha Get-BytesSha256/Test-BinaryContent do
+        onboarding/windows/lib.ps1; o hash bruto dava falso Conflict no graph.json, que o merge de
+        .json regrava com CRLF.
+    #>
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Path)
+
+    $bytes = [System.IO.File]::ReadAllBytes($Path)
+    $isBinary = $false
+    for ($i = 0; $i -lt [Math]::Min($bytes.Length, 8000); $i++) { if ($bytes[$i] -eq 0) { $isBinary = $true; break } }
+    if (-not $isBinary) {
+        $lat1  = [System.Text.Encoding]::GetEncoding(28591)
+        $bytes = $lat1.GetBytes(($lat1.GetString($bytes) -replace "`r`n", "`n"))
+    }
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    try { return [System.BitConverter]::ToString($sha.ComputeHash($bytes)).Replace('-', '') }
+    finally { $sha.Dispose() }
+}
+
+function Get-AdaptBaselineSettingsJson {
+    <#
+    .SYNOPSIS
+        O settings.json do baseline como o scaffold o entregaria a este projeto: com manifest, sem as
+        entradas dos hooks que não estão nele. Sem manifest, o do template. $null se não há arquivo.
+    .NOTES
+        Rodada Unity/Unreal de JOGO_SEM_CICLO_MEDIDO (2026-10-26): o mvp reescreve o settings.json
+        (new-project.ps1, "Perfil mvp") e o Compare-ClaudeSettingsKeys dava SessionStart e
+        UserPromptSubmit como Conflict num projeto recém-criado. A poda é a Get-ScaffoldProfileContent
+        do onboarding/windows/lib.ps1, a mesma da escrita: as duas não podem divergir.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][string]$Root,
+        [Parameter(Mandatory)][string]$BaselineRoot
+    )
+
+    $path = Join-Path (Join-Path $BaselineRoot '.claude') 'settings.json'
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { return $null }
+    $bytes = [System.IO.File]::ReadAllBytes($path)
+    $manifest = Get-ScaffoldManifestMap -Root $Root
+    $lib = Join-Path $PSScriptRoot '..\onboarding\windows\lib.ps1'
+    if ($manifest -and (Test-Path -LiteralPath $lib -PathType Leaf)) {
+        $hooksDir = Join-Path (Join-Path $BaselineRoot '.claude') 'hooks'
+        $removed = @(Get-FilesMatching -Root $hooksDir -Pattern '*' | ForEach-Object { ".claude/hooks/$_" } |
+                Where-Object { -not $manifest.ContainsKey($_) })
+        if ($removed.Count -gt 0) {
+            . $lib
+            $bytes = Get-ScaffoldProfileContent -Bytes $bytes -Rel '.claude/settings.json' -RemovedRel $removed
+        }
+    }
+    return [System.Text.UTF8Encoding]::new($false).GetString($bytes).TrimStart([char]0xFEFF)
+}
+
+function ConvertTo-AdaptComparableSettings {
+    <#
+    .SYNOPSIS
+        settings.json com todo command de hook na forma nativa `pwsh -File` (ConvertTo-NativeHooks
+        do onboarding/windows/lib.ps1). No Windows o merge de JSON grava essa forma, e o template
+        tem a dispatch-line `sh -c … pwsh || bash`: são equivalentes, e sem normalizar os dois lados
+        da comparação o SessionStart dava Conflict num projeto recém-criado. Sem a lib, ou com JSON
+        malformado, devolve o texto como veio.
+    #>
+    [CmdletBinding()]
+    param([AllowNull()][string]$Json)
+
+    $lib = Join-Path $PSScriptRoot '..\onboarding\windows\lib.ps1'
+    $obj = ConvertFrom-JsonOrNull -Text $Json
+    if ($null -eq $obj -or -not (Test-Path -LiteralPath $lib -PathType Leaf)) { return $Json }
+    . $lib
+    return (ConvertTo-NativeHooks $obj | ConvertTo-Json -Depth 20)
+}
+
 function Get-ClaudeAssetInventory {
     <#
     .SYNOPSIS
         Inventaria ativos .claude/{skills,agents,kb,rules,hooks,commands} + CLAUDE.md/AGENTS.md do
         projeto-alvo contra o baseline do scaffold, classificando cada caminho relativo em
         Additive (só no baseline) | Own (só no projeto) | Conflict (nos dois, diverge) |
-        Unchanged (nos dois, idêntico). Read-only, determinístico (settings.json fica de fora —
-        ver Compare-ClaudeSettingsKeys, que trata JSON estruturado por chave).
+        Unchanged (nos dois, idêntico) | NotDelivered (projeto scaffolded: só no baseline, mas o
+        scaffold não entregou ou o usuário removeu — quem sincroniza é o -Update, não a absorção).
+        Com .scaffold-manifest, arquivo com o hash entregue é Unchanged mesmo diferindo do template
+        bruto (o perfil mvp reescreve contratos). Read-only, determinístico (settings.json fica de
+        fora — ver Compare-ClaudeSettingsKeys, que trata JSON estruturado por chave).
     .OUTPUTS
         [pscustomobject[]] { RelativePath; Bucket; Note }
     #>
@@ -450,6 +556,8 @@ function Get-ClaudeAssetInventory {
         if ($inRoot -or $inBaseline) { $relPaths[$rf] = $true }
     }
 
+    $manifest = Get-ScaffoldManifestMap -Root $Root
+
     $result = foreach ($rel in ($relPaths.Keys | Sort-Object)) {
         $rootPath     = Join-Path $Root $rel
         $baselinePath = Join-Path $BaselineRoot $rel
@@ -462,8 +570,17 @@ function Get-ClaudeAssetInventory {
         if ($inRoot -and -not $inBaseline) {
             $bucket = 'Own'; $note = 'só no projeto'
         }
+        elseif (-not $inRoot -and $inBaseline -and $manifest) {
+            $bucket = 'NotDelivered'
+            $note = if ($manifest.ContainsKey($rel)) { 'entregue e removido pelo usuário' }
+                    else { 'fora do que o scaffold entregou (perfil ou versão) — o -Update sincroniza' }
+        }
         elseif (-not $inRoot -and $inBaseline) {
             $bucket = 'Additive'; $note = 'só no baseline'
+        }
+        elseif ($manifest -and $manifest.ContainsKey($rel) -and
+                (Get-ManifestFileHash -Path $rootPath) -eq $manifest[$rel]) {
+            $bucket = 'Unchanged'; $note = 'como o scaffold entregou'
         }
         else {
             try {
@@ -664,6 +781,13 @@ function Format-AbsorptionReport {
     [void]$sb.Append("Aditivos (no baseline, ausentes no projeto — candidatos a adicionar):`n")
     if ($additive.Count -gt 0) { foreach ($i in $additive) { [void]$sb.Append("  + $($i.RelativePath)`n") } }
     else { [void]$sb.Append("  (nenhum)`n") }
+
+    # só em projeto scaffolded: o que o perfil cortou não é candidato, e dizer isso evita a oferta
+    $notDelivered = @($Inventory | Where-Object { $_.Bucket -eq 'NotDelivered' } | Sort-Object RelativePath)
+    if ($notDelivered.Count -gt 0) {
+        [void]$sb.Append("Não entregues pelo scaffold (perfil, versão ou removidos — não são candidatos; o -Update decide):`n")
+        foreach ($i in $notDelivered) { [void]$sb.Append("  - $($i.RelativePath)`n") }
+    }
 
     [void]$sb.Append("Próprios (só no projeto — preservados, nada a fazer):`n")
     if ($own.Count -gt 0) { foreach ($i in $own) { [void]$sb.Append("  = $($i.RelativePath)`n") } }

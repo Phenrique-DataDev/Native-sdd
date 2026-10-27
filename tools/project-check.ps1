@@ -151,6 +151,37 @@ function Get-CheckVerdict {
     return 'ok'
 }
 
+# --- I/O: command do projeto com nome de skill de usuário -> finding[] ----------------------------
+function Get-SkillShadowFindings {
+    <#
+    .SYNOPSIS  Command de .claude/commands/ com o mesmo nome de uma skill de usuário
+               (<config>/skills/<nome>/SKILL.md). A skill vence no Skill("<nome>"): medido em
+               2026-10-25 (CLI 2.1.310), o Skill("spec") devolveu o /spec do gstack num projeto com
+               .claude/commands/spec.md (SKILL_DE_USUARIO_SOMBREIA_FASE). Sem o aviso, a fase some
+               sem erro.
+    .OUTPUTS   finding[] warn; $null quando não há commands no projeto ou skills de usuário (n/a)
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][string]$Root,
+        # CLAUDE_CONFIG_DIR é onde o Claude Code procura a config de usuário quando definido.
+        [string]$UserSkillsDir = (Join-Path $(if ($env:CLAUDE_CONFIG_DIR) { $env:CLAUDE_CONFIG_DIR } else { Join-Path $HOME '.claude' }) 'skills')
+    )
+
+    $cmdDir = Join-Path (Join-Path $Root '.claude') 'commands'
+    if (-not (Test-Path -LiteralPath $cmdDir -PathType Container)) { return $null }
+    if (-not (Test-Path -LiteralPath $UserSkillsDir -PathType Container)) { return $null }
+
+    $findings = foreach ($c in @(Get-ChildItem -LiteralPath $cmdDir -Filter '*.md' -File)) {
+        $name = $c.BaseName
+        if (Test-Path -LiteralPath (Join-Path (Join-Path $UserSkillsDir $name) 'SKILL.md') -PathType Leaf) {
+            New-CheckFinding -Severity warn -Rule 'command-shadowed-by-user-skill' -Path ".claude/commands/$($c.Name)" `
+                -Message "a skill de usuário '$name' ($UserSkillsDir) vence este command no Skill(""$name""); renomeie ou remova uma das duas, ou leia este arquivo à mão quando o conteúdo devolvido não for o dele"
+        }
+    }
+    return @($findings)
+}
+
 # --- I/O: roda o(s) lint(s) de uma seção -> { Name; Status; Findings } (fail-safe) ----------------
 function Test-GitEnumerable {
     <#
@@ -183,12 +214,12 @@ function Test-GitEnumerable {
 
 function Get-CheckSection {
     <#
-    .SYNOPSIS  Verifica uma seção ('kb'|'agent'|'config'|'sdd'|'link'|'encoding'|'rules'). Alvo ausente => 'n/a' (não falha).
+    .SYNOPSIS  Verifica uma seção ('kb'|'agent'|'config'|'sdd'|'link'|'encoding'|'rules'|'skills'). Alvo ausente => 'n/a' (não falha).
     .OUTPUTS   pscustomobject { Name; Status; Findings[] }
     #>
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory)][ValidateSet('kb', 'agent', 'config', 'sdd', 'link', 'encoding', 'rules')][string]$Kind,
+        [Parameter(Mandatory)][ValidateSet('kb', 'agent', 'config', 'sdd', 'link', 'encoding', 'rules', 'skills')][string]$Kind,
         [Parameter(Mandatory)][string]$Root
     )
 
@@ -279,6 +310,13 @@ function Get-CheckSection {
                 if ($null -eq $res) { return [pscustomobject]@{ Name = 'rules'; Status = 'n/a'; Findings = @() } }
                 $f = @($res)
             }
+            'skills' {
+                # Lê a config de USUÁRIO (fora do projeto): o mesmo projeto dá veredito diferente em
+                # máquinas diferentes, e é esse o ponto: a colisão é da máquina. Tudo warn.
+                $res = Get-SkillShadowFindings -Root $Root
+                if ($null -eq $res) { return [pscustomobject]@{ Name = 'skills'; Status = 'n/a'; Findings = @() } }
+                $f = @($res)
+            }
         }
         $f = @($f)
         return [pscustomobject]@{ Name = $Kind; Status = (Get-CheckVerdict -Findings $f); Findings = $f }
@@ -291,7 +329,7 @@ function Get-CheckSection {
     }
 }
 
-# --- I/O: monta o report agregado (7 seções + veredito global) -----------------------------------
+# --- I/O: monta o report agregado (8 seções + veredito global) -----------------------------------
 function Get-ProjectCheckReport {
     <#
     .SYNOPSIS  Verifica kb/agent/config/sdd/link/encoding/rules do projeto em -Root e agrega o veredito. Read-only.
@@ -308,6 +346,7 @@ function Get-ProjectCheckReport {
         Get-CheckSection -Kind link   -Root $Root
         Get-CheckSection -Kind encoding -Root $Root
         Get-CheckSection -Kind rules  -Root $Root
+        Get-CheckSection -Kind skills -Root $Root
     )
     # Veredito global só sobre seções que rodaram (n/a não contribui).
     $allFindings = @($sections | Where-Object { $_.Status -ne 'n/a' } | ForEach-Object { $_.Findings } | Where-Object { $_ })

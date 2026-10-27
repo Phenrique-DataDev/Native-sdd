@@ -118,5 +118,9 @@ dedicado, a lógica da fase é **auto-contida**.
   de escrever a mensagem, e não há campo de idioma em nenhum outro lugar do projeto.
 - `main` protegida: trabalho em branch de feature; merge só com confirmação explícita.
 - **Não inventar dados** (usar só o que se pode verificar); **não versionar segredos**.
+- **Git LFS:** os hooks do git ficam em `.githooks/` (`core.hooksPath`), e é lá que o `git lfs` grava
+  `pre-push`, `post-checkout`, `post-commit` e `post-merge`. Commite os quatro junto com o
+  `.gitattributes`: num clone sem o `pre-push`, o push sai sem o arquivo grande e sem erro, e o
+  clone seguinte falha ao baixá-lo.
 - **Qualidade verificável:** nada é "pronto" sem verificação real (lint, testes, critérios
   de aceite).

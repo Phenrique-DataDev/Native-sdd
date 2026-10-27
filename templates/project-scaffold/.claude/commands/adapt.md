@@ -61,8 +61,9 @@ contra o baseline do scaffold, sempre **preservando** o que já existe:
 $baseline = Resolve-AdaptBaselineRoot
 if ($baseline) {
     $inventory    = Get-ClaudeAssetInventory -Root . -BaselineRoot $baseline
-    $targetJson   = Get-Content .claude/settings.json -Raw -ErrorAction SilentlyContinue
-    $baselineJson = Get-Content (Join-Path $baseline '.claude/settings.json') -Raw -ErrorAction SilentlyContinue
+    # os dois lados com o corte do perfil e o command de hook na forma nativa, como o scaffold entrega
+    $targetJson   = ConvertTo-AdaptComparableSettings (Get-Content .claude/settings.json -Raw -ErrorAction SilentlyContinue)
+    $baselineJson = ConvertTo-AdaptComparableSettings (Get-AdaptBaselineSettingsJson -Root . -BaselineRoot $baseline)
     $settingsDiff = Compare-ClaudeSettingsKeys -TargetJson $targetJson -BaselineJson $baselineJson
     Format-AbsorptionReport -Inventory $inventory -SettingsDiff $settingsDiff
 } else {
@@ -74,7 +75,10 @@ if ($baseline) {
 Cada ativo (`.claude/{skills,agents,kb,rules,hooks,commands}` + `CLAUDE.md`/`AGENTS.md`) entra em
 um de 3 buckets — **`Additive`** (só no baseline — candidato a adicionar), **`Own`** (só no projeto —
 preservado, nada a fazer) ou **`Conflict`** (nos dois lados, conteúdo diverge — **preservado**,
-relatado lado a lado, decisão fica com o usuário depois). `settings.json` é comparado **por
+relatado lado a lado, decisão fica com o usuário depois). Projeto criado pelo `new-project.ps1` tem
+`.claude/.scaffold-manifest`: aí o que o perfil cortou ou o usuário removeu vira **`NotDelivered`**
+(não é candidato, e não ofereça: quem sincroniza com o template é o `-Update`), e arquivo com os
+bytes que o scaffold entregou conta como idêntico. `settings.json` é comparado **por
 chave** (`hooks.<Event>`, `permissions.<allow|deny|ask>`) pela mesma lógica, já que é JSON
 estruturado, não arquivo solto.
 

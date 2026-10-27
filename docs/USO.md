@@ -231,6 +231,13 @@ merge de `.json` do instalador.
 > depois que você rodar `git init`, basta ativar com:
 > `git config core.hooksPath .githooks` (ou recriar/equipar com `-Git`).
 
+> **Git LFS: commite os hooks que ele grava em `.githooks/`.** Com o `core.hooksPath` apontando
+> para `.githooks/`, o `git lfs track`/`git lfs install` grava ali `pre-push`, `post-checkout`,
+> `post-commit` e `post-merge`, como arquivos novos. Commite os quatro junto com o
+> `.gitattributes`. Medido com um remoto local (2026-10-25): num clone sem o `pre-push`, o push
+> sai com rc=0, o arquivo grande não vai, e o clone seguinte falha com
+> `smudge filter lfs failed` (`remote missing object`). Com o hook, o arquivo chega inteiro.
+
 > **Atalho global:** o `install.ps1` registra a função `New-SddProject` (alias `nsp`) no
 > seu `$PROFILE` do PowerShell 7. Depois de reabrir o terminal, basta
 > `nsp C:\dev\meu-projeto -Git -Open` de qualquer lugar — sem digitar o caminho do script.

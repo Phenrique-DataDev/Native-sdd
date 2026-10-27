@@ -33,6 +33,16 @@ Set-StrictMode -Version Latest
 . (Join-Path $PSScriptRoot 'sync-context.ps1')   # Build-AgentMap, Build-KbIndex
 . (Join-Path $PSScriptRoot 'graph-export.ps1')   # Get-UnifiedGraph, ConvertTo-GraphJson
 
+function Get-ResyncDocsDir {
+    # PURA. docs/ é IRMÃO de .claude/ (raiz do projeto), não filho — daí o Split-Path do pai.
+    # '-ClaudeDir .claude' (relativo, rodado da raiz) não tem pai: o Split-Path devolve '' e o
+    # Join-Path lançava (rodada 1 do JOGO_SEM_CICLO_MEDIDO, 2026-10-25). Pai vazio = o cwd.
+    param([Parameter(Mandatory)][string]$ClaudeDir)
+    $parent = Split-Path -Parent $ClaudeDir
+    if (-not $parent) { $parent = '.' }
+    return (Join-Path $parent 'docs')
+}
+
 function Get-ResyncPlan {
     <#
     .SYNOPSIS  PURA: dado o diretório .claude, devolve os alvos derivados { Key; Paths }.
@@ -44,8 +54,7 @@ function Get-ResyncPlan {
 
     $agents = Join-Path $ClaudeDir 'agents'
     $kb     = Join-Path $ClaudeDir 'kb'
-    # docs/ é IRMÃO de .claude/ (raiz do projeto), não filho — daí o Split-Path do pai.
-    $docs   = Join-Path (Split-Path -Parent $ClaudeDir) 'docs'
+    $docs   = Get-ResyncDocsDir -ClaudeDir $ClaudeDir
     return @(
         [pscustomobject]@{ Key = 'map';        Paths = @((Join-Path $agents 'AGENT_MAP.md')) }
         # Só o graph.json. O graph.cypher saiu dos artefatos versionados em 2026-08-14 (sem consumidor
@@ -72,7 +81,7 @@ function Get-ResyncContent {
     $cmdDir    = Join-Path $ClaudeDir 'commands'
     $skillsDir = Join-Path $ClaudeDir 'skills'
     $wavesRoot = Join-Path $kbDir '_waves'
-    $docsDir   = Join-Path (Split-Path -Parent $ClaudeDir) 'docs'
+    $docsDir   = Get-ResyncDocsDir -ClaudeDir $ClaudeDir
 
     $agents = @(Get-AgentInventory -Dir $agentsDir)
     # Arestas connects_to p/ o AGENT_MAP (H3): lê o frontmatter de cada agente (Read-AgentFrontmatter/

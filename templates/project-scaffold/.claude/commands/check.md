@@ -9,7 +9,7 @@ metadata:
 # /check — conformidade da curadoria (lint o que você curou)
 
 Roda, **read-only** e sob demanda, os lints aplicáveis ao **projeto-alvo** sobre os artefatos `.claude/`
-que a curadoria gera/instala, e devolve um **veredito** de conformidade. Sete seções: **kb** (frontmatter
+que a curadoria gera/instala, e devolve um **veredito** de conformidade. Oito seções: **kb** (frontmatter
 + grafo `related`), **agentes** (frontmatter + colisão + corpo + grafo `connects_to`), **config**
 (`settings.json`/`settings.local.json`: forma / `permissions.allow` amplo / regra de caminho que o
 harness ignora — `Write(caminho)` no lugar de `Edit(caminho)`, que num `deny` não protege nada / hook
@@ -25,7 +25,10 @@ inteiro; `bom-antes-do-frontmatter`: `.md` que **começa** com BOM antes do `---
 harness ignorar o frontmatter **inteiro** — a `description` vira `"---"` e campos como
 `disable-model-invocation` ficam inertes, sem erro nenhum) e **rules** (rules de área, com `paths:`:
 `dead-glob` quando um glob não casa nenhum arquivo, e a rule nunca carrega; `area-missing-in-list` quando
-a lista `rules` do `AGENTS.md` não diz a área, que Codex e Cursor não leem de `paths:`; tudo advisory).
+a lista `rules` do `AGENTS.md` não diz a área, que Codex e Cursor não leem de `paths:`; tudo advisory)
+e **skills** (`command-shadowed-by-user-skill`: command de `.claude/commands/` com o mesmo nome de uma
+skill de usuário, que vence no `Skill("<nome>")` e troca a fase por outra coisa, sem erro; lê a config
+de usuário, então o veredito depende da máquina; advisory).
 
 > Diferente dos vizinhos: `/status` mostra **estado** (o que existe, em que fase); o `curation-nudge`
 > **avisa staleness** reativo; o `/check` **valida** a conformidade a pedido. Não altera nada. Reusa os
@@ -53,14 +56,16 @@ if ($toolsRoot) {
 }
 ```
 
-`Get-ProjectCheckReport` monta as 7 seções (cada uma **fail-safe**): **kb** (`Get-KbInventory` +
+`Get-ProjectCheckReport` monta as 8 seções (cada uma **fail-safe**): **kb** (`Get-KbInventory` +
 `Invoke-KbLint` sobre `.claude/kb`), **agent** (`Invoke-AgentLint` sobre `.claude/agents`), **config**
 (`Invoke-ConfigLint` sobre `.claude/settings*.json`), **sdd** (`Invoke-SddLint` sobre
 `.claude/sdd/{reports,archive}`), **link** (`Get-LinkLintTarget` + `Get-LinkLintFindings` sobre todo
 `.md` do projeto — sem o gitignored e sem `.claude/sdd/archive/`) e **encoding**
 (`Get-EncodingLintTarget` + `Get-EncodingFindings` sobre os `.ps1`/`.psd1`/`.psm1`/`.md` que o git
 reconhece como seus) e **rules** (`Invoke-PathRulesLint` sobre as rules de área, as que têm `paths:`;
-sem nenhuma, `n/a`). `Get-CheckVerdict` (pura) agrega as severidades e
+sem nenhuma, `n/a`) e **skills** (`Get-SkillShadowFindings`: `.claude/commands/*.md` contra
+`<CLAUDE_CONFIG_DIR ou ~/.claude>/skills/<nome>/SKILL.md`; sem uma das pastas, `n/a`).
+`Get-CheckVerdict` (pura) agrega as severidades e
 `Format-ProjectCheckReport` imprime o painel determinístico (seção · status · contagem error/warn ·
 detalhe · veredito). A seção **link** diz também quantos `.md` varreu (`link : ok (82 arquivos)`):
 confira que o número bate com o projeto — um `ok` sobre poucos arquivos não aprova o resto.

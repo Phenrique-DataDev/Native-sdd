@@ -12,4 +12,5 @@ design	landing ?page|interface|layout|tela|frontend|front-end|css|responsiv|form
 reporting	relat.{1,2}rio|report|diagrama|diagram|apresenta.{1,2}.{1,2}o|slides?|explica.{1,2}.{1,2}o visual|mermaid|infogr.{1,2}fico
 data	duckdb|clickhouse|bigquery|dbt |snowflake|warehouse|parquet|\.csv|sql|ddl|modelagem (dimensional|de dados)|pipeline de dados|etl
 ai	agent ?sdk|mcp ?server|servidor mcp|claude code plugin|plugin (do|para o) claude code
-gamedev	unreal|godot|game ?dev|desenvolvimento de jogos?|jogo (2d|3d|indie|mobile|multiplayer)|game engine|motor de jogo|uproject|(no|em|do|pro|para o) unity|unity (editor|engine|hub|2d|3d|6)
+# gamedev só traz plugins de Unity e Unreal: Godot e "jogo" genérico ficam de fora (2026-10-25).
+gamedev	unreal|uproject|(no|em|do|pro|para o) unity|unity (editor|engine|hub|2d|3d|6)
