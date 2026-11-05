@@ -53,6 +53,13 @@
   sem sobrescrever outro shell escolhido) — sem isso os panes abrem no Windows PowerShell 5.1, onde
   o `nsp` não existe. Não bloqueante (WARN). Windows x64 é o alvo primário. Docs: https://herdr.dev/docs/
 
+.PARAMETER WithMods
+  Opt-in: instala os mods do Claude Code de templates/mods/ em ~/.claude/skills/<nome> (hoje:
+  repo-sync-band, faixa acima do prompt com o estado do repo git: sincronia com o remoto, branches
+  mergeadas, worktrees). Mod não tem sandbox e exige Claude Code v2.1.287+. O mod roda `git fetch`
+  (sem --prune) a cada 5 min no repo aberto. Backup antes de sobrescrever; idempotente. Não
+  bloqueante (WARN). Fica fora de -ProjectOnly (escreve em ~/.claude).
+
 .PARAMETER SetDefaultShell
   Opt-in: define o PowerShell 7 como perfil PADRÃO do Windows Terminal (settings.json, com backup)
   e como shell dos panes do herdr, se ele estiver instalado (%APPDATA%\herdr\config.toml, com backup).
@@ -97,6 +104,7 @@
   .\install.ps1 -ExtraPlugins -Themes design   # só os de design (ui-ux-pro-max, impeccable)
   .\install.ps1 -WithHerdr                     # + binário herdr (multiplexador de agentes, verifica SHA-256)
   .\install.ps1 -Check -WithHerdr              # relata: ausente / pinado / divergente
+  .\install.ps1 -WithMods                      # + mods do Claude Code (repo-sync-band)
   .\install.ps1 -SetDefaultShell               # + pwsh como padrão do Windows Terminal e do herdr
   .\install.ps1 -Force                         # reinstala mesmo já estando atualizado
 
@@ -115,6 +123,7 @@ param(
     [switch]$ExtraPlugins,
     [string[]]$Themes = @(),
     [switch]$WithHerdr,
+    [switch]$WithMods,
     [switch]$SetDefaultShell,
     [switch]$KeepRetired,
     [switch]$OverwriteCustom,
@@ -147,7 +156,7 @@ if ($onWindows) {
     $global:LASTEXITCODE = $null
     & (Join-Path $PSScriptRoot 'windows\apply.ps1') -SkipClis:$SkipClis -Check:$Check -DryRun:$DryRun `
         -NonInteractive:$NonInteractive -ManagedPolicy $ManagedPolicy -ExtraPlugins:$ExtraPlugins -Themes $Themes `
-        -WithHerdr:$WithHerdr `
+        -WithHerdr:$WithHerdr -WithMods:$WithMods `
         -SetDefaultShell:$SetDefaultShell -KeepRetired:$KeepRetired -Force:$Force -OverwriteCustom:$OverwriteCustom `
         -ProjectOnly:$ProjectOnly
     # $null aqui = o apply.ps1 não chegou a rodar o próprio `exit` (parse error, arquivo ausente).

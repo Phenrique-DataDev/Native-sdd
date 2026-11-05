@@ -12,6 +12,7 @@ param(
     [switch]$ExtraPlugins,
     [string[]]$Themes = @(),
     [switch]$WithHerdr,
+    [switch]$WithMods,
     [switch]$SetDefaultShell,
     [switch]$KeepRetired,
     [switch]$OverwriteCustom,
@@ -48,6 +49,7 @@ if ($ProjectOnly) {
     $conflitos = @()
     if ($ExtraPlugins)    { $conflitos += '-ExtraPlugins' }
     if ($WithHerdr)       { $conflitos += '-WithHerdr' }
+    if ($WithMods)        { $conflitos += '-WithMods' }
     if ($KeepRetired)     { $conflitos += '-KeepRetired' }
     if ($OverwriteCustom) { $conflitos += '-OverwriteCustom' }
     if ($ManagedPolicy -eq 'Yes') { $conflitos += '-ManagedPolicy Yes' }
@@ -265,6 +267,16 @@ if ($ExtraPlugins) {
     Invoke-PluginsSetup -Summary $summary -Themes $Themes -Check:$Check -DryRun:$DryRun
 }
 
+# --- A2k: mods do Claude Code (OPT-IN via -WithMods, NÃO bloqueante) --------
+# Copia templates/mods/<nome>/ para ~/.claude/skills/<nome> (carrega como @skills-dir). Opt-in de
+# propósito: mod não tem sandbox e roda código TS a cada evento. Falha = WARN, nunca quebra A1/A2.
+if ($WithMods) {
+    Write-Host ''
+    Write-Step INFO 'Mods do Claude Code (opt-in, user scope)'
+    . (Join-Path $PSScriptRoot 'install-mods.ps1')
+    Invoke-ModsSetup -Summary $summary -RepoRoot $RepoRoot -UserHome $userHome -Check:$Check -DryRun:$DryRun
+}
+
 # --- A2j: herdr (OPT-IN via -WithHerdr, NÃO bloqueante) ---------------------
 # Provisiona o binário `herdr` (multiplexador de agentes terminal-native, de terceiro — repo
 # público herdrdev/herdr): baixa o asset da versão pinada (onboarding/herdr/herdr.psd1),
@@ -327,6 +339,14 @@ else {
                  elseif ($os -eq 'macOS') { '/Library/Application Support/ClaudeCode' }
                  else { '/etc/claude-code' }
     Install-ManagedPolicy -SourcePath $mpSource -Summary $summary -DestDir $mpDestDir -OS $os -Check:$Check -DryRun:$DryRun -Decision $mpDecision
+}
+
+# --- A2m: relógio local contra o servidor (só no -Check, NÃO bloqueante) ----
+# Fica fora da instalação de propósito: instalar não deve depender desta chamada de rede.
+if ($Check) {
+    Write-Host ''
+    Write-Step INFO 'Relógio local'
+    Invoke-ClockCheck -Summary $summary
 }
 
 # --- A0b: grava o marcador de versão (só numa instalação real) -----------

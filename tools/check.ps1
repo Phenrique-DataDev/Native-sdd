@@ -21,6 +21,16 @@
       -SkipPester     pula a suíte Pester (iteração rápida só nos lints estáticos)
       -ExcludeTest    caminhos (relativos à raiz) de suítes Pester a deixar de fora — o CI usa para
                       pular as suítes de scaffold quando nada do scaffold mudou (.github/ci-scope.ps1)
+      -Changed        escopo pelo diff, como o CI: compara com o merge-base de `origin/main` (ou `main`)
+                      e usa as regras de `.github/ci-scope.ps1` — sem mudança em docs/backlog pula o
+                      Pester; sem mudança no scaffold deixa de fora as 3 suítes de scaffold. Base
+                      desconhecida, árvore sem mudança ou sem `.github/` (o espelho não o distribui) =
+                      escopo completo. O escopo vem impresso no começo
+                      AUTOMÁTICO como script, numa branch que não é `main`/`master`; na `main`, em HEAD
+                      solto, no CI (GITHUB_ACTIONS) ou quando você já passou -SkipPester/-ExcludeTest,
+                      roda completo. Quem usa `Invoke-Check` por função (publish.ps1) nunca recebe o
+                      escopo sozinho: lá só vale -Changed explícito
+      -Full           força o check completo, desligando o escopo automático
       -SkipAnalyzer   pula o PSScriptAnalyzer (o mais lento)
       -SkipBudget     pula o retrato de contexto always-on (rules-budget, G8 v2)
       -Quiet          só o resumo final (omite o relatório detalhado de cada lint que falhar)
@@ -40,7 +50,9 @@ param(
     [switch]$SkipAnalyzer,
     [switch]$SkipBudget,
     [switch]$Quiet,
-    [int]$PesterJobs = 0
+    [int]$PesterJobs = 0,
+    [switch]$Changed,
+    [switch]$Full
 )
 
 Set-StrictMode -Version Latest
@@ -538,7 +550,7 @@ function Get-LintPlan {
         @{ Name = 'link-lint'; Tool = 'link-lint.ps1'
             # Link relativo quebrado nos .md — exclui gitignored e .claude/sdd/archive/ (histórico
             # imutável: a reorg v2 deixou ~70 lá, cobrá-los seria arqueologia). Ver o .DESCRIPTION.
-            Findings = { Invoke-LinkLint -Root $script:RepoRoot }
+            Findings = { Invoke-LinkLint -Root $script:RepoRoot -CheckAnchor }
             Gate = { param($f) Test-LinkLintGate -Findings $f }; Report = { param($f) Format-LinkLintReport -Findings $f }
         }
         @{ Name = 'pii-lint'; Tool = 'pii-lint.ps1'
@@ -631,13 +643,79 @@ function Format-CheckAnnotation {
     })
 }
 
+# --- Escopo pelo diff (-Changed) ----------------------------------------------------------------
+# Arquivos alterados contra o merge-base com a main: commitados + não commitados + novos (untracked).
+# `$null` = base desconhecida (sem git, sem main, git falhou) = escopo completo. Árvore sem mudança
+# também devolve vazio, e vazio é escopo completo no Get-CiScope: na dúvida, roda tudo.
+function Get-CheckChangedFile {
+    param([string]$Root = $script:RepoRoot)
+    $base = $null
+    foreach ($ref in 'origin/main', 'main') {
+        $null = git -C $Root rev-parse --verify --quiet "$ref^{commit}" 2>$null
+        if ($LASTEXITCODE -ne 0) { continue }
+        # Sem `| Select-Object -First 1`: interromper o pipeline cedo faz o PowerShell não registrar o
+        # exit code do git, e num processo novo (CI) o $LASTEXITCODE some e o StrictMode lança.
+        $mbOut = @(git -C $Root merge-base HEAD $ref 2>$null)
+        $mb = $mbOut | Select-Object -First 1
+        if ($LASTEXITCODE -eq 0 -and $mb) { $base = $mb; break }
+    }
+    if (-not $base) { return $null }
+    $diff = @(git -C $Root diff --name-only $base 2>$null)
+    if ($LASTEXITCODE -ne 0) { return $null }
+    $novos = @(git -C $Root ls-files --others --exclude-standard 2>$null)
+    if ($LASTEXITCODE -ne 0) { return $null }
+    @($diff + $novos | Where-Object { $_ } | Select-Object -Unique)
+}
+
+# --- PURA: arquivos alterados -> { SkipPester; Exclude; Reason } --------------------------------
+# A regra mora em `.github/ci-scope.ps1` (fonte ÚNICA, a mesma do CI). Sem esse arquivo, escopo
+# completo: o espelho não distribui `.github/`, e pular sem a regra esconderia regressão.
+function Resolve-CheckScope {
+    param([AllowNull()][AllowEmptyCollection()][string[]]$ChangedFiles, [string]$Root = $script:RepoRoot)
+    $ciScope = Join-Path $Root '.github/ci-scope.ps1'
+    if (-not (Test-Path -LiteralPath $ciScope -PathType Leaf)) {
+        return [pscustomobject]@{ SkipPester = $false; Exclude = @(); Reason = 'sem .github/ci-scope.ps1: escopo completo' }
+    }
+    . $ciScope
+    $sc = Get-CiScope -ChangedFiles $ChangedFiles
+    [pscustomobject]@{
+        SkipPester = (-not $sc.Pester)
+        Exclude    = $(if ($sc.Pester -and -not $sc.Scaffold) { @($script:CiScaffoldSuites) } else { @() })
+        Reason     = $sc.Reason
+    }
+}
+
+# --- PURA: o escopo por diff liga sozinho? --------------------------------------------------------
+# Só na ENTRADA do script (não dentro do Invoke-Check): o publish.ps1 usa `Invoke-Check` como gate
+# de VERIFY antes de publicar e tem de rodar tudo. Liga só numa branch de trabalho. Na `main` o
+# check roda completo (é a cobertura Windows das suítes de scaffold que o CI deixa para o Linux), em
+# HEAD solto não há branch para julgar, e no CI o escopo é do próprio ci.yml.
+function Test-CheckAutoScope {
+    param(
+        [AllowEmptyString()][AllowNull()][string]$Branch,
+        [switch]$Full, [switch]$Changed, [switch]$SkipPester,
+        [string[]]$ExcludeTest = @(), [switch]$InCi
+    )
+    if ($Full -or $Changed -or $SkipPester -or $InCi) { return $false }
+    if (@($ExcludeTest | Where-Object { $_ }).Count -gt 0) { return $false }
+    if ([string]::IsNullOrWhiteSpace($Branch)) { return $false }
+    return ($Branch -notin 'main', 'master')
+}
+
 # --- Orquestra todos os checks ----------------------------------------------------------------
 function Invoke-Check {
     [CmdletBinding()]
     param([switch]$SkipPester, [string[]]$ExcludeTest = @(), [switch]$SkipAnalyzer, [switch]$SkipBudget, [switch]$Quiet,
-        [int]$PesterJobs = 0)
+        [int]$PesterJobs = 0, [switch]$Changed)
 
     $script:Quiet = [bool]$Quiet   # propaga a flag aos helpers (que leem $script:Quiet)
+    if ($Changed) {
+        $escopo = Resolve-CheckScope -ChangedFiles (Get-CheckChangedFile)
+        if ($escopo.SkipPester) { $SkipPester = [switch]$true }
+        $ExcludeTest = @($ExcludeTest) + @($escopo.Exclude)
+        # Sempre impresso, inclusive sob -Quiet: um Pester que não rodou tem de dizer por quê.
+        Write-Host "escopo (-Changed): $($escopo.Reason)"
+    }
     $results = [System.Collections.Generic.List[object]]::new()
     $jobs = if ($PesterJobs -gt 0) { $PesterJobs } else { Get-PesterDefaultJobs }
 
@@ -692,7 +770,15 @@ function Invoke-Check {
 # ADVISORY (postura low-friction): reporta o veredito mas NUNCA bloqueia (exit 0 sempre). Quem quiser
 # tratar como gate lê $sum.AllOk via dot-source. CI/local ficam informativos, não impeditivos.
 if ($MyInvocation.InvocationName -ne '.') {
-    $sum = Invoke-Check -SkipPester:$SkipPester -ExcludeTest $ExcludeTest -SkipAnalyzer:$SkipAnalyzer -SkipBudget:$SkipBudget -Quiet:$Quiet -PesterJobs $PesterJobs
+    # A branch é lida da raiz do repo (não do diretório atual): o `sddcheck` roda de qualquer pasta.
+    # Sem `| Select-Object -First 1` (ver Get-CheckChangedFile): com ele o $LASTEXITCODE não é definido
+    # num processo novo, e o CI da main falhou em 1 s por isso (2026-11-03).
+    $branchOut = @(git -C $script:RepoRoot symbolic-ref --short -q HEAD 2>$null)
+    $branch = if ($LASTEXITCODE -eq 0) { $branchOut | Select-Object -First 1 } else { $null }
+    $auto = Test-CheckAutoScope -Branch $branch -Full:$Full -Changed:$Changed -SkipPester:$SkipPester `
+        -ExcludeTest $ExcludeTest -InCi:($env:GITHUB_ACTIONS -eq 'true')
+    if ($auto) { Write-Host "(escopo automático: branch '$branch' não é a main; -Full roda tudo)" }
+    $sum = Invoke-Check -SkipPester:$SkipPester -ExcludeTest $ExcludeTest -SkipAnalyzer:$SkipAnalyzer -SkipBudget:$SkipBudget -Quiet:$Quiet -PesterJobs $PesterJobs -Changed:($Changed -or $auto)
     if (-not $sum.AllOk) {
         if ($env:GITHUB_ACTIONS -eq 'true') { Format-CheckAnnotation -Results $sum.Results | ForEach-Object { Write-Host $_ } }
         Write-Host '(advisory — não bloqueia; exit 0)'

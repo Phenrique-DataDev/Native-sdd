@@ -73,28 +73,31 @@ baixou (`[INFO   ] release: vX.Y.Z`); um push na `main` não muda o que você in
 
 ```powershell
 # Windows (PowerShell 5.1+) — sem flags
-irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboarding/bootstrap.ps1 | iex
+irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.18/onboarding/bootstrap.ps1 | iex
 
 # com flags do install.ps1: baixa o texto, embrulha num scriptblock e aplica os parâmetros
-iex "& { $(irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboarding/bootstrap.ps1) } -Check"
+iex "& { $(irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.18/onboarding/bootstrap.ps1) } -Check"
 
 # branch main em vez da última release (opt-in explícito; combina com os outros flags)
-iex "& { $(irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboarding/bootstrap.ps1) } -Ref main"
+iex "& { $(irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.18/onboarding/bootstrap.ps1) } -Ref main"
 ```
 
 ```bash
 # Linux — sem flags
-curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboarding/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.18/onboarding/bootstrap.sh | bash
 
 # com flags do install.sh: `bash -s --` repassa os args ao script vindo do pipe
-curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboarding/bootstrap.sh | bash -s -- --check
+curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.18/onboarding/bootstrap.sh | bash -s -- --check
 
 # branch main em vez da última release (opt-in explícito)
-curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboarding/bootstrap.sh | bash -s -- --ref main
+curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.18/onboarding/bootstrap.sh | bash -s -- --ref main
 ```
 
 > **Três URLs, papéis distintos:** as URLs acima (`raw.githubusercontent.com/...`) servem o
-> **texto do script** de bootstrap — é o que você cola no terminal, e esse texto vem da `main`.
+> **texto do script** de bootstrap — é o que você cola no terminal. A URL é **fixada na tag** da
+> release (`.../vX.Y.Z/onboarding/bootstrap.*`), então um push na `main` não muda o que você executa.
+> Não há verificação de hash: o texto e o conteúdo vêm do mesmo repositório, e um hash publicado ao lado
+> cobriria corrupção, não um repositório comprometido.
 > Por dentro, o script pergunta a última release a `api.github.com/repos/Phenrique-DataDev/Native-sdd/releases/latest`
 > e baixa o **conteúdo do repositório** daquela tag por outra URL
 > (`codeload.github.com/Phenrique-DataDev/Native-sdd/.../refs/tags/<tag>`; com `-Ref`/`--ref`,

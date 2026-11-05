@@ -22,7 +22,7 @@
 # script apaga ao terminar), o atalho ficaria órfão assim que o bootstrap termina (achado em uso
 # real, 2026-07-07: rodar sem --check deixava nsp/sddcheck quebrados logo em seguida).
 #
-# Sem flags:  curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboarding/bootstrap.sh | bash
+# Sem flags:  curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/vX.Y.Z/onboarding/bootstrap.sh | bash
 # Com flags:  curl -fsSL <mesma url> | bash -s -- --check
 # Branch main: curl -fsSL <mesma url> | bash -s -- --ref main   (combina com os demais flags)
 #

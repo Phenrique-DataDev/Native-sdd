@@ -36,5 +36,7 @@ bash "$SDD_WORKFLOW_HOME/onboarding/install.sh" --check --non-interactive
 
 Resuma em poucas linhas: versão instalada × versão do checkout, o que está `OK` e cada `WARN`/`FAIL`
 com a ação que o próprio instalador sugere. O código de saída zero não basta, leia as linhas de
-aviso. Não corrija nada sem o usuário pedir. Para aplicar, a skill `native-sdd-atualizar` (ou o
-instalador sem `-Check`) é o caminho.
+aviso. Se a statusline mostrar `5h --`, confira a linha `Relógio` antes de suspeitar do script: o
+Claude Code descarta a janela de 5h quando o relógio local já passou do reset. Não corrija nada sem
+o usuário pedir. Para aplicar, a skill `native-sdd-atualizar` (ou o instalador sem `-Check`) é o
+caminho.

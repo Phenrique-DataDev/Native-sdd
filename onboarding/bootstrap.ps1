@@ -42,11 +42,11 @@
   atalho aponta para um caminho que sobrevive.
 
   Sem flags:
-    irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboarding/bootstrap.ps1 | iex
+    irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/vX.Y.Z/onboarding/bootstrap.ps1 | iex
   Com flags (embrulha num scriptblock e aplica os parametros do install.ps1):
-    iex "& { $(irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboarding/bootstrap.ps1) } -Check"
+    iex "& { $(irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/vX.Y.Z/onboarding/bootstrap.ps1) } -Check"
   Branch main em vez da ultima release (opt-in; combina com os demais flags):
-    iex "& { $(irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboarding/bootstrap.ps1) } -Ref main"
+    iex "& { $(irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/vX.Y.Z/onboarding/bootstrap.ps1) } -Ref main"
 
 .NOTES
   Release, nao main (BOOTSTRAP_BAIXA_A_MAIN, 2026-10-18): reverte a Decisao 1 do

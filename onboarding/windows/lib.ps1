@@ -93,6 +93,57 @@ function Test-WingetInstalled {
     return ($LASTEXITCODE -eq 0 -and $out -match [regex]::Escape($Id))
 }
 
+# --- Relógio local contra a hora do servidor -------------------------------
+# POR QUE (medido em 2026-11-02): o Claude Code descarta a janela de rate limit cujo `resets_at` já
+# passou pelo relógio LOCAL. Com a máquina 10800 s adiantada, a janela de 5h sumia da statusline
+# embora o servidor a enviasse, e nada apontava a causa.
+function Get-ClockSkewSeconds {
+    # Pura: positivo = relógio local adiantado. Header ilegível devolve $null, nunca um desvio inventado.
+    param(
+        [AllowNull()][AllowEmptyString()][string]$DateHeader,
+        [Parameter(Mandatory)][DateTimeOffset]$Now
+    )
+    $server = [DateTimeOffset]::MinValue
+    $parsed = [DateTimeOffset]::TryParse($DateHeader, [Globalization.CultureInfo]::InvariantCulture,
+        [Globalization.DateTimeStyles]::AssumeUniversal, [ref]$server)
+    if (-not $parsed) { return $null }
+    return [int][math]::Round(($Now - $server).TotalSeconds)
+}
+
+function Get-ServerDateHeader {
+    # Sem rede ou sem o header devolve $null: o -Check não falha por isso.
+    param([string]$Uri = 'https://api.anthropic.com')
+    try {
+        $response = Invoke-WebRequest -Uri $Uri -Method Head -TimeoutSec 5 -SkipHttpErrorCheck -ErrorAction Stop
+        return [string]($response.Headers['Date'] | Select-Object -First 1)
+    }
+    catch { return $null }
+}
+
+function Invoke-ClockCheck {
+    param(
+        [Parameter(Mandatory)][hashtable]$Summary,
+        [scriptblock]$GetDateHeader = { Get-ServerDateHeader },
+        [int]$ToleranceSeconds = 300
+    )
+    $skew = Get-ClockSkewSeconds -DateHeader (& $GetDateHeader) -Now ([DateTimeOffset]::UtcNow)
+    if ($null -eq $skew) {
+        Write-Step INFO 'Relógio: sem a hora do servidor para comparar (sem rede?)'
+        return
+    }
+    $abs = [math]::Abs($skew)
+    if ($abs -le $ToleranceSeconds) {
+        Write-Step OK "Relógio: certo (desvio de ${abs}s)"
+        return
+    }
+    $Summary.Warn++
+    if ($skew -gt 0) {
+        Write-Step WARN "Relógio: ${abs}s adiantado frente ao servidor. A statusline pode mostrar '5h --': o Claude Code descarta a janela que parece vencida. Sincronize a hora do sistema."
+        return
+    }
+    Write-Step WARN "Relógio: ${abs}s atrasado frente ao servidor. Sincronize a hora do sistema."
+}
+
 # --- Relaunch em pwsh quando o script roda sob Windows PowerShell 5.1 ----
 # POR QUE (verificado em uso real, 2026-07-16): o new-project.ps1 NÃO roda no 5.1. Duas causas
 # independentes, e a segunda só apareceu depois de corrigir a primeira:

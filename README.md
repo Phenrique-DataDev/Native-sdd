@@ -21,8 +21,8 @@
 </p>
 
 <p align="center">
-  <strong>Versão atual: v1.0.17</strong> ·
-  <a href="https://github.com/Phenrique-DataDev/Native-sdd/releases/tag/v1.0.17">o que mudou nela</a> ·
+  <strong>Versão atual: v1.0.18</strong> ·
+  <a href="https://github.com/Phenrique-DataDev/Native-sdd/releases/tag/v1.0.18">o que mudou nela</a> ·
   <a href="https://github.com/Phenrique-DataDev/Native-sdd/releases">todas as releases</a>
 </p>
 
@@ -49,7 +49,7 @@
 - **Ferramentas:** nativo no Claude Code; medido ao vivo no Codex (GPT), no Copilot e no Antigravity
   (Gemini), com o guard de comando destrutivo nos três (no Antigravity ele não pergunta quando as
   permissões estão puladas). Cursor e OpenCode têm só o guard como hook, sem rodada ao vivo. Ver
-  [Ferramentas suportadas](#ferramentas-suportadas--supported-tools).
+  [Ferramentas suportadas](#nativo-no-claude-code-medido-nas-demais--native-in-claude-code-measured-in-the-rest).
 - **Não é para você se:** você quer só um `CLAUDE.md` e meia dúzia de comandos, ou precisa de suporte
   medido numa ferramenta que ainda não foi verificada. Veja também a
   [comparação com Spec Kit e OpenSpec](docs/VISAO.md#alternativas-spec-kit-e-openspec).
@@ -149,7 +149,7 @@ your `~/.claude` configuration alone. The bootstrap still caches the downloaded 
 
 ```powershell
 # Windows — sem clonar, num PowerShell
-irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboarding/bootstrap.ps1 | iex
+irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.18/onboarding/bootstrap.ps1 | iex
 ```
 
 > Em automação ou CI, embrulhe num processo próprio
@@ -157,7 +157,7 @@ irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboardi
 
 ```bash
 # Linux e macOS — sem clonar (precisa de bash + curl + tar; o script avisa se algo faltar)
-curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboarding/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.18/onboarding/bootstrap.sh | bash
 ```
 
 > **No macOS** as dependências vêm pelo **Homebrew** (instalado se faltar) e o PowerShell pelo tarball
@@ -500,7 +500,7 @@ Todos auto-contidos, em `.claude/commands/`. Detalhe de roteamento em `.claude/r
    Dev Loop.
 4. **Claude-first, portável.** Otimizado para Claude Code (commands, hooks, MCP), com artefatos (SDD,
    KB, regras, `AGENTS.md`) estruturados para portar a outras ferramentas. O que já porta, e como
-   foi medido, está em [Ferramentas suportadas](#ferramentas-suportadas--supported-tools).
+   foi medido, está em [Ferramentas suportadas](#nativo-no-claude-code-medido-nas-demais--native-in-claude-code-measured-in-the-rest).
 5. **Qualidade verificável.** Nada é "pronto" sem verificação real (lint, testes, critérios de
    aceite). Não inventar dados; não versionar segredos.
 6. **Segurança em camadas, sem barrar.** A rede é **hook-based**, não prompt-based: git **pre-commit**
@@ -517,7 +517,13 @@ PSScriptAnalyzer, os lints de conformidade e o Pester:
 ```powershell
 pwsh tools/check.ps1              # tudo (lints + testes)
 pwsh tools/check.ps1 -SkipPester  # rápido: só os lints estáticos
+pwsh tools/check.ps1 -Full        # força o completo (veja abaixo)
 ```
+
+Numa **branch de trabalho** (fora de `main`/`master`), o runner escopa o Pester pelo diff, com as
+mesmas regras do CI: só docs/backlog pula o Pester, e sem mudança no scaffold as suítes de scaffold
+ficam de fora. Ele imprime o escopo que escolheu. Na `main`, no CI, em HEAD solto ou com `-Full`,
+roda tudo. `-Changed` liga o escopo à mão, em qualquer branch.
 
 Após o `install.ps1`, o atalho **`sddcheck`** (registrado no `$PROFILE`) roda o mesmo runner de
 qualquer pasta, resolvendo o repo via `$env:SDD_WORKFLOW_HOME` — repassa as flags:
@@ -542,7 +548,7 @@ pwsh tools/e2e-linux.ps1        # só no repositório de desenvolvimento: sobe c
 > PSScriptAnalyzer, the conformance lints and Pester (`-SkipPester` for a fast lints-only pass).
 > Green here = green in CI — the workflow calls the same script.
 
-## Ferramentas suportadas / Supported tools
+## Nativo no Claude Code, medido nas demais / Native in Claude Code, measured in the rest
 
 O suporte é por **ferramenta**, a CLI que roda o modelo, e não por modelo. Todas leem o mesmo
 contrato, o `AGENTS.md` do projeto. O que muda é quanto do resto (skills, hooks, papéis de agente)

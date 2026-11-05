@@ -41,7 +41,7 @@ conformance check (`/check`) and a pre-commit hook that blocks secrets come with
 | **On an existing codebase** | `/adapt` detects the stack and the test, CI and docs hygiene, absorbs an existing `.claude/` without overwriting it, and hands off to `/curate`. |
 
 **Not for you if** you only want a `CLAUDE.md` and a handful of commands, or need measured support
-in a tool that has not been verified yet ([supported tools](#supported-tools)). See also the
+in a tool that has not been verified yet ([supported tools](#native-in-claude-code-measured-in-the-rest)). See also the
 [comparison with Spec Kit and OpenSpec](docs/VISAO.md#alternativas-spec-kit-e-openspec) (Portuguese).
 
 ## The workflow
@@ -66,12 +66,12 @@ installs the latest tagged release, not `main`. You can read it first:
 
 ```powershell
 # Windows, in PowerShell
-irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboarding/bootstrap.ps1 | iex
+irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.18/onboarding/bootstrap.ps1 | iex
 ```
 
 ```bash
 # Linux and macOS (needs bash, curl and tar)
-curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboarding/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.18/onboarding/bootstrap.sh | bash
 ```
 
 **See what changes before installing.** `-Check` / `--check` only reports, `-DryRun` / `--dry-run`
@@ -79,7 +79,7 @@ lists each action without running it, and `-ProjectOnly` / `--project-only` leav
 configuration alone. A normal install backs up every file it overwrites (`<file>.bak-<date>`).
 
 ```powershell
-iex "& { $(irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/main/onboarding/bootstrap.ps1) } -DryRun"
+iex "& { $(irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.18/onboarding/bootstrap.ps1) } -DryRun"
 ```
 
 **2 · Create a project** (reopen the terminal first: the installer adds `New-SddProject`, alias
@@ -105,7 +105,7 @@ multi-agent sessions.
 project (`-DryRun` shows the plan first). Files you customized are never overwritten: when the
 template changed them too, they are listed as conflicts.
 
-## Supported tools
+## Native in Claude Code, measured in the rest
 
 Support is per tool (the CLI that runs the model). All of them read the same contract, the
 project's `AGENTS.md`.
@@ -116,7 +116,7 @@ project's `AGENTS.md`.
 | **Codex CLI**, **Hermes Agent**, **GitHub Copilot CLI**, **Antigravity CLI** | Measured live, with the destructive-command guard in Codex, Copilot and Antigravity (Antigravity does not prompt when permissions are skipped). |
 | **Cursor**, **OpenCode** | Guard hook only, tested with fixtures, no live run. |
 
-Details and how each was measured: [Ferramentas suportadas](README.md#ferramentas-suportadas--supported-tools).
+Details and how each was measured: [Ferramentas suportadas](README.md#nativo-no-claude-code-medido-nas-demais--native-in-claude-code-measured-in-the-rest).
 
 ## Requirements
 

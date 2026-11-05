@@ -6,7 +6,7 @@
 # Uso:
 #   ./apply.sh [--check] [--dry-run] [--skip-clis] [--non-interactive] [--force]
 #              [--extra-plugins] [--themes "design reporting"] [--managed-policy Ask|Yes|No]
-#              [--with-herdr] [--keep-retired] [--overwrite-custom] [--project-only]
+#              [--with-herdr] [--with-mods] [--keep-retired] [--overwrite-custom] [--project-only]
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

@@ -216,6 +216,10 @@ dom5=0
 if [ -n "$rate5" ]; then
     if [ -z "$rate7" ] || awk -v a="$rate5" -v b="$rate7" 'BEGIN{exit !(a>=b)}'; then dom5=1; fi
     ratestr="$(render_rate 5h "$rate5" "$reset5" "$dom5")"
+elif [ -n "$rate7" ]; then
+    # O CLI descarta a janela cujo reset já passou pelo relógio LOCAL: com 7d presente, 5h ausente é
+    # falta, não "plano sem janela". Marca em vez de sumir (relógio adiantado: o --check acusa).
+    ratestr="$(paint "$C_accent" 5h bold) $(paint "$C_muted" "--")"
 fi
 if [ -n "$rate7" ]; then
     dom7=1; [ "$dom5" = 1 ] && dom7=0

@@ -249,6 +249,9 @@ $l2 = ' ' + $bar + ' ' + $pctStr + ' ' + (P $T.muted ("$(Fmt-Tokens $ctxTokens)/
 $rateStr = ''
 $dom5 = ($null -ne $rate5) -and (($null -eq $rate7) -or ($rate5 -ge $rate7))
 if ($null -ne $rate5) { $rateStr += (Format-RateWindow '5h' $rate5 $reset5 $dom5) }
+# O CLI descarta a janela cujo reset já passou pelo relógio LOCAL: com 7d presente, 5h ausente é falta,
+# não "plano sem janela". Marca em vez de sumir (relógio adiantado: o -Check do instalador acusa).
+elseif ($null -ne $rate7) { $rateStr += (P $T.accent '5h' 'bold') + ' ' + (P $T.muted '--') }
 if ($null -ne $rate7) {
     if ($rateStr) { $rateStr += (P $T.muted ' · ') }
     $rateStr += (Format-RateWindow '7d' $rate7 $reset7 (-not $dom5))

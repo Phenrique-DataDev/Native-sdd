@@ -24,7 +24,7 @@ posix_apply_main() {
 
   local CHECK=0 DRYRUN=0 SKIP_CLIS=0 NONINTERACTIVE=0 FORCE=0 EXTRA_PLUGINS=0
   local THEMES="" MANAGED_POLICY=""
-  local WITH_HERDR=0 KEEP_RETIRED=0 OVERWRITE_CUSTOM=0 PROJECT_ONLY=0
+  local WITH_MODS=0 WITH_HERDR=0 KEEP_RETIRED=0 OVERWRITE_CUSTOM=0 PROJECT_ONLY=0
   while [ $# -gt 0 ]; do
     case "$1" in
       --check)                      CHECK=1 ;;
@@ -38,6 +38,7 @@ posix_apply_main() {
       --managed-policy)             shift; MANAGED_POLICY="${1:-}" ;;
       --managed-policy=*)           MANAGED_POLICY="${1#*=}" ;;
       --with-herdr)                 WITH_HERDR=1 ;;
+      --with-mods)                  WITH_MODS=1 ;;
       --keep-retired)               KEEP_RETIRED=1 ;;
       --overwrite-custom)           OVERWRITE_CUSTOM=1 ;;
       --project-only)               PROJECT_ONLY=1 ;;
@@ -100,6 +101,7 @@ posix_apply_main() {
   fi
   [ -n "$MANAGED_POLICY" ]    && PS_ARGS+=(-ManagedPolicy "$MANAGED_POLICY")
   [ "$WITH_HERDR" = 1 ]       && PS_ARGS+=(-WithHerdr)
+  [ "$WITH_MODS" = 1 ]        && PS_ARGS+=(-WithMods)
   [ "$KEEP_RETIRED" = 1 ]     && PS_ARGS+=(-KeepRetired)
   [ "$OVERWRITE_CUSTOM" = 1 ] && PS_ARGS+=(-OverwriteCustom)
   [ "$PROJECT_ONLY" = 1 ]     && PS_ARGS+=(-ProjectOnly)

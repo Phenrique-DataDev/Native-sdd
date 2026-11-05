@@ -38,7 +38,9 @@ Claude Code só envia p/ assinantes **Pro/Max** e após a 1ª resposta da sessã
 **etiqueta** (`5h`/`7d`, em accent fixo) + **mini-barra** de 4 blocos (`▰▱`, cor por faixa) + **%**;
 o **tempo até o reset** (resumido: `2h`, `18m`, `2d` — de `resets_at`) aparece só na janela de
 **maior uso** — a que aperta. Cada janela e o custo degradam sozinhos: quem é **API-user** vê o
-custo em `$`; quem é Pro/Max vê as janelas de rate.
+custo em `$`; quem é Pro/Max vê as janelas de rate. Com `7d` presente e `5h` ausente, a linha mostra
+`5h --`: o Claude Code descarta a janela cujo reset já passou pelo relógio local, então isso aparece
+com o relógio adiantado. O `install.ps1 -Check` compara o relógio com a hora do servidor.
 
 **Portabilidade (dois shells).** `settings.json` chama uma dispatch-line que prefere `pwsh`
 (`statusline.ps1`) e cai p/ `bash` (`statusline.sh`, via `jq`) quando `pwsh` falta — mesmo padrão
