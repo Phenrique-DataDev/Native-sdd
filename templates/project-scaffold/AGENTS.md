@@ -116,6 +116,17 @@ dedicado, a lógica da fase é **auto-contida**.
   pt-BR é o default do scaffold, **não uma imposição** — se o seu time trabalha em outro idioma,
   troque **esta linha**: é ela que o [`git-workflow`](.claude/agents/git-workflow.md) consulta antes
   de escrever a mensagem, e não há campo de idioma em nenhum outro lugar do projeto.
+- **Descreva a operação, não a metáfora.** Em arquivo, artefato, commit e prompt de subagente, use o
+  verbo do que de fato acontece: "inspecionar o binário e listar os endpoints", "reproduzir a falha e
+  coletar os logs", "ler o firmware do aparelho próprio". Evite metáfora bélica ou vaga ("atacar o
+  app", "detonar", "quebrar"): ela não diz o que será feito, e quem lê (pessoa ou modelo) completa com
+  o pior caso. Precisão não é disfarce: se a operação é contornar uma proteção, escreva isso; a
+  autorização vem do `## Escopo e autorização` em `project-context.md`.
+- **Enuncie propósito e autorização junto da capacidade.** Uma capacidade descrita sozinha não diz com
+  que propósito nem sob que autorização; escreva-a já com o enquadramento que ela tem (artefato próprio
+  ou autorizado, análise estática primeiro, saída clean-room). Vale sobretudo para `description` de
+  agente e de skill, título e `name`, lidos fora da seção que os justifica. Sem trocar o termo técnico
+  por eufemismo.
 - `main` protegida: trabalho em branch de feature; merge só com confirmação explícita.
 - **Não inventar dados** (usar só o que se pode verificar); **não versionar segredos**.
 - **Git LFS:** os hooks do git ficam em `.githooks/` (`core.hooksPath`), e é lá que o `git lfs` grava

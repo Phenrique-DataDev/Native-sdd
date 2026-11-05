@@ -19,7 +19,7 @@ projeto, feita no `/curate`). Você vai passar pelas três camadas nesta ordem �
 explícito.
 
 ## Antes de começar
-- [ ] Windows 10/11 (com `winget`), Linux (Ubuntu/Fedora/Arch) **ou** macOS 14+ (Apple Silicon ou
+- [ ] Windows 10/11 (com `winget`), Linux (Ubuntu/Fedora/Arch/Kali) **ou** macOS 14+ (Apple Silicon ou
       Intel; o instalador põe o Homebrew se faltar e pede a senha de admin uma vez).
 - [ ] `git` instalado (o instalador cuida disso se faltar, no Windows).
 - [ ] Claude Code (CLI ou desktop) — o instalador também garante isso.

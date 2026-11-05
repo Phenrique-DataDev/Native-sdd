@@ -66,12 +66,12 @@ installs the latest tagged release, not `main`. You can read it first:
 
 ```powershell
 # Windows, in PowerShell
-irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.18/onboarding/bootstrap.ps1 | iex
+irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.19/onboarding/bootstrap.ps1 | iex
 ```
 
 ```bash
 # Linux and macOS (needs bash, curl and tar)
-curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.18/onboarding/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.19/onboarding/bootstrap.sh | bash
 ```
 
 **See what changes before installing.** `-Check` / `--check` only reports, `-DryRun` / `--dry-run`
@@ -79,7 +79,7 @@ lists each action without running it, and `-ProjectOnly` / `--project-only` leav
 configuration alone. A normal install backs up every file it overwrites (`<file>.bak-<date>`).
 
 ```powershell
-iex "& { $(irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.18/onboarding/bootstrap.ps1) } -DryRun"
+iex "& { $(irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.19/onboarding/bootstrap.ps1) } -DryRun"
 ```
 
 **2 · Create a project** (reopen the terminal first: the installer adds `New-SddProject`, alias

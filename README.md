@@ -21,8 +21,8 @@
 </p>
 
 <p align="center">
-  <strong>Versão atual: v1.0.18</strong> ·
-  <a href="https://github.com/Phenrique-DataDev/Native-sdd/releases/tag/v1.0.18">o que mudou nela</a> ·
+  <strong>Versão atual: v1.0.19</strong> ·
+  <a href="https://github.com/Phenrique-DataDev/Native-sdd/releases/tag/v1.0.19">o que mudou nela</a> ·
   <a href="https://github.com/Phenrique-DataDev/Native-sdd/releases">todas as releases</a>
 </p>
 
@@ -149,7 +149,7 @@ your `~/.claude` configuration alone. The bootstrap still caches the downloaded 
 
 ```powershell
 # Windows — sem clonar, num PowerShell
-irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.18/onboarding/bootstrap.ps1 | iex
+irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.19/onboarding/bootstrap.ps1 | iex
 ```
 
 > Em automação ou CI, embrulhe num processo próprio
@@ -157,7 +157,7 @@ irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.18/onboa
 
 ```bash
 # Linux e macOS — sem clonar (precisa de bash + curl + tar; o script avisa se algo faltar)
-curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.18/onboarding/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.19/onboarding/bootstrap.sh | bash
 ```
 
 > **No macOS** as dependências vêm pelo **Homebrew** (instalado se faltar) e o PowerShell pelo tarball

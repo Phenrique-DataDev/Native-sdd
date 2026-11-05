@@ -136,7 +136,7 @@ Frontmatter obrigatório, no mesmo formato dos agentes do núcleo, **mais** o ma
 ```markdown
 ---
 name: <nome-kebab-case-único>
-description: <quando acionar — gatilho concreto do stack/domínio real>
+description: <quando acionar — gatilho concreto do stack/domínio real; capacidade sensível vem com propósito e autorização juntos (ver AGENTS.md "Enuncie propósito e autorização junto da capacidade"), sem eufemismo>
 tools: Read, Grep, Glob, Edit, Bash
 model: inherit
 role: <papel mais próximo: review|testing|search|security|debug|validation|vcs|simulation>

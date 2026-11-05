@@ -79,7 +79,7 @@ bash ./onboarding/linux/apply.sh --help
 > **tarball oficial do GitHub** (última versão estável, com fallback fixo se a API falhar).
 > Arquiteturas: `x64`/`arm64` (arm32 não é suportado — sem build oficial do PowerShell).
 > A managed policy (opt-in) escreve em `/etc/claude-code/` via `sudo`. Validado em Docker:
-> `ubuntu:24.04`, `fedora:41`, `archlinux`.
+> `ubuntu:24.04`, `fedora:41`, `archlinux` e `kalilinux/kali-rolling` (root e usuário comum com `sudo`).
 
 ## O que faz
 

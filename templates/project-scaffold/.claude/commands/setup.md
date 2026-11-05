@@ -26,6 +26,12 @@ Você vai configurar este projeto preenchendo `.claude/rules/project-context.md`
      os testes. Proponha a partir da stack inferida; o usuário confirma ou corrige. Projeto ainda sem
      teste nenhum: diga que `/dev`, `/build` e `/iterate` ficarão sem sinal verde/vermelho, e grave
      `—` só se ele confirmar.
+   - **Escopo e autorização** — **só se** o projeto lê artefato sem fonte (binário, APK, firmware),
+     observa alvo externo, mexe em aparelho ou faz trabalho de segurança. Pergunte: o **alvo**, a
+     **relação** com ele (próprio do usuário · autorização escrita · CTF · análise defensiva), as
+     **operações permitidas** (ex.: ler o firmware, desbloquear o bootloader, executar em VM), o que
+     fica **fora de escopo** e o **ambiente isolado** de execução. Projeto sem nada disso: não
+     pergunte e não crie a seção.
    - **Convenção que vale só para uma parte do projeto** (uma pasta, um tipo de arquivo)? Se houver,
      ela **não** vai para o `project-context.md`, que é always-on e vale para tudo. Leia
      [`postures/path-rules.md`](../postures/path-rules.md) e ofereça gravá-la como rule de área
@@ -36,6 +42,9 @@ Você vai configurar este projeto preenchendo `.claude/rules/project-context.md`
    marcador para `<!-- status: active -->`. Na seção **`## Verificação`**, grave só comando que você
    **rodou aqui** e mostrou a saída (install primeiro, depois lint e teste): comando que não passa
    local não é verificação, é palpite. Um comando por célula, entre crases; sem a etapa, `—`.
+   Se o passo 3 levantou escopo e autorização, grave-o numa seção **`## Escopo e autorização`**
+   (tabela Campo | Valor com as cinco linhas acima), depois de `## Verificação`. A prova de posse ou o
+   documento de autorização **não** entram no arquivo: registre só onde estão.
 5. **Aponte a área de trabalho.** Deixe explícito (sem criar nada à força):
    - A **raiz do projeto é o workspace** — código, dados e docs vão na estrutura que a
      stack capturada pedir (ex.: Python+dbt → `src/ tests/ models/`). É **derivado da
