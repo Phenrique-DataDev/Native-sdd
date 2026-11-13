@@ -99,6 +99,8 @@ function Read-NormalizedEvent {
         Command       = [string](Get-PropOrNull $toolInput 'command')
         FilePath      = [string](Get-PropOrNull $toolInput 'file_path')
         Cwd           = [string](Get-PropOrNull $Payload 'cwd')
+        # SessionStart: startup|resume|clear|compact|fork (ausente nos demais eventos).
+        Source        = [string](Get-PropOrNull $Payload 'source')
     }
 }
 
@@ -135,7 +137,7 @@ function Get-StalenessSignals {
         if ($null -ne (Get-PropOrNull $cs 'ProjectInitialized') -and -not [bool](Get-PropOrNull $cs 'ProjectInitialized')) {
             $signals += [pscustomobject]@{
                 Signal  = 'nao-inicializado'
-                Detail  = 'PROJETO NAO INICIALIZADO (project-context.md em status: template) -- avise o usuario ANTES de executar qualquer trabalho, inclusive tarefa pequena'
+                Detail  = 'PROJETO NAO INICIALIZADO (project-context.md em status: template). Sessao nao interativa (`claude -p`, sem AskUserQuestion): o /setup nao pode rodar aqui, entao NAO PARE: faca a tarefa pedida e avise do /setup na primeira linha e ao final. So em sessao interativa: avise o usuario ANTES de executar qualquer trabalho, inclusive tarefa pequena'
                 Command = '/setup'
             }
         }
@@ -326,7 +328,10 @@ function Get-NudgeDecision {
         Gatilho RECORRENTE (UserPromptSubmit/PostToolUse) só avisa se houver ao menos um sinal cuja
         chave não estava no último estado: o aviso anterior já está no contexto da sessão, e repeti-lo
         a cada 30 min ensina a ignorá-lo (auditoria 2026-09-30: `LastSignals` era gravado e nunca
-        comparado). SessionStart avisa sempre — sessão nova (ou pós-compact) não tem o aviso.
+        comparado). SessionStart avisa sempre — sessão nova não tem o aviso. EXCEÇÃO: `compact` DENTRO do
+        cooldown com as mesmas chaves vira recorrente (silêncio): medido ao vivo em 2026-11-10, uma sessão
+        `-p` com 1 /compact injetou 2x o mesmo aviso (startup + compact) — o ruído do item
+        NUDGE_RUIDOSO_EM_SESSAO_HEADLESS. Fora do cooldown (>30 min) o compact reavisa.
         Quando avisa, manda a lista INTEIRA, não só o novo: o texto é um retrato, não um diff.
     .OUTPUTS
         [pscustomobject] { Emit = [bool]; Keys = [string[]] }  — Keys vai para `last_signals`.
@@ -334,12 +339,16 @@ function Get-NudgeDecision {
     param(
         [AllowEmptyCollection()][psobject[]]$Signals = @(),
         [AllowEmptyCollection()][string[]]$LastKeys = @(),
-        [string]$EventName
+        [string]$EventName,
+        [string]$Source = '',
+        [bool]$CooldownElapsed = $true
     )
     $Signals = @($Signals | Where-Object { $_ })
     $keys = @($Signals | ForEach-Object { Get-NudgeSignalKey $_ })
     if ($keys.Count -eq 0) { return [pscustomobject]@{ Emit = $false; Keys = @() } }
-    if ($EventName -notin @('PostToolUse', 'UserPromptSubmit')) { return [pscustomobject]@{ Emit = $true; Keys = $keys } }
+    $recorrente = ($EventName -in @('PostToolUse', 'UserPromptSubmit')) -or
+                  ($EventName -eq 'SessionStart' -and $Source -eq 'compact' -and -not $CooldownElapsed)
+    if (-not $recorrente) { return [pscustomobject]@{ Emit = $true; Keys = $keys } }
     $novos = @($keys | Where-Object { @($LastKeys) -notcontains $_ })
     return [pscustomobject]@{ Emit = ($novos.Count -gt 0); Keys = $keys }
 }
@@ -595,7 +604,8 @@ function Invoke-CurationNudge {
     # 5) Reúne sinais (read-only) e decide
     try { $snapshot = Get-CurationSnapshot -Root $root -LearnWatermark $state.LearnWatermark } catch { return }
     $signals = @(Get-StalenessSignals -Snapshot $snapshot)
-    $decision = Get-NudgeDecision -Signals $signals -LastKeys @($state.LastSignals) -EventName $eventName
+    $decision = Get-NudgeDecision -Signals $signals -LastKeys @($state.LastSignals) -EventName $eventName `
+                  -Source $evt.Source -CooldownElapsed (Test-CooldownElapsed -LastEpoch $state.LastEpoch -NowEpoch $now -WindowSeconds $script:CooldownSeconds)
 
     if ($decision.Emit) {
         $userOnly = @(Get-UserOnlyCommands -CommandsDir (Join-Path $root '.claude/commands'))

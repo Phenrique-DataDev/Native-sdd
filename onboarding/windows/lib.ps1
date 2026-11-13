@@ -567,6 +567,11 @@ function ConvertTo-NativeStatusLine {
     return $Settings
 }
 
+# -NativeHooks: o DEFAULT segue o SO (só Windows reescreve), não `$true`. Até 2026-11-09 era `$true`
+# e só o apply.ps1 passava o valor pelo SO: o new-project.ps1 e o Get-ScaffoldDeliveredBytes caíam no
+# default, e o projeto criado no Linux/macOS recebia o SessionStart como `pwsh -File`, sem o fallback
+# para o `.sh`. Sem pwsh o hook saía com rc 127 e o aviso de degradação dos stubs nunca era chamado
+# (medido em container, SESSIONSTART_DO_PROJETO_QUEBRA_SEM_PWSH no backlog).
 # --- Instalação de um baseline .json (MERGE no destino; cria se faltar) ---
 function Get-JsonBaselineMerge {
     # O que o instalador JSON ESCREVERIA, sem escrever: expande placeholders, reescreve hooks para
@@ -580,7 +585,7 @@ function Get-JsonBaselineMerge {
         [Parameter(Mandatory)][string]$Rel,
         [string]$HomePath = (Get-UserHome),
         [string]$WorkflowHome = (Get-SddWorkflowRoot),
-        [bool]$NativeHooks = $true,
+        [bool]$NativeHooks = ((Get-OnboardingOS) -eq 'Windows'),
         [string]$JsonBaselineDir
     )
     $baseObj = if ($Dst) { (Get-Content -LiteralPath $Dst -Raw) | ConvertFrom-Json } else { [pscustomobject]@{} }
@@ -608,7 +613,7 @@ function Install-JsonBaselineItem {
         [Parameter(Mandatory)][hashtable]$Summary,
         [string]$HomePath = (Get-UserHome),
         [string]$WorkflowHome = (Get-SddWorkflowRoot),
-        [bool]$NativeHooks = $true,
+        [bool]$NativeHooks = ((Get-OnboardingOS) -eq 'Windows'),
         [string]$JsonBaselineDir,
         # -FastForward: o destino é exatamente o que entregamos (classe 'intacto' do -Update do
         # scaffold), então o template novo o SUBSTITUI. Mesclar sem proveniência preservava a entrada
@@ -670,7 +675,7 @@ function Install-BaselineItem {
         [Parameter(Mandatory)][hashtable]$Summary,
         [string]$HomePath = (Get-UserHome),
         [string]$WorkflowHome = (Get-SddWorkflowRoot),
-        [bool]$NativeHooks = $true,
+        [bool]$NativeHooks = ((Get-OnboardingOS) -eq 'Windows'),
         [string]$JsonBaselineDir,
         [AllowNull()][hashtable]$Manifest,
         [switch]$PreserveCustom,

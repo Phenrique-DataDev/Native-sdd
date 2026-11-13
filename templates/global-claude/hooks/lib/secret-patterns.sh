@@ -45,6 +45,7 @@ is_secret_file_path() {
   [ -z "$p" ] && return 1
   p="${p//\\//}"
   local leaf="${p##*/}"
+  printf '%s' "$leaf" | grep -qE '^\.env\.(example|sample|template|dist)$' && return 1   # modelo versionado, sem valor real
   printf '%s' "$leaf" | grep -qE '^\.env(\..+)?$'            && return 0   # .env, .env.local…
   printf '%s' "$leaf" | grep -qE '^id_(rsa|dsa|ecdsa|ed25519)$' && return 0   # chaves SSH
   printf '%s' "$p"    | grep -qE '\.(pem|pfx|p12|key|keystore|jks)$' && return 0   # material de chave

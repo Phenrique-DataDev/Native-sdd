@@ -23,8 +23,11 @@
   (bloco Unicode) aqui - nem em comentario, nem em string.
 
   Fluxo: resolve a ultima release pela API do GitHub (releases/latest, campo tag_name), baixa o
-  zip de refs/tags/<tag> via codeload.github.com (HTTPS, anonimo) e imprime a tag. Com -Ref
-  <branch> (opt-in explicito, ex.: -Ref main) pula a API e baixa refs/heads/<branch>. Se a API
+  asset native-sdd-<tag>.zip da release (HTTPS, anonimo), confere o sha256 contra o digest que a
+  propria API devolve (BOOTSTRAP_SEM_PIN_NEM_HASH) e so entao extrai; imprime a tag. Sem o asset
+  ou sem o digest, falha. Cobre corrupcao ou troca do arquivo no download; NAO cobre repositorio
+  comprometido (o digest vem do mesmo GitHub). Com -Ref <branch> (opt-in explicito, ex.: -Ref
+  main) pula a API e baixa refs/heads/<branch> do codeload, SEM verificacao. Se a API
   falhar (rate limit, rede, espelho sem release), o bootstrap FALHA citando o -Ref main - nunca
   cai na main em silencio. O -Ref e consumido aqui; os demais args vao ao install.ps1. Extrai num
   diretorio temporario e MOVE o conteudo extraido para um cache permanente em
@@ -82,6 +85,7 @@
 # trocar o destino exige editar este arquivo, nunca um parametro/env solto.
 $bootstrapOwner = 'Phenrique-DataDev'
 $bootstrapRepo = 'Native-sdd'
+$bootstrapAsset = $null
 $bootstrapApiUrl = "https://api.github.com/repos/$bootstrapOwner/$bootstrapRepo/releases/latest"
 
 # Copia exata de Split-BootstrapArgs em bootstrap-lib.ps1 (o teste de paridade compara as duas).
@@ -134,6 +138,26 @@ function Get-BootstrapDownloadUrl {
     return $null
 }
 
+# Copia exata de Get-BootstrapReleaseAsset em bootstrap-lib.ps1 (o teste de paridade compara as duas).
+function Get-BootstrapReleaseAsset {
+    # Do JSON de /releases/latest, o asset native-sdd-<Tag>.zip: @{ Url; Sha256 } ou $null se faltar
+    # asset, digest sha256 ou se a URL nao for https do proprio repo. Pura (so le texto, nunca lanca).
+    # O digest e o que a API do GitHub calculou no upload; o bootstrap compara com o arquivo baixado.
+    param([string]$Json, [string]$Tag, [string]$Owner = 'Phenrique-DataDev', [string]$Repo = 'Native-sdd')
+    try { $release = $Json | ConvertFrom-Json -ErrorAction Stop } catch { return $null }
+    if (-not $Tag -or -not $release -or -not $release.PSObject.Properties['assets']) { return $null }
+    $prefix = "https://github.com/$Owner/$Repo/releases/download/"
+    foreach ($asset in @($release.assets)) {
+        if (-not $asset -or $asset.name -ne "native-sdd-$Tag.zip") { continue }
+        $digest = [string]$asset.digest
+        $url = [string]$asset.browser_download_url
+        if ($digest -notmatch '^sha256:([0-9a-fA-F]{64})$') { return $null }
+        if (-not $url.StartsWith($prefix, [System.StringComparison]::Ordinal)) { return $null }
+        return @{ Url = $url; Sha256 = $Matches[1].ToLowerInvariant() }
+    }
+    return $null
+}
+
 Write-Host ''
 Write-Host '=============================================='
 Write-Host '   Bootstrap remoto - Native-SDD'
@@ -169,25 +193,45 @@ try {
             if (-not $bootstrapTag) {
                 throw "a resposta de $bootstrapApiUrl nao trouxe um tag_name valido. Para baixar o branch main em vez da release, rode de novo com -Ref main"
             }
-            $bootstrapUrl = Get-BootstrapDownloadUrl -Owner $bootstrapOwner -Repo $bootstrapRepo -Tag $bootstrapTag
             Write-Host "[INFO   ] release: $bootstrapTag"
+            # O que se baixa e o asset da release (o subset que o publish empacotou), conferido contra o
+            # digest sha256 que a API devolve. Sem asset ou sem digest e fatal: nunca cai no codeload
+            # sem verificacao. Cobre corrupcao/troca no download; nao cobre repo comprometido.
+            $bootstrapAsset = Get-BootstrapReleaseAsset -Json $releaseJson -Tag $bootstrapTag -Owner $bootstrapOwner -Repo $bootstrapRepo
+            if (-not $bootstrapAsset) {
+                throw "a release $bootstrapTag nao tem o asset native-sdd-$bootstrapTag.zip com digest sha256 - sem hash para conferir. Para baixar o branch main (sem verificacao), rode de novo com -Ref main"
+            }
+            $bootstrapUrl = $bootstrapAsset.Url
         }
         Write-Host "[INFO   ] baixando $bootstrapUrl"
         Invoke-WebRequest -Uri $bootstrapUrl -OutFile $zip -UseBasicParsing -ErrorAction Stop
+        if ($bootstrapAsset) {
+            $actualHash = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+            if ($actualHash -ne $bootstrapAsset.Sha256) {
+                throw "sha256 do asset nao confere (esperado $($bootstrapAsset.Sha256), baixado $actualHash) - download abortado, nada foi instalado"
+            }
+            Write-Host "[INFO   ] sha256 conferido: $actualHash"
+        }
     }
     finally { $ProgressPreference = $prevProgress }
 
-    Write-Host "[INFO   ] extraindo em $tmp"
-    Expand-Archive -Path $zip -DestinationPath $tmp -ErrorAction Stop
+    # Extrai num subdiretorio: o asset da release vem SEM pasta-raiz (onboarding/ no topo), o codeload
+    # vem COM uma. O zip baixado fica fora do que sera movido para o cache.
+    $extractDir = Join-Path $tmp 'x'
+    Write-Host "[INFO   ] extraindo em $extractDir"
+    Expand-Archive -Path $zip -DestinationPath $extractDir -ErrorAction Stop
 
     # Procura install.ps1 em QUALQUER pasta de 1o nivel extraida - nao assume que a 1a pasta
     # (ordem alfabetica do provider do filesystem) e a certa. Cobre tanto "zip sem pasta-raiz"
     # quanto "zip com pasta extra no nivel raiz" (achados de revisao adversarial).
-    $topDir = Get-ChildItem -Path $tmp -Directory -ErrorAction Stop |
-        Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName 'onboarding\install.ps1') } |
-        Select-Object -First 1
+    $topDir = if (Test-Path -LiteralPath (Join-Path $extractDir 'onboarding\install.ps1')) { Get-Item -LiteralPath $extractDir }
+    else {
+        Get-ChildItem -Path $extractDir -Directory -ErrorAction Stop |
+            Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName 'onboarding\install.ps1') } |
+            Select-Object -First 1
+    }
     if (-not $topDir) {
-        throw "estrutura inesperada apos extrair o zip - onboarding/install.ps1 nao encontrado sob $tmp"
+        throw "estrutura inesperada apos extrair o zip - onboarding/install.ps1 nao encontrado sob $extractDir"
     }
 
     # Move (nao copia) o conteudo extraido para o cache permanente - substitui qualquer versao
@@ -243,7 +287,7 @@ function Test-BootstrapNonInteractive {
 # de quem colou e levaria junto a mensagem de erro, entao so o $LASTEXITCODE recebe o codigo.
 $bootstrapExits = Test-BootstrapNonInteractive -CommandLineArgs ([Environment]::GetCommandLineArgs())
 # Via "irm | iex" as funcoes caem na sessao do usuario: sai tudo que este script definiu.
-foreach ($bootstrapFn in 'Test-BootstrapNonInteractive', 'Split-BootstrapArgs', 'Get-BootstrapTagName', 'Get-BootstrapDownloadUrl') {
+foreach ($bootstrapFn in 'Test-BootstrapNonInteractive', 'Split-BootstrapArgs', 'Get-BootstrapTagName', 'Get-BootstrapDownloadUrl', 'Get-BootstrapReleaseAsset') {
     Remove-Item -Path "Function:\$bootstrapFn" -ErrorAction SilentlyContinue
 }
 if ($bootstrapExits) { exit $exitCode }

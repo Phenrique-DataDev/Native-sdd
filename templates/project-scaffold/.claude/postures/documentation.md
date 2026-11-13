@@ -45,6 +45,13 @@ Ao documentar código/runbook, atualize **só o trecho** relativo ao que mudou, 
 update **pontual** e **nunca-destrutivo**. **Nunca** regenere a árvore de docs inteira às cegas (isso
 diverge do código e apodrece: doc-rot). Derive do código **real**; não invente comportamento.
 
+## Sessão não interativa (`claude -p`)
+
+Sem `AskUserQuestion` não há como aprovar um plano, e devolver só o plano não entrega nada (medido no
+piloto A/B: 33 de 36 chamadas de `/document` pararam aí). A regra: **registro append-only grava**, porque
+uma entrada nova datada não destrói nada; **doc de código e sobrescrita não gravam** — saem como plano +
+diff, marcados "não aplicado — precisa de aprovação". O relatório final diz o que foi gravado e o que não.
+
 ## Diagramas — Mermaid inline × visual-explainer
 
 Quando um diagrama clarifica (arquitetura, fluxo, máquina de estados, sequência), prefira-o à

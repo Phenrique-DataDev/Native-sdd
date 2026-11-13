@@ -1,6 +1,6 @@
 ---
 name: designer
-description: 'Cria e revisa UI/frontend em três modos: Refinar (UI já no código), Fidelidade (reproduzir Figma/print) e Greenfield (do zero; canvas no Claude Design se `Artifact` estiver entre as suas ferramentas, senão briefing). Confere o que fez por screenshot calibrado (skill `visual-check`) ou declara que não rodou. Cobre acessibilidade (WCAG/APCA, ARIA), tokens, performance e motion; usa a `impeccable` quando instalada.'
+description: 'Cria e revisa UI/frontend em três modos: Refinar (UI existente), Fidelidade (reproduzir Figma/print) e Greenfield. Confere por screenshot (`visual-check`) ou declara que não rodou. Cobre acessibilidade, tokens, performance e motion.'
 tools: Read, Grep, Glob, Edit, Write, Bash, PowerShell, Skill, Artifact, mcp__figma, mcp__plugin_figma_figma, mcp__claude_ai_Figma
 model: inherit
 role: design

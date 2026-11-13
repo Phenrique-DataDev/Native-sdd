@@ -26,9 +26,171 @@ seção. Com outra combinação, o resultado pode mudar.
 
 ## O que ainda não está medido
 
-Nenhuma medição compara projetos feitos com o fluxo contra projetos feitos sem ele. O que está aqui
-mede custo de contexto, obediência às regras e se cada peça dispara quando deveria. Essas coisas são
-pré-condição de um resultado melhor, mas não provam que ele acontece.
+Há uma série de comparações entre projetos feitos com o fluxo e projetos feitos sem ele
+([abaixo](#fluxo-contra-sem-fluxo-piloto-de-9-tarefas)). Em tarefas pequenas e médias, **nada separou os braços**;
+no cenário de legado com armadilhas, **o fluxo não superou a pasta crua** (veja a última seção da série).
+O resto do que está aqui mede custo de contexto, obediência às regras e se cada peça dispara quando
+deveria. Essas coisas são pré-condição de um resultado melhor, mas não provam que ele acontece.
+
+## Fluxo contra sem fluxo: piloto de 9 tarefas
+
+| | Com fluxo (`mvp`) | Sem fluxo (pasta vazia) |
+|---|---|---|
+| Testes de aceitação ocultos | **142/142** | **142/142** |
+| Rodadas de correção até verde | 0 | 0 |
+| Custo das 18 sessões | US$ 0,1290 | US$ 0,0841 (**+53%** no braço com fluxo) |
+| Turnos | 77 | 81 |
+
+- **Como:** 9 tarefas pareadas, cada uma nos dois braços, 1 sessão por célula. Mesmo prompt nos dois
+  (nunca cita o fluxo), `claude -p --model haiku --setting-sources project`. O braço com fluxo é um
+  projeto criado com `onboarding/new-project.ps1 <pasta> -Profile mvp`; o outro é uma pasta vazia.
+  Funções puras em Python, uma CLI multi-arquivo e regras de borda. Duas alavancas de dificuldade:
+  tarefa maior e ambígua (2 tarefas) e `--effort low` (2 tarefas). Quem julga o defeito é o `pytest`
+  com testes escritos antes e não vistos pelo gerador, validados contra uma implementação de referência.
+- **Quando:** 2026-11-09, v1.0.19, Claude Code 2.1.321. Custo, turnos e tempo vêm do JSON de cada sessão.
+- **O que isso diz:** nada sobre qualidade. O Haiku acertou tudo nos dois braços, então o teste não
+  discrimina e a pergunta "o fluxo evita defeito?" segue **sem resposta**. O que se sustenta é o custo:
+  o contexto fixo do fluxo encareceu as sessões em cerca de metade neste molde.
+- **Limite:** n=1 por célula, variância não medida. Tarefas pequenas e autocontidas, que são onde o
+  fluxo menos ajuda. O `~/.claude/CLAUDE.md` pessoal carregou nos dois braços. O relatório, os
+  testes ocultos e o script não vêm no template.
+
+### Três sessões sem memória: o código bastou
+
+| Cadeia (3 sessões independentes) | Testes ocultos acumulados S1 / S2 / S3 | Custo total |
+|---|---|---|
+| Com fluxo, réplica 1 | 19/19 · 39/39 · 51/51 | US$ 0,0729 |
+| Com fluxo, réplica 2 | 19/19 · 39/39 · 51/51 | US$ 0,1389 |
+| Sem fluxo, réplica 1 | 19/19 · 39/39 · 51/51 | US$ 0,0727 |
+| Sem fluxo, réplica 2 | 19/19 · 39/39 · 51/51 | US$ 0,0746 |
+
+- **Como:** um pacote de estoque (persistência JSON, reservas, backorder, `desfazer` com estorno) em 3
+  sessões `claude -p --model haiku`, cada uma nova e sem `--continue`. A sessão 2 traz uma mudança de
+  negócio que contradiz uma regra da sessão 1; a 3 cruza histórico, reservas, backorder e persistência.
+  Depois de cada sessão roda-se o acumulado dos testes ocultos, sem correção entre elas. Duas réplicas
+  por braço.
+- **Quando:** 2026-11-09, v1.0.19, Claude Code 2.1.321.
+- **O que isso diz:** o modelo releu o código a cada sessão e não regrediu nada, com ou sem fluxo. Nos
+  projetos do braço com fluxo, `BACKLOG.md`, `docs/_index.md` e `inbox/` ficaram **iguais ao template**:
+  o scaffold não foi usado como memória. A diferença de custo (+44% com fluxo) é do tamanho da variância
+  entre as duas réplicas do mesmo braço, então não vale como número.
+- **Limite:** ~400 linhas de código no fim. Não cobre decisão cujo motivo só existe numa conversa,
+  base grande ou legado.
+
+### Legado com armadilhas: o scaffold não inicializado perdeu
+
+| Cadeia (3 sessões independentes, 13 armadilhas) | Testes ocultos acumulados S1 / S2 / S3 |
+|---|---|
+| Sem fluxo, 3 réplicas | 8/8 · 23/23 · 32/32 (as três) |
+| Com fluxo (`mvp` não inicializado), réplica 1 | 8/8 · 17/23 · 22/32 |
+| Com fluxo, réplica 2 | 8/8 · 21/23 · 19/32 (sessão 3 não entregou) |
+| Com fluxo, réplica 3 | 8/8 · 16/23 · 21/32 |
+
+- **Como:** um faturador legado de 347 linhas, com 13 armadilhas contra o senso geral (encoding do ERP,
+  half-up, corte às 18h de Brasília, centavos em formato novo, migração do formato antigo, cliente bloqueado,
+  reversão de regra com cascata, entre outras). O cenário e os testes ocultos foram projetados pelo Opus 5.5 e
+  validados antes: referência 32/32, solução ingênua reprova 18. Haiku gera; 3 sessões `claude -p` sem memória;
+  4 decisões de negócio ditas uma única vez na sessão 1.
+- **Quando:** 2026-11-09, v1.0.19, Claude Code 2.1.321. Custo igual: US$ 0,314 com fluxo e 0,310 sem.
+- **O que isso diz:** é a única medição em que os dois braços se separaram, e o scaffold perdeu. As decisões
+  só sobrevivem se a sessão 1 as registra e a 2 as lê; sem fluxo, os 3 agentes registraram (README ou módulo)
+  e os 3 passaram. Com fluxo, só 1 de 3 registrou, e ele não leu o próprio registro na sessão seguinte. Uma
+  sessão parou sem entregar porque o projeto estava em `status: template` e o `AGENTS.md` exige `/setup`.
+- **Limite:** o braço "com fluxo" é o scaffold **entregue e não inicializado**, sem `/setup` nem as fases
+  rodadas. 0/3 contra 3/3 dá p = 0,05 unilateral (Fisher). A rodada seguinte isolou a causa (abaixo).
+
+### Scaffold inicializado e fluxo em uso: sem ganho medido
+
+| Braço (3 cadeias de 3 sessões cada, mesmo cenário) | Cadeias perfeitas (32/32) | Custo médio por cadeia |
+|---|---|---|
+| Pasta crua | 3/3 | US$ 0,103 |
+| Scaffold não inicializado (`status: template`) | 0/3 | US$ 0,105 |
+| Scaffold inicializado (`project-context.md` ativo) | 3/3 | US$ 0,122 (+18%) |
+| Inicializado + `/dev` na entrada e `/document` ao fechar a sessão | 2/3 | US$ 0,290 (2,8×) |
+
+- **Como:** o mesmo faturador legado de 13 armadilhas, Haiku, 3 sessões `claude -p` sem memória. Cada braço novo
+  muda uma coisa em relação ao anterior. O `project-context.md` ativo foi escrito no formato do `/setup`, com o
+  comando de verificação rodado antes (11 testes). `/dev` e `/document` são os comandos do próprio produto.
+- **Quando:** 2026-11-09, v1.0.19, Claude Code 2.1.321.
+- **O que isso diz:** (1) o scaffold **não inicializado perde** da pasta crua, e é a inicialização que corrige;
+  (2) **nenhum braço superou a pasta crua em qualidade**, e o fluxo em uso custou 2,8× e teve 1 cadeia
+  reprovada, mesmo depois de gravar e ler um documento de decisões correto. Neste cenário e com este modelo,
+  o fluxo **não deu ganho de corretude**.
+- **Limites:** a pasta crua já está em 3/3, então o teste não tem folga para mostrar ganho, só perda. n=3 por
+  braço (2/3 contra 3/3 não se distingue), um modelo, cenário sintético, só testes como juiz. Não mede
+  rastreabilidade, ADRs nem onboarding, que o fluxo produz. O ciclo SDD de 5 fases, que exige aprovação humana
+  entre fases, não foi exercitado: o braço "fluxo" usou o Dev Loop.
+
+Repetido com `--effort low` (menos raciocínio do gerador), para dar folga à pasta crua:
+
+| Braço (3 cadeias, `--effort low`) | Cadeias perfeitas | Testes ocultos no fim (de 96) | Custo total |
+|---|---|---|---|
+| Pasta crua | 1/3 | 84 | US$ 0,229 |
+| Scaffold inicializado | 2/3 | 95 | US$ 0,328 (+43%) |
+| Inicializado + `/dev` + `/document` | 1/3 | 80 | US$ 0,624 (2,7×) |
+
+- **O que isso diz:** com folga, o scaffold inicializado fica nominalmente na frente (95 contra 84 testes), mas
+  com 2/3 contra 1/3 cadeias perfeitas isso não se distingue de paridade (p = 1,0). O fluxo em uso não melhora
+  e custa 2,7×. As cadeias que falham perdem quase sempre a mesma decisão (dinheiro em centavos em formato novo)
+  e a migração do legado, e **criar um módulo ou registro na sessão 1 não protegeu**: três cadeias que o criaram
+  falharam, duas que não criaram passaram.
+- **Limite:** n=3 por braço, um modelo, um cenário. Nenhum resultado desta série mostra ganho de corretude do
+  fluxo; nenhum prova que ele não exista fora deste cenário.
+
+### Cadeia longa de 6 sessões: os três braços quebram
+
+Cenário `locadora` (Opus 5.5 projetou: 23 armadilhas, 3 reversões de regra, formato persistido v1→v2→v3), Haiku
+com `--effort low`, 6 sessões sem memória, 3 réplicas por braço. Relatório completo em
+`.claude/sdd/reports/TESE_AB_PAREADO_2026-11-09.md`.
+
+| Braço | Cadeias perfeitas | Falhas ao fim (de 60) | Custo médio/cadeia |
+|-------|-------------------|-----------------------|--------------------|
+| Pasta crua | 0/3 | 19, 19, 15 | US$ 0,216 |
+| Scaffold inicializado | 0/3 | 9, 19, 19 | US$ 0,288 (+33%) |
+| Inicializado + `/dev` + `/document` | 0/3 | 22, 9, 21 | US$ 0,723 (3,3×; 62% é `/document`) |
+
+- **O que isso diz:** cadeia longa com decisões que só mordem sessões depois derruba todos os braços; o
+  fluxo não trouxe ganho de corretude medido. **Ressalva da auditoria:** em headless o `/document` quase nunca gravou
+  (exige `AskUserQuestion`, e a rule manda ficar em silêncio com KB não treinada), então o braço F não mediu o fluxo
+  em uso e ~60% do seu custo é `/document` sem entrega. Só 1 de 9 cadeias registrou a regra do ISS, e foi a que a respeitou.
+- **Limite:** n=3 por braço, um modelo, um cenário sintético, juiz só de testes.
+
+### Rodada 8: o `/document` passou a gravar, e o resultado não mudou
+
+Mesmo cenário `locadora`, mesmo juiz e script da cadeia longa, só o braço com fluxo em uso (3 réplicas, `--effort low`, Haiku, perfil `mvp`), depois que o `/document` passou a gravar em sessão não interativa, e três testes de acompanhamento.
+
+| | Rodada 7 (`/document` sem gravar) | Rodada 8 (`/document` gravando) |
+|---|---|---|
+| Falhas ao fim (de 60) | 22, 9, 21 | 15, 15, 12 |
+| Cadeias perfeitas | 0/3 | 0/3 |
+| Custo médio/cadeia | US$ 0,723 | US$ 0,926 (+28%; US$ 0,606 só de `/document`) |
+
+- **O que isso diz:** a regra do ISS e a do código de cliente chegaram a `docs/` na sessão 2 em 3/3 cadeias (antes 1/3), então o braço agora mede o fluxo em uso. Ainda assim, sem ganho de corretude distinguível. Registrar a decisão não faz a sessão seguinte usá-la.
+- **Controle no mesmo dia (2026-11-11):** pasta crua (B) e scaffold inicializado (I) rodadas de novo, 3 réplicas cada, mesmo cenário, juiz e `--effort low`, Haiku.
+
+| Braço | Cadeias perfeitas | Falhas ao fim da S6 (de 60) | Custo médio/cadeia |
+|---|---|---|---|
+| Pasta crua | 0/3 | 15, 18 e 1 cadeia sem medida (B3) | US$ 0,215 |
+| Scaffold inicializado | 0/3 | 9, 18, 17 | US$ 0,256 (+19%) |
+
+  B3 não entregou o módulo `locadora.receita` na S3, então os testes ocultos das sessões 3 a 6 nem coletaram (4 erros de importação) e a cadeia fica sem contagem de falhas. Excluída B3, B tem média de 16,5 falhas e I de 14,7: não se distinguem, como na rodada 7. O custo extra do scaffold (+19%) fica no que já foi medido (+18% a +33%).
+- **Método:** `drive_c8.sh` (3 ondas de `run_c4.sh B|I`, `EFFORT=low`, `TAG=L8`) sobre a `main` com #192 e #197; falhas do `pytest` nos testes ocultos cumulativos; custo e turnos somados de `total_cost_usd`/`num_turns` dos JSON de cada sessão (nenhuma com `is_error`).
+- **Limite:** n=3 por braço, um modelo, um cenário. O F não foi rodado de novo neste lote, então B e I vêm de outra hora que o F da rodada 8.
+- **Teste A: `/dev` lendo `docs/` antes de editar (2026-11-11).** Só o passo 2 do `/dev` mudou: além do `project-context.md`, ler o índice e os registros de decisões e regras de `docs/` antes de editar (o registro vence a suposição). Braço F no `mvp`, 3 réplicas, mesmo cenário e juiz. Falhas ao fim da S6 (de 60): **sem contagem** (F1: a S3 não criou o módulo e os testes das sessões 3 a 6 não coletaram), **9** e **5**; custo médio US$ 1,15 (+24% sobre os US$ 0,926 da rodada 8). Os dois números medidos são menores que os 15, 15 e 12 da rodada 8 e que os 22, 9 e 21 da rodada 7, mas com uma réplica sem contagem e n=3 isso **não separa do ruído**. Não verificamos nos transcripts se foi o `/dev` que leu os registros. A mudança não foi para a `main`.
+- **Teste B: perfil `full` (2026-11-11).** Mesmo cenário e juiz, `new-project.ps1 -Profile full` (14 agentes, 30 commands, 12 rules, contra 7 rules do `mvp`), 3 réplicas por braço, `dev.md` original.
+
+| Braço no `full` | Cadeias perfeitas | Falhas ao fim da S6 (de 60) | Custo médio/cadeia |
+|---|---|---|---|
+| Inicializado (I) | 0/3 | 21, 20, 6 | US$ 0,458 (+79% sobre o I do `mvp`, US$ 0,256) |
+| Inicializado + `/dev` + `/document` (F) | 0/3 | 8, 9, 18 | US$ 1,306 (+41% sobre o F do `mvp`, US$ 0,926) |
+
+  O perfil `full` custa mais e não corrigiu mais: a média de falhas do I fica em 15,7 (contra 14,7 do `mvp` no controle) e a do F em 11,7. Nenhuma diferença se distingue com n=3 e variância de 6 a 21 dentro do mesmo braço.
+- **Método dos testes A e B:** `run_c4.sh` com `TAG=L9` (A) e `TAG=L10` + `PROFILE=full` (B), `EFFORT=low`, Haiku; falhas do `pytest` nos testes ocultos cumulativos; custo e turnos somados de `total_cost_usd`/`num_turns` dos JSON de cada sessão (nenhuma com `is_error`).
+- **Teste D: tarefas reais num projeto Node privado de terceiros (2026-11-12).** Reaplicação de 3 commits reais com teste (Finanças valida valor/data, MCP fecha lacunas, MCP baixa links): cada tarefa parte do estado anterior ao commit e recebe como pedido os itens da mensagem do commit; o juiz é o teste do commit, nunca visto. Pasta crua, scaffold `mvp` inicializado e scaffold + `/dev`, 2 réplicas por célula, Haiku `--effort low`, 18 sessões. **Resultado: 0/18 passam nos testes ocultos, nos três braços.** Smoke e `node --check` limpos em todas. Custo médio por sessão: B US$ 0,070, I US$ 0,104 (+48%), F US$ 0,070.
+  - **O que isso diz:** nada sobre qualidade. As falhas são sempre a mesma verificação por tarefa, e ela exige contrato que o pedido não escreve (mensagem de erro de data, um helper `sendJson` injetado pelo teste novo, formatos aceitos). O teste mede especificação incompleta, não implementação.
+  - **Limite:** 3 tarefas de backend Node, n=2 por célula, um modelo, repositório privado de terceiros, sem nome aqui (cópias descartáveis, nada enviado a ele). Um juiz por comportamento, ou pedidos que carreguem o contrato, ainda não foram feitos.
+- **Correção de método (2026-11-12): conectores da conta inflam o custo do scaffold em `claude -p`.** As sessões acima rodaram com os conectores do claude.ai da conta de quem mede (Gmail, Calendar, Docs…). Esses conectores só entram no prompt se já estiverem `connected` quando a primeira chamada sai. O hook `SessionStart` do scaffold roda `pwsh` (centenas de ms), o que dá tempo de eles conectarem; a pasta crua não tem hook e sai antes, com os conectores ainda `pending`. Resultado: os braços com scaffold carregavam ~2.900 tokens de ferramentas de conector que o braço cru não carregava. Medido com uma sessão de um turno (Haiku, `--setting-sources project`): o mesmo texto de hook passado por `sh` custa +133 tokens sobre nenhum hook; uma saída trivial passada por `pwsh` custa +2.909, e o `init` da sessão lista 50 ferramentas `mcp__*` contra 0. Com `ENABLE_CLAUDEAI_MCP_SERVERS=false` o efeito some (35.107 contra 37.967). **Os custos relativos desta série (+18% a +79% do scaffold) estão superestimados por esse artefato**, em ordem de ~15% da diferença (ESTIMADO, não recalculei cada rodada). O número limpo do contexto fixo, com os conectores desligados e a mesma sonda: pasta crua 18.846 tokens, `mvp` 35.128 (**+16.282**), `full` 41.641 (**+22.795**). As conclusões sobre corretude não mudam, porque o artefato é só de custo. Medições futuras de custo com `claude -p` devem exportar `ENABLE_CLAUDEAI_MCP_SERVERS=false` nos dois braços.
+- **Conclusão da série:** em corretude, nenhum braço com fluxo superou a pasta crua neste molde; o custo subiu de +18% a 3,3×. Não medimos tarefas reais, rastreabilidade das decisões nem o ciclo SDD completo.
 
 ## Custo de contexto por perfil
 

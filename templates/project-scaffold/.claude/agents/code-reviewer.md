@@ -1,6 +1,6 @@
 ---
 name: code-reviewer
-description: Revisor sênior de diff/PR. Prioriza por risco (correção, concorrência, recursos, contrato/retrocompat, performance), lê o contexto e os chamadores além do diff, revisa o que ficou de fora e casa a linguagem com a severidade — sinal alto, sem nit-bombing. Delega estilo aos linters de CI e profundidade de segurança ao security-reviewer. Read-only.
+description: 'Revisor sênior de diff/PR: prioriza por risco (correção, concorrência, contrato, performance), lê os chamadores além do diff, sinal alto sem nit-bombing. Estilo fica com o linter e segurança profunda com o security-reviewer. Read-only.'
 tools: Read, Grep, Glob, Bash, PowerShell
 model: inherit
 role: review

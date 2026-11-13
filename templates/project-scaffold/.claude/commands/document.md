@@ -24,9 +24,15 @@ registro de acontecimentos, referência/notas.
    sentido paralelizar) — contexto próprio, lê o código real e propõe a doc.
 2. **Plano/diff:** o `documenter` devolve o **plano** do que será criado/atualizado em `docs/`, com **diff**.
 3. **Aprovação:** mostre o plano e **peça confirmação** (`AskUserQuestion`: aplicar tudo / escolher / cancelar).
+   **Sem `AskUserQuestion`** (sessão não interativa, `claude -p`): não pare no plano — siga o passo 4 na
+   modalidade "sem aprovação" abaixo.
 4. **Aplica:** só após aprovação, escreve em `docs/` — **nunca-destrutivo**: registros são **append-only**
    (entrada nova datada, nunca reescreve o passado); doc de código é update **pontual** do trecho tocado,
    nunca regenera a árvore. Faça backup quando sobrescrever.
+   **Sem aprovação possível (sessão não interativa):** aplique **só** o que é append-only — entrada nova
+   datada em registro/ADR (arquivo novo, ou entrada acrescentada ao fim de um existente). Doc de código e
+   qualquer sobrescrita **não** são aplicadas: devolva o plano + diff no relatório final, marcado
+   *"não aplicado — precisa de aprovação"*. Diga no relatório o que foi gravado e o que ficou de fora.
 5. **Reindexar:** rode `/sync-context` para regenerar `docs/_index.md` e o ponteiro — é o catálogo
    que a busca por significado lê (ver [`semantic-search.md`](../rules/semantic-search.md)).
 
@@ -40,6 +46,7 @@ registro de acontecimentos, referência/notas.
 ## O que NÃO fazer
 - Escrever conhecimento curado/agente-facing — isso é KB (`/train-kb`), não `docs/`.
 - Regenerar a árvore de docs inteira (doc-rot) — atualize só o trecho tocado.
-- Aplicar mudança sem mostrar o plano/diff e obter aprovação.
+- Aplicar mudança sem mostrar o plano/diff e obter aprovação — exceto o registro **append-only** em
+  sessão não interativa (passo 4), que não destrói nada.
 
 **Próximo passo:** `/sync-context` (reindexa `docs/`).

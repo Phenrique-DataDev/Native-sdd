@@ -49,5 +49,5 @@ não preenchido), e confirme rodando assim.
 
 ## Como os agentes usam este arquivo
 
-- `status: template` → projeto não configurado: instruir o usuário a rodar `/setup` antes de executar trabalho.
+- `status: template` → projeto não configurado: instruir o usuário a rodar `/setup` antes de executar trabalho. Em sessão não interativa (`claude -p`), avisar do `/setup` e entregar a tarefa mesmo assim.
 - `status: active` → ler como **fonte de verdade** de stack, domínio e convenções.

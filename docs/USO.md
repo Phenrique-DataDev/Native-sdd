@@ -73,24 +73,24 @@ baixou (`[INFO   ] release: vX.Y.Z`); um push na `main` não muda o que você in
 
 ```powershell
 # Windows (PowerShell 5.1+) — sem flags
-irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.19/onboarding/bootstrap.ps1 | iex
+irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.21/onboarding/bootstrap.ps1 | iex
 
 # com flags do install.ps1: baixa o texto, embrulha num scriptblock e aplica os parâmetros
-iex "& { $(irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.19/onboarding/bootstrap.ps1) } -Check"
+iex "& { $(irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.21/onboarding/bootstrap.ps1) } -Check"
 
 # branch main em vez da última release (opt-in explícito; combina com os outros flags)
-iex "& { $(irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.19/onboarding/bootstrap.ps1) } -Ref main"
+iex "& { $(irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.21/onboarding/bootstrap.ps1) } -Ref main"
 ```
 
 ```bash
 # Linux — sem flags
-curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.19/onboarding/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.21/onboarding/bootstrap.sh | bash
 
 # com flags do install.sh: `bash -s --` repassa os args ao script vindo do pipe
-curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.19/onboarding/bootstrap.sh | bash -s -- --check
+curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.21/onboarding/bootstrap.sh | bash -s -- --check
 
 # branch main em vez da última release (opt-in explícito)
-curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.19/onboarding/bootstrap.sh | bash -s -- --ref main
+curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.21/onboarding/bootstrap.sh | bash -s -- --ref main
 ```
 
 > **Três URLs, papéis distintos:** as URLs acima (`raw.githubusercontent.com/...`) servem o

@@ -13,24 +13,22 @@ inicia trabalho de feature, escolha a fase certa e rode o command correspondente
 | 3. Build | "build", "implemente", "execute" · *"implement", "let's code this"* | `/build` | código + `.claude/sdd/reports/BUILD_REPORT_<FEATURE>.md` |
 | 4. Ship | "ship", "encerrar feature", "arquivar" · *"wrap up", "close the feature", "archive"* | `/ship` | `.claude/sdd/archive/<FEATURE>/SHIPPED_<DATE>.md` |
 
-> **O idioma do projeto é seu.** Os artefatos, o `BACKLOG.md` e as seções que os lints exigem
-> (`## Não exercitado` / `## Not exercised`, `## Aberto` / `## Open`, `## Regras críticas` /
-> `## Critical rules`) são reconhecidos em **português e inglês** — escreva no idioma do time e
-> **mantenha um só por documento**: o idioma do cabeçalho é o que decide como a seção é lida.
+> **O idioma do projeto é seu.** Artefatos, `BACKLOG.md` e as seções que os lints exigem
+> (`## Não exercitado`/`## Not exercised`, `## Aberto`/`## Open`, `## Regras críticas`/`## Critical rules`)
+> valem em português ou inglês: **mantenha um só por documento**, porque o idioma do cabeçalho decide como a seção é lida.
 
 ## Regras de engajamento
 
 1. **Uma fase por vez.** Não pule à frente. Se pedirem `/build` sem DESIGN, faça o
    `/define`/`/spec` primeiro ou pergunte em que fase entrar.
-2. **Passe o artefato anterior.** Cada fase recebe o caminho do documento da fase prévia
-   como contexto (BRAINSTORM → DEFINE → DESIGN → BUILD → SHIP).
-3. **Não funda fases** num só documento gigante. Um artefato por fase.
-4. **Não pule o BRAINSTORM** a menos que o usuário diga explicitamente que os requisitos
+2. **Um artefato por fase, sem fundir.** Cada fase recebe o caminho do documento da fase
+   anterior (BRAINSTORM → DEFINE → DESIGN → BUILD → SHIP) e não escreve sem ele.
+3. **Não pule o BRAINSTORM** a menos que o usuário diga explicitamente que os requisitos
    já estão claros.
-5. **Templates** ficam em `.claude/sdd/templates/` — leia o template da fase antes de
-   gerar o artefato.
-6. **Gate de qualidade:** o DEFINE tem um *Clarity Score* (mín. 12/15) antes de avançar
+4. **Templates** ficam em `.claude/sdd/templates/` — leia o da fase antes de gerar o artefato.
+5. **Gate de qualidade:** o DEFINE tem um *Clarity Score* (mín. 12/15) antes de avançar
    para DESIGN. Não avance abaixo do mínimo sem confirmação.
+6. **SHIPPED só depois** do BUILD_REPORT completo e verificado.
 
 ## Dev Loop (alternativa para tarefas pequenas)
 
@@ -46,17 +44,9 @@ SDD completo:
 
 ## Racionalizações comuns
 
-Desculpas frequentes para pular uma fase ou um gate — e por que não colam:
-
 | Desculpa | Realidade |
 |----------|-----------|
-| "Os requisitos já estão claros, posso pular o BRAINSTORM/DEFINE" | Clareza aparente vira retrabalho no BUILD. O DEFINE custa minutos; refazer o design custa horas. Só pule com autorização explícita. |
-| "É uma mudança pequena, não precisa de fase" | Se é pequena mesmo, use o **Dev Loop** (`/dev`) — que é a fase certa, não a ausência dela. |
-| "Junto DEFINE e DESIGN num doc só pra ir mais rápido" | Um artefato por fase existe para cada gate ser verificável. Fundir esconde a lacuna que o gate pegaria. |
-| "O Clarity Score está em 11, mas dá pra seguir" | O mínimo (12/15) é o piso de "requisito não-ambíguo". Abaixo dele o DESIGN herda a ambiguidade — feche a lacuna, não o número. |
-
-## O que NÃO fazer
-
-- Não escrever DEFINE/DESIGN/BUILD sem ter o artefato da fase anterior.
-- Não misturar várias fases num documento só.
-- Não escrever o SHIPPED antes do BUILD_REPORT estar completo e verificado.
+| "Os requisitos já estão claros, posso pular o BRAINSTORM/DEFINE" | Clareza aparente vira retrabalho no BUILD. Só pule com autorização explícita. |
+| "É uma mudança pequena, não precisa de fase" | Se é pequena mesmo, use o **Dev Loop** (`/dev`): é a fase certa, não a ausência dela. |
+| "Junto DEFINE e DESIGN num doc só pra ir mais rápido" | Um artefato por fase deixa cada gate verificável; fundir esconde a lacuna. |
+| "O Clarity Score está em 11, mas dá pra seguir" | 12/15 é o piso de requisito não-ambíguo: feche a lacuna, não o número. |

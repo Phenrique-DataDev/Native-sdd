@@ -435,6 +435,31 @@ is_risky_chmod_target() {
   is_risky_target "${1-}"
 }
 
+# PURA: alguma parte do comando EXECUTA uma string como codigo? Espelha Test-RunsStringAsCode.
+runs_string_as_code() {
+  local c="${1-}"
+  [ -z "${c//[[:space:]]/}" ] && return 1
+  printf '%s' "$c" | grep -qiE '(^|[[:space:];&|(])(eval|source)[[:space:]]' && return 0
+  printf '%s' "$c" | grep -qiE '\b(sh|bash|zsh|ksh|dash|pwsh|powershell|python[0-9.]*|node|perl|ruby)\b[^|;&]*[[:space:]]-(c|command|e|ne|pe)\b' && return 0
+  printf '%s' "$c" | grep -qiE '\b(sh|bash|zsh|ksh|dash|pwsh|powershell)[[:space:]]*<<' && return 0
+  printf '%s' "$c" | grep -qiE "\b(iex|invoke-expression)([[:space:]]*[(\"\`\$]|[[:space:]]+')" && return 0
+  return 1
+}
+
+# PURA: o comando sem o que e so TEXTO (aspas e corpo de heredoc) -> _GQ. Espelha Remove-GuardQuotedText.
+remove_quoted_text() {
+  local c="${1-}" tag="" line out="" nl=$'\n'
+  while IFS= read -r line || [ -n "$line" ]; do
+    if [ -n "$tag" ]; then
+      [ "$(printf '%s' "$line" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')" = "$tag" ] && tag=""
+      continue
+    fi
+    out+="$line$nl"
+    if [[ "$line" =~ (^|[^<])\<\<-?[[:space:]]*[\'\"]?([A-Za-z_][A-Za-z0-9_]*)[\'\"]? ]]; then tag="${BASH_REMATCH[2]}"; fi
+  done <<< "$c"
+  _GQ="$(printf '%s' "$out" | tr '\n' '\001' | sed -E "s/'[^']*'/''/g; s/\"([^\"\\]|\\.)*\"/\"\"/g" | tr '\001' '\n')"
+}
+
 # PURA: o comando baixa um script e o executa direto no shell? Espelha Test-IsDownloadToShell.
 # Interpretador com script INLINE (`python -c`, `node -e`, `perl -ne`, `python -m`) le o download
 # como DADO, nao o executa (DESTRUCTIVE_GUARD_AFROUXA, 2026-10-17). Shell sempre pede.
@@ -551,11 +576,13 @@ _destructive_decision() {
   local re_gitc='(^|[[:space:]])git[[:space:]]+-C[[:space:]]+([^[:space:]]+)'
   local curdir="" substack="" dir sv risky
   [ -z "${cmd//[[:space:]]/}" ] && return 1
-  if is_download_to_shell "$cmd"; then
+  local dlview="$cmd"
+  if ! runs_string_as_code "$cmd"; then remove_quoted_text "$cmd"; dlview="$_GQ"; fi
+  if is_download_to_shell "$dlview"; then
     printf '%s' 'Download de script executado direto no shell (curl/wget | sh). Confirmacao exigida.'
     return 0
   fi
-  if is_powershell_download_exec "$cmd"; then
+  if is_powershell_download_exec "$dlview"; then
     printf '%s' 'Download de script executado direto no PowerShell (iwr/irm | iex). Confirmacao exigida.'
     return 0
   fi

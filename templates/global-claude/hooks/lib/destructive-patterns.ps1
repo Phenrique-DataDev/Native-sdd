@@ -368,6 +368,31 @@ function Test-IsRiskyChmodTarget {
     return (Test-IsRiskyTarget $Token $SafeRoots)
 }
 
+# --- PURA: alguma parte do comando EXECUTA uma string como código? -----------------------------
+# `bash -c "…"`, `pwsh -Command "…"`, `python -c`, `eval`/`source`, `bash <<EOF`, `iex "…"`: o texto
+# entre aspas/heredoc é código, então os detectores de download-para-shell olham o comando BRUTO.
+function Test-RunsStringAsCode {
+    param([string]$Command)
+    if ([string]::IsNullOrWhiteSpace($Command)) { return $false }
+    if ($Command -match '(?i)(?:^|[\s;&|(])(?:eval|source)\s') { return $true }
+    if ($Command -match '(?i)\b(?:sh|bash|zsh|ksh|dash|pwsh|powershell|python[0-9.]*|node|perl|ruby)\b[^|;&\n]*\s-(?:c|command|e|ne|pe)\b') { return $true }
+    if ($Command -match '(?i)\b(?:sh|bash|zsh|ksh|dash|pwsh|powershell)\s*<<') { return $true }
+    if ($Command -match '(?i)\b(?:iex|invoke-expression)(?:\s*[("`$]|\s+'')') { return $true }
+    return $false
+}
+
+# --- PURA: o comando sem o que é só TEXTO (aspas e corpo de heredoc) ------------------------------
+# `git commit -m "… curl x | sh …"`, `sed 's/curl|sh/…/'`, `rg 'iwr.*iex'` citam o padrão sem executá-lo.
+function Remove-GuardQuotedText {
+    param([string]$Command)
+    if ([string]::IsNullOrEmpty($Command)) { return $Command }
+    $t = ConvertTo-GuardAnalysisText $Command
+    $t = (($t -split '\n') | Where-Object { -not $_.StartsWith('#HD ') }) -join "`n"
+    $t = [regex]::Replace($t, "'[^']*'", "''")
+    $t = [regex]::Replace($t, '"(?:[^"\\]|\\.)*"', '""')
+    return $t
+}
+
 # --- PURA: o comando baixa um script e o executa direto no shell? (no comando bruto) ----------
 function Test-IsDownloadToShell {
     param([string]$Command)
@@ -455,13 +480,16 @@ function Get-DestructiveDecision {
     if ([string]::IsNullOrWhiteSpace($Command)) {
         return [pscustomobject]@{ Decision = 'pass'; Reason = '' }
     }
-    # 1) download-to-shell roda no comando bruto (antes do split, que quebraria `curl x | sh`).
-    if (Test-IsDownloadToShell $Command) {
+    # 1) download-to-shell roda ANTES do split (que quebraria `curl x | sh`). Texto entre aspas/heredoc
+    #    só conta quando algo o executa como código (`bash -c "…"`, `eval`, `iex "…"`): commit message,
+    #    `sed`/`rg` e doc que CITAM `curl|sh` deixam de pedir confirmação.
+    $dlView = if (Test-RunsStringAsCode $Command) { $Command } else { Remove-GuardQuotedText $Command }
+    if (Test-IsDownloadToShell $dlView) {
         return [pscustomobject]@{ Decision = 'ask'
             Reason = 'Download de script executado direto no shell (curl/wget | sh). Confirmacao exigida.'
         }
     }
-    if (Test-IsPowerShellDownloadExec $Command) {
+    if (Test-IsPowerShellDownloadExec $dlView) {
         return [pscustomobject]@{ Decision = 'ask'
             Reason = 'Download de script executado direto no PowerShell (iwr/irm | iex). Confirmacao exigida.'
         }

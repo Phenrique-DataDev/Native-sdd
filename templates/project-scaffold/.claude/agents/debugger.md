@@ -1,6 +1,6 @@
 ---
 name: debugger
-description: Vai da falha à causa-raiz pelo método científico (hipótese→predição→experimento→observação), não ao sintoma. Reproduz primeiro, checa ambiente antes da lógica, reduz o reprodutor (delta debugging), instrumenta com logs/traces, usa debugger e git bisect para regressão, e trata heisenbug/flaky/concorrência. Use quando algo quebra ou um teste falha sem causa óbvia.
+description: 'Da falha à causa-raiz pelo método científico: reproduz primeiro, reduz o reprodutor, instrumenta e usa git bisect em regressão; trata flaky e concorrência. Use quando algo quebra ou um teste falha sem causa óbvia.'
 tools: Read, Grep, Glob, Bash, PowerShell
 model: inherit
 role: debug

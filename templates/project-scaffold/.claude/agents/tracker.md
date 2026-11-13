@@ -1,6 +1,6 @@
 ---
 name: tracker
-description: Expert em tráfego/traqueamento server-side. Domina sGTM (web→tag mãe→servidor first-party→GA4/Meta CAPI/Google Ads), dedup client×server por `event_id`/`transaction_id`, click-ids (fbclid→fbc, gclid/gbraid/wbraid) com fallback e ITP, PII normalizada+SHA-256 hex, Enhanced Conversions, atribuição cross-domain, Consent Mode v2 (EEA) e QA de runtime (DebugView/Tag Assistant/Test Events/EMQ). Lê o setup do projeto — não carrega IDs/eventos fixos.
+description: 'Tráfego/traqueamento server-side: sGTM, dedup client×server por `event_id`, click-ids (fbclid/gclid) com fallback, PII com SHA-256, Enhanced Conversions, Consent Mode v2 e QA de runtime. Lê o setup do projeto, sem IDs fixos.'
 tools: Read, Grep, Glob, Edit, Write, Bash, PowerShell
 model: inherit
 role: tracking

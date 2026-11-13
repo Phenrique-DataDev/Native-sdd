@@ -58,6 +58,7 @@ function Test-IsSecretFilePath {
     if ([string]::IsNullOrWhiteSpace($Path)) { return $false }
     $p = $Path.Trim().Replace('\', '/')
     $leaf = ($p -split '/')[-1]
+    if ($leaf -match '^\.env\.(?:example|sample|template|dist)$') { return $false }   # modelo versionado, sem valor real
     if ($leaf -match '^\.env(\..+)?$') { return $true }            # .env, .env.local, .env.prod…
     if ($leaf -match '^id_(rsa|dsa|ecdsa|ed25519)$') { return $true } # chaves SSH privadas
     if ($p -match '\.(pem|pfx|p12|key|keystore|jks)$') { return $true } # material de chave

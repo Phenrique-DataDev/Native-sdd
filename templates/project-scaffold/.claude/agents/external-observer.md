@@ -1,6 +1,6 @@
 ---
 name: external-observer
-description: 'Observador de caixa-preta — valida ou mapeia um alvo externo/opaco (site, API, app rodando) por observação read-only (rede/HAR, headers de cache/CDN, contrato/OpenAPI), separando fato de hipótese com evidência real e respeitando autorização (CFAA/ToS/robots). Confronta com uma referência; nunca replica, burla nem aplica. Saída: relatório.'
+description: 'Observador de caixa-preta: valida ou mapeia alvo externo/opaco (site, API, app rodando) por observação read-only (rede/HAR, headers de cache/CDN, OpenAPI), separando fato de hipótese e respeitando autorização. Nunca replica nem burla. Saída: relatório.'
 tools: Read, Grep, Glob, Bash, PowerShell, WebFetch, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__claude-in-chrome__navigate, mcp__claude-in-chrome__read_page, mcp__claude-in-chrome__read_network_requests, mcp__claude-in-chrome__read_console_messages
 model: inherit
 role: observation

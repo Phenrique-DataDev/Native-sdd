@@ -66,6 +66,25 @@ function Get-BootstrapDownloadUrl {
     return $null
 }
 
+function Get-BootstrapReleaseAsset {
+    # Do JSON de /releases/latest, o asset native-sdd-<Tag>.zip: @{ Url; Sha256 } ou $null se faltar
+    # asset, digest sha256 ou se a URL nao for https do proprio repo. Pura (so le texto, nunca lanca).
+    # O digest e o que a API do GitHub calculou no upload; o bootstrap compara com o arquivo baixado.
+    param([string]$Json, [string]$Tag, [string]$Owner = 'Phenrique-DataDev', [string]$Repo = 'Native-sdd')
+    try { $release = $Json | ConvertFrom-Json -ErrorAction Stop } catch { return $null }
+    if (-not $Tag -or -not $release -or -not $release.PSObject.Properties['assets']) { return $null }
+    $prefix = "https://github.com/$Owner/$Repo/releases/download/"
+    foreach ($asset in @($release.assets)) {
+        if (-not $asset -or $asset.name -ne "native-sdd-$Tag.zip") { continue }
+        $digest = [string]$asset.digest
+        $url = [string]$asset.browser_download_url
+        if ($digest -notmatch '^sha256:([0-9a-fA-F]{64})$') { return $null }
+        if (-not $url.StartsWith($prefix, [System.StringComparison]::Ordinal)) { return $null }
+        return @{ Url = $url; Sha256 = $Matches[1].ToLowerInvariant() }
+    }
+    return $null
+}
+
 # Cópia EXATA da função inline em onboarding/bootstrap.ps1 (por isso só ASCII, como lá) — o teste
 # de paridade em onboarding/tests/bootstrap.Tests.ps1 compara as duas pelo texto do AST.
 function Test-BootstrapNonInteractive {

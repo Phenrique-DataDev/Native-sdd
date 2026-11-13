@@ -133,9 +133,15 @@ function Get-BashGuardGatePattern {
         # entra acima) e download executado por `iex`. Alias curto vai com espaco: `ri`/`rd` soltos
         # casariam `description` em todo payload.
         foreach ($a in 'remove-item', 'ri ', 'del ', 'erase ', 'rd ', 'rmdir') { , @($a, '-r') }
-        foreach ($x in 'iex', 'invoke-expression') { , @($x) }
+        # `iex` com fronteira de palavra: solto casava `index`, `Complex`, `codex`... em todo payload
+        # (falso acordar do guard: ~0,4 s de pwsh por chamada). O `[!A-Za-z0-9_]` e' o  do `case`.
+        , @('<word>iex')
+        , @('invoke-expression')
     )
-    return , @($parts | ForEach-Object { ConvertTo-CaseGlob -Parts $_ })
+    return , @($parts | ForEach-Object {
+            if ($_[0] -ceq '<word>iex') { '*[!A-Za-z0-9_][Ii][Ee][Xx][!A-Za-z0-9_]*' }
+            else { ConvertTo-CaseGlob -Parts $_ }
+        })
 }
 
 # PURA: dada a lista de nomes de arquivo de um diretorio de hooks, aponta os .ps1 sem par .sh.

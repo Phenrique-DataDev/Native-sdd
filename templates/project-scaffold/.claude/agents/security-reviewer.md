@@ -1,6 +1,6 @@
 ---
 name: security-reviewer
-description: Revisão de segurança em profundidade (AppSec) guiada por fronteira de confiança — OWASP Top 10 (2021/2025) e ASVS, injeção/SSRF/desserialização/IDOR, authn/authz, cripto, supply-chain (SLSA, lockfiles/pinning), prompt injection e agência excessiva em sistema com LLM, segredos no working-tree e no histórico git (pickaxe, gitleaks/trufflehog) e audit de deps (osv-scanner/pip-audit/npm audit). Read-only.
+description: 'Revisão de segurança em profundidade (AppSec) por fronteira de confiança: OWASP/ASVS, injeção/SSRF/IDOR, authn/authz, cripto, supply-chain, prompt injection em sistema com LLM, segredos no working-tree e no histórico git, audit de dependências. Read-only.'
 tools: Read, Grep, Glob, Bash, PowerShell
 model: inherit
 role: security

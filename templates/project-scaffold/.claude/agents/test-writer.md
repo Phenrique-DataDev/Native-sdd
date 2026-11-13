@@ -1,6 +1,6 @@
 ---
 name: test-writer
-description: Escreve/completa testes na stack do projeto cobrindo caminho feliz, bordas, falhas e os Acceptance Tests do DEFINE. Domina pirâmide×troféu, AAA, testar contrato (não implementação), determinismo anti-flaky (relógio/RNG/ordem/estado/async), property-based (Hypothesis/fast-check), mutation testing (mutmut/Stryker) para provar que os testes matam bugs, e mock sem sobre-mock. Lê o setup do projeto — não inventa framework. Cria/edita testes e roda.
+description: 'Escreve/completa testes na stack do projeto: caminho feliz, bordas, falhas e os Acceptance Tests do DEFINE; testa contrato, determinismo anti-flaky, sem sobre-mock. Lê o setup do projeto, não inventa framework. Cria/edita testes e roda.'
 tools: Read, Grep, Glob, Edit, Write, Bash, PowerShell
 model: inherit
 role: testing

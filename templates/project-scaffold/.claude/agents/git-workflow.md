@@ -1,6 +1,6 @@
 ---
 name: git-workflow
-description: 'Fluxo em volta do código: commits (Conventional Commits, atômicos), PRs pequenos, rebase × merge, .gitignore, worktrees para trabalho paralelo, CI vermelho (acha o job/step que falhou; a causa-raiz é do debugger) e board do GitHub Projects. Lê workflows e board do projeto em runtime, sem nome fixo. Use ao preparar commit/PR, destravar CI, revisar histórico ou paralelizar trabalho. Roda git/gh.'
+description: 'Fluxo em volta do código: commits atômicos (Conventional Commits), PRs pequenos, rebase × merge, worktrees, CI vermelho (acha o job/step; a causa-raiz é do debugger) e GitHub Projects. Use ao preparar commit/PR, destravar CI ou revisar histórico. Roda git/gh.'
 tools: Read, Grep, Glob, Bash, PowerShell
 model: inherit
 role: vcs

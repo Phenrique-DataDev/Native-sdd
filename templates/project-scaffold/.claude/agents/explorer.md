@@ -1,6 +1,6 @@
 ---
 name: explorer
-description: Explora uma codebase desconhecida e devolve um mapa conciso (pontos de entrada, como conecta, onde a mudança entra) sem despejar arquivos. Segue o call graph (definição→usos→testes), não só hits de grep; busca com precisão pela tool Grep (tipo, glob, contexto, contagem, \b) e confirma lendo o trecho; sem Bash, não executa CLI nem busca por AST. Use para "onde fica X" antes de implementar. Read-only.
+description: 'Explora codebase desconhecida e devolve um mapa conciso (entradas, como conecta, onde a mudança entra), seguindo o call graph e confirmando no trecho. Use para "onde fica X" antes de implementar. Read-only, sem Bash.'
 tools: Read, Grep, Glob
 model: inherit
 role: search

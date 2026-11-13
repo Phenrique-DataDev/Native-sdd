@@ -13,6 +13,8 @@ Verifique [`.claude/rules/project-context.md`](.claude/rules/project-context.md)
 
 - `status: template` ou placeholders `<...>` → projeto **não inicializado**. Instrua o
   usuário a rodar a inicialização (**`/setup`** no Claude Code) antes de executar trabalho.
+  **Exceção — sessão não interativa** (`claude -p`, sem `AskUserQuestion`): não pare. Avise do
+  `/setup` na primeira linha, entregue a tarefa pedida e repita o aviso ao final.
 - `status: active` → use stack, domínio e convenções de lá como **fonte de verdade**.
 
 ## O que é este repositório
@@ -26,13 +28,7 @@ Cinco fases sequenciais — **nunca pule fases** sem autorização explícita. C
 consome o artefato da anterior. Detalhes em
 [`.claude/rules/workflow-sdd.md`](.claude/rules/workflow-sdd.md).
 
-| Fase | Artefato gerado |
-|------|-----------------|
-| 0. Brainstorm | `.claude/sdd/features/BRAINSTORM_<FEATURE>.md` |
-| 1. Define | `.claude/sdd/features/DEFINE_<FEATURE>.md` |
-| 2. Design | `.claude/sdd/features/DESIGN_<FEATURE>.md` |
-| 3. Build | código + `.claude/sdd/reports/BUILD_REPORT_<FEATURE>.md` |
-| 4. Ship | `.claude/sdd/archive/<FEATURE>/SHIPPED_<DATE>.md` |
+Brainstorm → Define → Design → Build → Ship; os artefatos de cada fase estão no mapa de `workflow-sdd.md`.
 
 > No **Claude Code**, cada fase tem um slash command dedicado — ver [`CLAUDE.md`](CLAUDE.md).
 > Em outras ferramentas, execute a fase manualmente seguindo o template correspondente em
@@ -91,21 +87,13 @@ curada/agente-facing) e do `inbox/` (insumo que chega).
 _(vazio — povoado por `/train-kb` e indexado por `/sync-context`; ver `.claude/kb/_index.yaml`)_
 <!-- sync-context:end:kb -->
 
-## CLI-first (resumo)
-
-Antes de implementar algo na mão, verifique se uma CLI já instalada resolve (`gh`, `jq`,
-`yq`, `rg`, `uv`, `git`…). Regra completa em
-[`.claude/rules/cli-first.md`](.claude/rules/cli-first.md).
-
 ## Subagents
 
 Use subagents quando uma tarefa for **independente e focada** o suficiente para se
 beneficiar de contexto próprio (investigação, testes, exploração). Quando não há subagent
 dedicado, a lógica da fase é **auto-contida**.
 
-- Catálogo genérico de **experts de papel** em [`.claude/agents/`](.claude/agents/): `explorer`,
-  `code-reviewer`, `test-writer`, `git-workflow`, `security-reviewer`, `debugger`, `validator`,
-  `documenter`, `external-observer`, `reverse-engineer`, `designer`, `tracker`. Fonte de verdade do roteamento e gatilhos:
+- Catálogo genérico de **experts de papel** em [`.claude/agents/`](.claude/agents/). Roteamento e gatilhos:
   [`.claude/rules/agent-routing.md`](.claude/rules/agent-routing.md); mapa de relações (gerado) em
   [`.claude/agents/AGENT_MAP.md`](.claude/agents/AGENT_MAP.md).
 - Agentes **de domínio** não vêm no scaffold — surgem na curadoria (`/audit-agents`).

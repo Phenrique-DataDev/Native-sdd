@@ -11,14 +11,14 @@
  * Carregado por <script defer> ANTES de graph.js (que consome window.__AGENT_GRAPH__).
  */
 window.__AGENT_GRAPH__ ={
-  "generatedAt": "2026-10-22",
+  "generatedAt": "2026-11-12",
   "source": "templates/project-scaffold/.claude/agents/graph.json + agents/*.md (frontmatter) + skills/<nome>/SKILL.md + tools/supplements.psd1",
   "nodes": [
     {
       "id": "code-reviewer",
       "type": "Agent",
       "role": "review",
-      "description": "Revisor sênior de diff/PR. Prioriza por risco (correção, concorrência, recursos, contrato/retrocompat, performance), lê o contexto e os chamadores além do diff, revisa o que ficou de fora e casa a linguagem com a severidade — sinal alto, sem nit-bombing. Delega estilo aos linters de CI e profundidade de segurança ao security-reviewer. Read-only.",
+      "description": "Revisor sênior de diff/PR: prioriza por risco (correção, concorrência, contrato, performance), lê os chamadores além do diff, sinal alto sem nit-bombing. Estilo fica com o linter e segurança profunda com o security-reviewer. Read-only.",
       "tools": [
         "Read",
         "Grep",
@@ -32,7 +32,7 @@ window.__AGENT_GRAPH__ ={
       "id": "debugger",
       "type": "Agent",
       "role": "debug",
-      "description": "Vai da falha à causa-raiz pelo método científico (hipótese→predição→experimento→observação), não ao sintoma. Reproduz primeiro, checa ambiente antes da lógica, reduz o reprodutor (delta debugging), instrumenta com logs/traces, usa debugger e git bisect para regressão, e trata heisenbug/flaky/concorrência. Use quando algo quebra ou um teste falha sem causa óbvia.",
+      "description": "Da falha à causa-raiz pelo método científico: reproduz primeiro, reduz o reprodutor, instrumenta e usa git bisect em regressão; trata flaky e concorrência. Use quando algo quebra ou um teste falha sem causa óbvia.",
       "tools": [
         "Read",
         "Grep",
@@ -46,7 +46,7 @@ window.__AGENT_GRAPH__ ={
       "id": "designer",
       "type": "Agent",
       "role": "design",
-      "description": "Cria e revisa UI/frontend em três modos: Refinar (UI já no código), Fidelidade (reproduzir Figma/print) e Greenfield (do zero; canvas no Claude Design se `Artifact` estiver entre as suas ferramentas, senão briefing). Confere o que fez por screenshot calibrado (skill `visual-check`) ou declara que não rodou. Cobre acessibilidade (WCAG/APCA, ARIA), tokens, performance e motion; usa a `impeccable` quando instalada.",
+      "description": "Cria e revisa UI/frontend em três modos: Refinar (UI existente), Fidelidade (reproduzir Figma/print) e Greenfield. Confere por screenshot (`visual-check`) ou declara que não rodou. Cobre acessibilidade, tokens, performance e motion.",
       "tools": [
         "Read",
         "Grep",
@@ -67,7 +67,7 @@ window.__AGENT_GRAPH__ ={
       "id": "documenter",
       "type": "Agent",
       "role": "documentation",
-      "description": "Expert em escrita técnica humano×LLM (fora da KB) — organiza `docs/` por Diátaxis (tutorial/how-to/reference/explanation), lavra ADR (Nygard/MADR), changelog Keep a Changelog derivado de Conventional Commits, runbook/onboarding e diagramas Mermaid. Registros append-only datados, derivados do git/código; nunca inventa. Use ao registrar o que mudou/aconteceu ou documentar como algo funciona.",
+      "description": "Escrita técnica em `docs/` (fora da KB): Diátaxis, ADR, changelog derivado de Conventional Commits, runbook e diagramas Mermaid. Registros append-only datados, derivados do git/código; nunca inventa. Use para registrar o que mudou ou explicar como algo funciona.",
       "tools": [
         "Read",
         "Grep",
@@ -83,7 +83,7 @@ window.__AGENT_GRAPH__ ={
       "id": "explorer",
       "type": "Agent",
       "role": "search",
-      "description": "Explora uma codebase desconhecida e devolve um mapa conciso (pontos de entrada, como conecta, onde a mudança entra) sem despejar arquivos. Segue o call graph (definição→usos→testes), não só hits de grep; busca com precisão pela tool Grep (tipo, glob, contexto, contagem, \\b) e confirma lendo o trecho; sem Bash, não executa CLI nem busca por AST. Use para \"onde fica X\" antes de implementar. Read-only.",
+      "description": "Explora codebase desconhecida e devolve um mapa conciso (entradas, como conecta, onde a mudança entra), seguindo o call graph e confirmando no trecho. Use para \"onde fica X\" antes de implementar. Read-only, sem Bash.",
       "tools": [
         "Read",
         "Grep",
@@ -95,7 +95,7 @@ window.__AGENT_GRAPH__ ={
       "id": "external-observer",
       "type": "Agent",
       "role": "observation",
-      "description": "Observador de caixa-preta — valida ou mapeia um alvo externo/opaco (site, API, app rodando) por observação read-only (rede/HAR, headers de cache/CDN, contrato/OpenAPI), separando fato de hipótese com evidência real e respeitando autorização (CFAA/ToS/robots). Confronta com uma referência; nunca replica, burla nem aplica. Saída: relatório.",
+      "description": "Observador de caixa-preta: valida ou mapeia alvo externo/opaco (site, API, app rodando) por observação read-only (rede/HAR, headers de cache/CDN, OpenAPI), separando fato de hipótese e respeitando autorização. Nunca replica nem burla. Saída: relatório.",
       "tools": [
         "Read",
         "Grep",
@@ -116,7 +116,7 @@ window.__AGENT_GRAPH__ ={
       "id": "git-workflow",
       "type": "Agent",
       "role": "vcs",
-      "description": "Fluxo em volta do código: commits (Conventional Commits, atômicos), PRs pequenos, rebase × merge, .gitignore, worktrees para trabalho paralelo, CI vermelho (acha o job/step que falhou; a causa-raiz é do debugger) e board do GitHub Projects. Lê workflows e board do projeto em runtime, sem nome fixo. Use ao preparar commit/PR, destravar CI, revisar histórico ou paralelizar trabalho. Roda git/gh.",
+      "description": "Fluxo em volta do código: commits atômicos (Conventional Commits), PRs pequenos, rebase × merge, worktrees, CI vermelho (acha o job/step; a causa-raiz é do debugger) e GitHub Projects. Use ao preparar commit/PR, destravar CI ou revisar histórico. Roda git/gh.",
       "tools": [
         "Read",
         "Grep",
@@ -130,7 +130,7 @@ window.__AGENT_GRAPH__ ={
       "id": "reverse-engineer",
       "type": "Agent",
       "role": "reverse-engineering",
-      "description": "Engenharia reversa de artefato local opaco — binário nativo, app Electron/ASAR, APK, assembly .NET, firmware, captura HAR/pcap salva — por análise estática primeiro, separando fato de hipótese com evidência (offset, símbolo, string, hash). Autorização e licença antes de abrir; nunca burla DRM/licença/anti-cheat e nunca executa o alvo sem OK e isolamento. Saída: relatório clean-room, nunca código copiado do alvo.",
+      "description": "Engenharia reversa de artefato local opaco (binário nativo, Electron/ASAR, APK, .NET, firmware, HAR/pcap salvo), estática primeiro, com evidência (offset, símbolo, hash). Exige autorização; nunca burla DRM/licença nem executa o alvo sem OK. Saída: relatório clean-room.",
       "tools": [
         "Read",
         "Grep",
@@ -147,7 +147,7 @@ window.__AGENT_GRAPH__ ={
       "id": "security-reviewer",
       "type": "Agent",
       "role": "security",
-      "description": "Revisão de segurança em profundidade (AppSec) guiada por fronteira de confiança — OWASP Top 10 (2021/2025) e ASVS, injeção/SSRF/desserialização/IDOR, authn/authz, cripto, supply-chain (SLSA, lockfiles/pinning), prompt injection e agência excessiva em sistema com LLM, segredos no working-tree e no histórico git (pickaxe, gitleaks/trufflehog) e audit de deps (osv-scanner/pip-audit/npm audit). Read-only.",
+      "description": "Revisão de segurança em profundidade (AppSec) por fronteira de confiança: OWASP/ASVS, injeção/SSRF/IDOR, authn/authz, cripto, supply-chain, prompt injection em sistema com LLM, segredos no working-tree e no histórico git, audit de dependências. Read-only.",
       "tools": [
         "Read",
         "Grep",
@@ -161,7 +161,7 @@ window.__AGENT_GRAPH__ ={
       "id": "test-writer",
       "type": "Agent",
       "role": "testing",
-      "description": "Escreve/completa testes na stack do projeto cobrindo caminho feliz, bordas, falhas e os Acceptance Tests do DEFINE. Domina pirâmide×troféu, AAA, testar contrato (não implementação), determinismo anti-flaky (relógio/RNG/ordem/estado/async), property-based (Hypothesis/fast-check), mutation testing (mutmut/Stryker) para provar que os testes matam bugs, e mock sem sobre-mock. Lê o setup do projeto — não inventa framework. Cria/edita testes e roda.",
+      "description": "Escreve/completa testes na stack do projeto: caminho feliz, bordas, falhas e os Acceptance Tests do DEFINE; testa contrato, determinismo anti-flaky, sem sobre-mock. Lê o setup do projeto, não inventa framework. Cria/edita testes e roda.",
       "tools": [
         "Read",
         "Grep",
@@ -177,7 +177,7 @@ window.__AGENT_GRAPH__ ={
       "id": "tracker",
       "type": "Agent",
       "role": "tracking",
-      "description": "Expert em tráfego/traqueamento server-side. Domina sGTM (web→tag mãe→servidor first-party→GA4/Meta CAPI/Google Ads), dedup client×server por `event_id`/`transaction_id`, click-ids (fbclid→fbc, gclid/gbraid/wbraid) com fallback e ITP, PII normalizada+SHA-256 hex, Enhanced Conversions, atribuição cross-domain, Consent Mode v2 (EEA) e QA de runtime (DebugView/Tag Assistant/Test Events/EMQ). Lê o setup do projeto — não carrega IDs/eventos fixos.",
+      "description": "Tráfego/traqueamento server-side: sGTM, dedup client×server por `event_id`, click-ids (fbclid/gclid) com fallback, PII com SHA-256, Enhanced Conversions, Consent Mode v2 e QA de runtime. Lê o setup do projeto, sem IDs fixos.",
       "tools": [
         "Read",
         "Grep",
@@ -193,7 +193,7 @@ window.__AGENT_GRAPH__ ={
       "id": "validator",
       "type": "Agent",
       "role": "validation",
-      "description": "Verifica se o resultado entregue cumpre a spec e os Acceptance Tests do DEFINE — executa e observa o comportamento real, checa exit code (não só stdout), cobre o caso negativo e a fronteira, e isola o veredito em ambiente reprodutível (worktree limpo, deps do zero). Distingue cumpre/parcial/não-cumpre com evidência. Não conserta — só verifica. Read-only.",
+      "description": "Verifica se a entrega cumpre a spec e os Acceptance Tests do DEFINE: executa e observa o comportamento real, checa exit code, cobre caso negativo e fronteira, em ambiente reprodutível. Veredito cumpre/parcial/não-cumpre com evidência. Não conserta. Read-only.",
       "tools": [
         "Read",
         "Grep",

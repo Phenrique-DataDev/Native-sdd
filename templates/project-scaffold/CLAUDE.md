@@ -80,15 +80,9 @@ Cada fase do SDD tem um command dedicado e **auto-contido** (carrega a própria 
 > A tabela acima é regenerada por `/sync-context` (G4). Os arquivos vivem em `.claude/commands/`.
 
 **Skills internas** — o `/nome` vem da **própria skill** (`.claude/skills/<nome>/SKILL.md`), sem
-arquivo em `commands/`: skill vence command homônimo, e o command nunca rodaria.
-
-| Comando | Propósito |
-|---------|-----------|
-| `/page-to-markdown` | Converte URL em Markdown limpo, sem binário externo |
-| `/decision-preview` | Artifact comparando 2-4 variantes de decisão aberta |
-| `/grill-me` | Entrevista em rodadas até a decisão não ter ramo aberto |
-| `/handoff` | Documento de passagem do trabalho em voo para outra sessão |
-| `/visual-check` | Screenshot da UI em largura calibrada, lido e conferido |
+arquivo em `commands/`: skill vence command homônimo, e o command nunca rodaria. São
+`/page-to-markdown`, `/decision-preview`, `/grill-me`, `/handoff` e `/visual-check`; a `description` de
+cada uma já chega à sessão.
 
 ### Você PODE disparar os commands acima — via `Skill`
 

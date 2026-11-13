@@ -4,7 +4,8 @@
 #
 # Release, não main (BOOTSTRAP_BAIXA_A_MAIN, 2026-10-18): resolve a tag por
 # api.github.com/repos/<owner>/<repo>/releases/latest (tag_name, lido com sed — sem jq, como o
-# onboarding/posix/lib.sh) e baixa refs/tags/<tag> do codeload; imprime a tag baixada. Reverte a
+# onboarding/posix/lib.sh) e baixa o asset native-sdd-<tag>.tar.gz da release, conferindo o sha256 contra
+# o digest da API antes de extrair (BOOTSTRAP_SEM_PIN_NEM_HASH); imprime a tag baixada. Reverte a
 # Decisão 1 do DESIGN_BOOTSTRAP_REMOTO ("codeload de main, sem pinar versão"): com main, qualquer
 # push mudava o que o usuário executava. A main fica como opt-in explícito: `--ref main` (ou
 # `--ref=main`), consumido aqui e removido antes de repassar o resto ao install.sh. Se a API falhar
@@ -109,8 +110,28 @@ else
     step INFO 'para baixar o branch main em vez da release: ... | bash -s -- --ref main'
     exit 1
   fi
-  url="https://codeload.github.com/$owner/$repo/tar.gz/refs/tags/$tag"
   step INFO "release: $tag"
+  # O que se baixa é o asset native-sdd-<tag>.tar.gz da release (git archive do commit publicado), conferido
+  # contra o digest sha256 que a API devolve (BOOTSTRAP_SEM_PIN_NEM_HASH). Sem asset ou sem digest é fatal:
+  # nunca cai no codeload sem verificação. Cobre corrupção/troca no download; NÃO cobre repositório
+  # comprometido (o digest vem do mesmo GitHub). A API responde JSON indentado, um campo por linha.
+  asset="native-sdd-$tag.tar.gz"
+  asset_fields="$(awk -v want="$asset" '
+    /"name"[[:space:]]*:/ { n = $0; sub(/.*"name"[[:space:]]*:[[:space:]]*"/, "", n); sub(/".*/, "", n); cur = (n == want) }
+    cur && /"digest"[[:space:]]*:/ { d = $0; sub(/.*"digest"[[:space:]]*:[[:space:]]*"/, "", d); sub(/".*/, "", d); print "digest=" d }
+    cur && /"browser_download_url"[[:space:]]*:/ { u = $0; sub(/.*"browser_download_url"[[:space:]]*:[[:space:]]*"/, "", u); sub(/".*/, "", u); print "url=" u }
+  ' <<<"$release_json")"
+  expected_sha="$(sed -n -E 's/^digest=sha256:([0-9a-fA-F]{64})$/\1/p' <<<"$asset_fields" | head -n 1 | tr 'A-F' 'a-f')"
+  url="$(sed -n 's/^url=//p' <<<"$asset_fields" | head -n 1)"
+  if [ -z "$expected_sha" ] || [ -z "$url" ]; then
+    step FAIL "a release $tag nao tem o asset $asset com digest sha256 — sem hash para conferir"
+    step INFO 'para baixar o branch main (sem verificacao): ... | bash -s -- --ref main'
+    exit 1
+  fi
+  case "$url" in
+    "https://github.com/$owner/$repo/releases/download/"*) ;;
+    *) step FAIL "URL do asset fora de https://github.com/$owner/$repo/releases/download/: $url"; exit 1 ;;
+  esac
 fi
 
 tmp="$(mktemp -d)"
@@ -119,6 +140,20 @@ permanent="$HOME/.claude/.native-sdd-src"
 
 step INFO "baixando $url"
 curl -fsSL "$url" -o "$tmp/native-sdd.tar.gz"
+
+if [ -z "$ref" ]; then
+  if command -v sha256sum >/dev/null 2>&1; then actual_sha="$(sha256sum "$tmp/native-sdd.tar.gz" | cut -d ' ' -f 1)"
+  elif command -v shasum >/dev/null 2>&1; then actual_sha="$(shasum -a 256 "$tmp/native-sdd.tar.gz" | cut -d ' ' -f 1)"
+  else
+    step FAIL "nem sha256sum nem shasum encontrados — impossivel conferir o hash do asset"
+    exit 1
+  fi
+  if [ "$actual_sha" != "$expected_sha" ]; then
+    step FAIL "sha256 do asset nao confere (esperado $expected_sha, baixado $actual_sha) — download abortado, nada foi instalado"
+    exit 1
+  fi
+  step INFO "sha256 conferido: $actual_sha"
+fi
 
 step INFO "extraindo em $tmp"
 tar -xzf "$tmp/native-sdd.tar.gz" -C "$tmp" --strip-components=1

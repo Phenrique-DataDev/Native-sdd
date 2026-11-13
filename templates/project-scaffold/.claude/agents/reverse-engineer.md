@@ -1,6 +1,6 @@
 ---
 name: reverse-engineer
-description: 'Engenharia reversa de artefato local opaco — binário nativo, app Electron/ASAR, APK, assembly .NET, firmware, captura HAR/pcap salva — por análise estática primeiro, separando fato de hipótese com evidência (offset, símbolo, string, hash). Autorização e licença antes de abrir; nunca burla DRM/licença/anti-cheat e nunca executa o alvo sem OK e isolamento. Saída: relatório clean-room, nunca código copiado do alvo.'
+description: 'Engenharia reversa de artefato local opaco (binário nativo, Electron/ASAR, APK, .NET, firmware, HAR/pcap salvo), estática primeiro, com evidência (offset, símbolo, hash). Exige autorização; nunca burla DRM/licença nem executa o alvo sem OK. Saída: relatório clean-room.'
 tools: Read, Grep, Glob, Bash, PowerShell, WebFetch, mcp__context7__resolve-library-id, mcp__context7__query-docs
 model: inherit
 role: reverse-engineering
