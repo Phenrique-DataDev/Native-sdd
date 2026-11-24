@@ -13,6 +13,7 @@
       Get-OrchestrationStatus       -> [pscustomobject]     { Objective; Total; Passed; Failed; Pending; Awaiting; IgnoredLines; Tasks[]; ReadyTasks[]; AwaitingApproval[]; NextTask }
       Test-TaskGate                 -> [pscustomobject]     { Passed=[bool]; Failed[]; Checked[] }
       Format-OrchestrationReport    -> [string]             painel determinístico (sem timestamp)
+      ConvertTo-OrchestrationMermaid -> [string]            o mesmo estado como grafo Mermaid (deps = arestas)
 
     Checkpoint humano: uma task pode declarar `type: checkpoint` (default `agent`). Checkpoint NUNCA
     entra em ReadyTasks — ReadyTasks é "o que se pode DESPACHAR a um subagente", e despachar um ponto
@@ -684,4 +685,113 @@ function Format-OrchestrationReport {
     [void]$sb.Append("Próximo: $($Status.NextTask)`n")
     [void]$sb.Append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n")
     return $sb.ToString()
+}
+
+function ConvertTo-OrchestrationMermaid {
+    <#
+    .SYNOPSIS
+        O mesmo estado do Format-OrchestrationReport, como grafo Mermaid (`flowchart TD`): um nó por
+        task, uma aresta `dep --> task` por dependência, uma classe por estado. Pura e determinística:
+        mesma entrada, mesmo texto (ordem das tasks como veio do Status, sem timestamp, quebras LF).
+    .DESCRIPTION
+        O estado de cada nó segue a MESMA precedência do painel em texto, para os dois nunca
+        discordarem: status não-pending vence; pending vira awaiting-approval (checkpoint pronto),
+        ready (despachável) ou fica pending. Status fora do conjunto conhecido ganha a classe
+        `unknown` em vez de sumir: é o mesmo modo de falha que a contagem não-terminal corrige.
+
+        Dep que aponta para task inexistente vira nó `missing` (tracejado) — no grafo, a aresta para o
+        vazio é justamente o que o leitor precisa ver.
+
+        Id de task vira id de nó Mermaid só com [A-Za-z0-9_] (prefixo `t_`); o rótulo mostra o Id
+        original. Aspas e `<>` do rótulo são trocadas por entidades para não quebrar o parser.
+    .PARAMETER Fenced
+        Envolve a saída num bloco ```mermaid, pronto para colar em Markdown.
+    .OUTPUTS
+        [string]
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][psobject]$Status,
+        [switch]$Fenced
+    )
+
+    $ready    = @($Status.ReadyTasks)
+    $awaiting = @(if ($Status.PSObject.Properties['AwaitingApproval']) { $Status.AwaitingApproval } else { @() })
+    $tasks    = @($Status.Tasks)
+    $known    = @('passed', 'failed', 'pending', 'ready', 'awaiting-approval', 'running', 'blocked')
+
+    # Id -> id de nó, com desempate: `a-b` e `a_b` sanitizam igual e virariam UM nó só.
+    $nodeMap  = [System.Collections.Generic.Dictionary[string, string]]::new([System.StringComparer]::Ordinal)
+    $usedIds  = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+    $nodeId = {
+        param([string]$Id)
+        if ($nodeMap.ContainsKey($Id)) { return $nodeMap[$Id] }
+        $base = 't_' + ($Id -replace '[^A-Za-z0-9_]', '_')
+        $cand = $base; $n = 2
+        while (-not $usedIds.Add($cand)) { $cand = "${base}_$n"; $n++ }
+        $nodeMap[$Id] = $cand
+        return $cand
+    }
+    $label = {
+        param([string]$Text)
+        $Text.Replace('&', '&amp;').Replace('"', '&quot;').Replace('<', '&lt;').Replace('>', '&gt;')
+    }
+
+    $lines = [System.Collections.Generic.List[string]]::new()
+    if ($Fenced) { $lines.Add('```mermaid') }
+    $lines.Add('flowchart TD')
+    $lines.Add('  classDef passed fill:#d7f0dd,stroke:#2e7d32,color:#1b3d20')
+    $lines.Add('  classDef failed fill:#f8d7da,stroke:#c62828,color:#5c1a1a')
+    $lines.Add('  classDef ready fill:#dbe9f8,stroke:#1565c0,color:#0d2c4d')
+    $lines.Add('  classDef awaiting fill:#fff3cd,stroke:#b7791f,color:#4d3800')
+    $lines.Add('  classDef pending fill:#eeeeee,stroke:#757575,color:#333333')
+    $lines.Add('  classDef unknown fill:#ffffff,stroke:#6a1b9a,color:#3c0f57,stroke-width:2px')
+    $lines.Add('  classDef missing fill:#ffffff,stroke:#9e9e9e,color:#616161,stroke-dasharray:4 3')
+
+    if ($tasks.Count -eq 0) {
+        $lines.Add('  vazio["sem tasks: o STATE não existe, está vazio ou não foi parseado"]:::unknown')
+        if ($Fenced) { $lines.Add('```') }
+        return (($lines -join "`n") + "`n")
+    }
+
+    $ids = @($tasks | ForEach-Object { [string]$_.Id })
+    foreach ($t in $tasks) {
+        $state =
+            if ($t.Status -ne 'pending')       { [string]$t.Status }
+            elseif ($awaiting -contains $t.Id) { 'awaiting-approval' }
+            elseif ($ready -contains $t.Id)    { 'ready' }
+            else                               { 'pending' }
+        $class =
+            switch ($state) {
+                'passed'            { 'passed' }
+                'failed'            { 'failed' }
+                'ready'             { 'ready' }
+                'awaiting-approval' { 'awaiting' }
+                'pending'           { 'pending' }
+                default             { if ($known -contains $state) { 'pending' } else { 'unknown' } }
+            }
+        $text = (& $label ([string]$t.Id)) + '<br/>' + (& $label $state)
+        $lines.Add("  $(& $nodeId ([string]$t.Id))[""$text""]:::$class")
+    }
+
+    $missing = [System.Collections.Generic.List[string]]::new()
+    foreach ($t in $tasks) {
+        foreach ($d in @($t.Deps)) {
+            if ([string]::IsNullOrWhiteSpace([string]$d)) { continue }
+            if (($ids -notcontains [string]$d) -and -not $missing.Contains([string]$d)) { $missing.Add([string]$d) }
+        }
+    }
+    foreach ($m in $missing) {
+        $lines.Add("  $(& $nodeId $m)[""$(& $label $m)<br/>inexistente""]:::missing")
+    }
+
+    foreach ($t in $tasks) {
+        foreach ($d in @($t.Deps)) {
+            if ([string]::IsNullOrWhiteSpace([string]$d)) { continue }
+            $lines.Add("  $(& $nodeId ([string]$d)) --> $(& $nodeId ([string]$t.Id))")
+        }
+    }
+
+    if ($Fenced) { $lines.Add('```') }
+    return (($lines -join "`n") + "`n")
 }

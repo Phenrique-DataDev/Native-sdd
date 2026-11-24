@@ -85,6 +85,35 @@ https://herdr.dev/docs/socket-api/ — confira `herdr --help` / `herdr api schem
   irmão. Rode você mesmo o gate (testes/build) — de preferência num pane/contexto próprio — antes de
   seguir em cima do resultado dele.
 
+## Delegar a outra CLI de agente num pane (opcional, herdr)
+
+Quando o usuário quer a task rodando **numa aba visível, com sessão contínua** em outra CLI (Copilot,
+Antigravity/agy, OpenCode). Para uma task só, sem pane, a rota headless (`tools/external-agent.ps1`,
+§*Destino* da postura de orquestração) é mais simples e testável. Comandos do `herdr 0.9.4`; confira
+`herdr agent --help` na sua versão.
+
+| Passo | Comando |
+|-------|---------|
+| Já existe um agente da CLI? | `herdr agent list` |
+| Abrir um pane ao lado, sem roubar o foco | `herdr pane split <pane> --direction right --no-focus` |
+| Subir a CLI no pane | `herdr agent start <nome> --kind agy --pane <pane> --timeout 120000` |
+| Mandar a task e esperar | `herdr agent prompt <nome> "<prompt em uma linha>" --wait --timeout 300000` |
+| Ler a resposta | `herdr agent read <nome> --source recent --lines 100` |
+| Ver por que está `blocked` | `herdr agent read <nome> --source visible --lines 30` |
+
+- **Permissão:** por default, suba a CLI **sem** flag que libere tudo, e cada tool pede aprovação no
+  pane. Flag "yolo" (`-- --dangerously-skip-permissions` no agy, `-- --allow-all-tools
+  --allow-all-paths` no copilot, `-- --auto` no opencode) só com pedido explícito do usuário.
+- **Diálogo de aprovação:** aprove sozinho só leitura dentro do escopo. Escrita, `git push`/`commit`,
+  qualquer coisa destrutiva ou fora do escopo: pergunte ao usuário.
+- **Não fixe o estado final** do `prompt --wait` (`--until idle`): ele varia por versão da CLI. Sem
+  `--until`, o default casa `idle`/`done`/`blocked`. Falhou a entrega (`rc` ≠ 0), reenvie uma vez.
+- **`recent` traz o texto no topo e brancos no fim**: filtre linhas vazias antes de concluir que veio
+  vazio. Resposta longa cortada: peça para a CLI gravar num `.md` e leia o arquivo.
+- **Não há `herdr agent stop`:** encerrar é `herdr pane close <pane>`, que mata o terminal. Só feche
+  pane que você criou, e depois de o trabalho estar em disco.
+- Vale o padrão 3: o "terminei" da CLI é alegação. Confira o diff e rode o teste antes de seguir.
+
 ## O que NÃO fazer
 - **Não** sonde em `sleep`-loop o estado de um irmão — use o mecanismo de espera por evento
   (`herdr wait`, ou o pull sob demanda do `/peers`).

@@ -441,6 +441,30 @@ estão **todas** `passed`. Tasks independentes prontas → **várias chamadas `A
   (a) o objetivo é um **plano grande e independente** que estouraria o contexto atual, ou (b) o
   usuário quer **continuar noutro chat/máquina**. É instrução **ao humano** (texto), não chamada de
   ferramenta.
+- **Executor externo (outra CLI de agente)**, só quando o usuário **pede** a CLI ("manda pro
+  copilot", "usa o agy nessa"): `tools/external-agent.ps1` roda a task em modo headless em `agy`,
+  `copilot` ou `opencode` e grava a resposta num arquivo.
+
+  ```powershell
+  . "$toolsRoot/external-agent.ps1"
+  $cmd = Get-ExternalAgentCommand -Kind agy -Prompt '<pacote de contexto em uma linha>' -Permission read-only
+  $r   = Invoke-ExternalAgent -Command $cmd -OutFile '.claude/sdd/orchestration/out/<task>.txt' -TimeoutSec 600
+  ```
+
+  - **Permissão é sua decisão, com default `read-only`.** `edits` deixa editar arquivo; `all` libera
+    shell e paths sem perguntar e **só** entra quando o usuário pediu. Nunca suba o nível para
+    "destravar" uma task que falhou.
+  - **A saída é alegação** (`Claim = $true`). O gate é o mesmo da task `agent`: leia o arquivo, rode
+    você a verificação e confira o diff. `ExitCode` ≠ 0 ou `TimedOut` é `failed`, sem reler a conversa.
+  - O executor **não tem o contexto desta sessão**: o pacote de contexto vai inteiro no prompt, sem
+    segredo. Registre no STATE qual CLI e modelo responderam; sem isso, o resultado não se reproduz.
+  - Sessão visível e contínua num pane (Herdr) é outra rota: suplemento `orchestrating-agents`.
+- **Receita pronta (Workflow salvo em `.claude/workflows/`)**, quando o trabalho tem **forma fixa** e
+  não precisa de STATE: hoje só a `review-paralela` (revisa o diff por eixo e confirma cada achado com
+  um refutador; somente leitura). Quem dispara é o usuário, pelo nome ("roda o workflow
+  review-paralela"); não a rode por conta própria, porque cada execução custa um agente por eixo e um
+  por achado. **Regra de escolha:** a pergunta é "este diff tem problema?" → receita; é "faça X",
+  com tasks, deps, checkpoint ou retomada → este ciclo, com STATE.
 
 ## Schema do STATE (`.claude/sdd/orchestration/STATE_<slug>.yaml`)
 
@@ -486,7 +510,8 @@ tasks:
 > sempre treinaria o líder a ignorar o aviso.
 
 `Get-OrchestrationStatus -StatePath <arquivo>` lê este STATE (read-only) e deriva o progresso +
-`ReadyTasks` + `NextTask`. `Format-OrchestrationReport` imprime o painel.
+`ReadyTasks` + `NextTask`. `Format-OrchestrationReport` imprime o painel; `ConvertTo-OrchestrationMermaid`
+desenha o mesmo estado como grafo (opcional, nunca substitui o painel).
 
 ## O registro das medições — de onde vem cada número do gatilho
 

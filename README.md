@@ -21,8 +21,8 @@
 </p>
 
 <p align="center">
-  <strong>Versão atual: v1.0.21</strong> ·
-  <a href="https://github.com/Phenrique-DataDev/Native-sdd/releases/tag/v1.0.21">o que mudou nela</a> ·
+  <strong>Versão atual: v1.0.22</strong> ·
+  <a href="https://github.com/Phenrique-DataDev/Native-sdd/releases/tag/v1.0.22">o que mudou nela</a> ·
   <a href="https://github.com/Phenrique-DataDev/Native-sdd/releases">todas as releases</a>
 </p>
 
@@ -81,7 +81,8 @@ projetos. Ele reúne quatro coisas num só lugar:
 - **Scaffold SDD** — todo projeto novo nasce com `.claude/` pronto para as 5 fases do SDD.
 - **Curadoria / auto-otimização** — o scaffold genérico **se especializa** no projeto: cura os
   agentes certos, treina a KB do domínio e mantém os índices coerentes.
-- **Padrões verificáveis** — nada é "pronto" sem lint/testes reais: a suíte **Pester** roda no CI
+- **Padrões verificáveis** — nada é "pronto" sem lint/testes reais, e o teste tem de provar que
+  reprova sem o fix (Falsificador no `/define`, prova por mutação no `/build`): a suíte **Pester** roda no CI
   do repositório de desenvolvimento, e o **smoke do produto** roda no CI deste repositório (Windows
   e Linux: cria um projeto `mvp` e um `full`, passa o `/check` e o pre-commit anti-segredo deles).
 
@@ -149,7 +150,7 @@ your `~/.claude` configuration alone. The bootstrap still caches the downloaded 
 
 ```powershell
 # Windows — sem clonar, num PowerShell
-irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.21/onboarding/bootstrap.ps1 | iex
+irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.22/onboarding/bootstrap.ps1 | iex
 ```
 
 > Em automação ou CI, embrulhe num processo próprio
@@ -157,7 +158,7 @@ irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.21/onboa
 
 ```bash
 # Linux e macOS — sem clonar (precisa de bash + curl + tar; o script avisa se algo faltar)
-curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.21/onboarding/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.22/onboarding/bootstrap.sh | bash
 ```
 
 > **No macOS** as dependências vêm pelo **Homebrew** (instalado se faltar) e o PowerShell pelo tarball
@@ -501,8 +502,13 @@ Todos auto-contidos, em `.claude/commands/`. Detalhe de roteamento em `.claude/r
 4. **Claude-first, portável.** Otimizado para Claude Code (commands, hooks, MCP), com artefatos (SDD,
    KB, regras, `AGENTS.md`) estruturados para portar a outras ferramentas. O que já porta, e como
    foi medido, está em [Ferramentas suportadas](#nativo-no-claude-code-medido-nas-demais--native-in-claude-code-measured-in-the-rest).
-5. **Qualidade verificável.** Nada é "pronto" sem verificação real (lint, testes, critérios de
-   aceite). Não inventar dados; não versionar segredos.
+5. **Qualidade verificável — teste que a IA não passa só por passar.** Nada é "pronto" sem
+   verificação real (lint, testes, critérios de aceite), e verde sozinho não basta: cada critério
+   de aceite declara o **Falsificador** (a condição que o reprova), o `/build` reintroduz o defeito
+   e anota **qual teste reprova** (teste que passa com o defeito não conta) e o `/ship` roda o
+   comando de verificação do projeto em vez de confiar no relatório do agente. É prova exigida,
+   não bloqueio mecânico: nada impede o agente de editar um teste, e o `validator` e a revisão
+   existem para pegar isso. Não inventar dados; não versionar segredos.
 6. **Segurança em camadas, sem barrar.** A rede é **hook-based**, não prompt-based: git **pre-commit**
    (bloqueia o commit), **secret-guard** (confirma em commit/push e leitura de `.env`),
    **destructive-guard** (confirma `rm -rf`/git destrutivo) e **managed policy** (deny inviolável).

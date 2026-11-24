@@ -144,6 +144,17 @@ $status = Get-OrchestrationStatus -StatePath ".claude/sdd/orchestration/STATE_<s
 Format-OrchestrationReport -Status $status
 ```
 
+**Grafo, quando ajuda a ler:** com deps cruzadas, checkpoint no meio ou o usuário pedindo para "ver o
+estado", gere também o mesmo estado como Mermaid e mostre junto do painel, que continua sendo a fonte:
+
+```text
+ConvertTo-OrchestrationMermaid -Status $status -Fenced   # bloco ```mermaid: deps = arestas, cor = estado
+```
+
+O grafo usa a mesma precedência de estado do painel. Status desconhecido sai em roxo (`unknown`) e
+dep para task inexistente sai tracejada (`missing`): as duas coisas são defeito do STATE, corrija antes
+de conduzir.
+
 Se **`--plan-only`**, **pare aqui** (só o relatório — nada é invocado).
 
 ---

@@ -37,8 +37,13 @@ próprios projetos.
    mas com artefatos (SDD, KB, regras) estruturados para portar a outras ferramentas. A meta é
    rodar nas principais ferramentas dos modelos de fronteira; o que já está medido, e o que não
    está, fica na tabela de [ferramentas suportadas](../README.md#nativo-no-claude-code-medido-nas-demais--native-in-claude-code-measured-in-the-rest).
-5. **Qualidade verificável.** Nada é "pronto" sem verificação real (lint, testes, critérios
-   de aceite). Não inventar dados.
+5. **Qualidade verificável — teste que a IA não passa só por passar.** Nada é "pronto" sem
+   verificação real (lint, testes, critérios de aceite), e verde sozinho não basta: cada critério
+   de aceite declara o **Falsificador** (a condição que o reprova), o `/build` reintroduz o defeito
+   e anota **qual teste reprova** (teste que passa com o defeito não conta) e o `/ship` roda o
+   comando de verificação do projeto em vez de confiar no relatório do agente. É prova exigida,
+   não bloqueio mecânico: nada impede o agente de editar um teste, e o `validator` e a revisão
+   existem para pegar isso. Não inventar dados.
 
 ## Como funciona (fluxo-alvo)
 
