@@ -78,7 +78,7 @@ $script:CommandMappingHints = [ordered]@{
     define        = @('define', 'requisito', 'requisitos', 'requirement', 'requirements', 'prd')
     spec          = @('spec', 'design', 'arquitetura', 'architecture', 'plan', 'plano')
     build         = @('build', 'implement', 'implementa', 'implementar')
-    ship          = @('ship', 'encerrar', 'wrap')
+    'sdd-ship'    = @('ship', 'encerrar', 'wrap')
     dev           = @('dev', 'fix', 'hotfix', 'bug', 'quick', 'task')
     'review-diff' = @('review', 'revisar', 'revisa', 'cr')
     status        = @('status', 'progress', 'progresso')
@@ -93,7 +93,7 @@ $script:CommandPhase = @{
     define     = 'fase 1 (Define)'
     spec       = 'fase 2 (Design)'
     build      = 'fase 3 (Build)'
-    ship       = 'fase 4 (Ship)'
+    'sdd-ship' = 'fase 4 (Ship)'
 }
 
 function Get-GitFileList {

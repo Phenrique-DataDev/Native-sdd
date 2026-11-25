@@ -3,7 +3,7 @@ description: "Fase 4 SDD — encerrar feature, arquivar e registrar lições"
 argument-hint: "<FEATURE>"
 ---
 
-# /ship — Fase 4 (Ship)
+# /sdd-ship — Fase 4 (Ship)
 
 Fechar a feature `$ARGUMENTS`: arquivar artefatos e capturar aprendizado.
 
@@ -88,7 +88,7 @@ Ele confere que todo `BUILD_REPORT` da feature em `reports/` está **✅ COMPLET
 | "O BUILD_REPORT está quase ✅, já posso arquivar" | Ship só depois do ✅ verificado. Arquivar build incompleto enterra dívida. |
 | "Os Success Criteria 'claramente' foram atingidos" | Só escreva o SHIPPED com evidência de cada critério — não com a sensação de que bateu. |
 | "Pulo as lições aprendidas, não houve nada de novo" | A seção é barata e é o que alimenta o próximo ciclo. "Nada novo" também é uma lição — registre. |
-| "O BUILD_REPORT pode ficar em `reports/`, eu aponto para ele no SHIPPED" | Não pode. `reports/` significa **build em andamento** — deixar o arquivo lá faz o `/status` anunciar como aberta uma feature encerrada e sugerir `/ship` de novo. Mover é o passo, não uma preferência de organização. |
+| "O BUILD_REPORT pode ficar em `reports/`, eu aponto para ele no SHIPPED" | Não pode. `reports/` significa **build em andamento** — deixar o arquivo lá faz o `/status` anunciar como aberta uma feature encerrada e sugerir `/sdd-ship` de novo. Mover é o passo, não uma preferência de organização. |
 | "São 2 relatórios (entrega em levas), não cabe um por feature no archive" | Cabe: `archive/<FEATURE>/` aceita **N** relatórios lado a lado. O diretório é a identidade — não renomeie nem invente sufixo para "caber". |
 | "Peço ao usuário para rodar `/sync-context` depois" | Você **pode** disparar (`Skill`) e o comando é idempotente/não-destrutivo. Pedir ao humano o que você mesmo executa é como o índice fica stale — e como o agente vira um formulário. |
 

@@ -36,7 +36,7 @@ nada some sem rastro (verificado por `tools/reflect.ps1`). O `curation-nudge` av
 ## Lições aprendidas (loop de boas práticas)
 
 A camada `operations/` também recebe **práticas promovidas** do acervo de `SHIPPED` pelo **`/learn`**
-(feature **G7**): quando uma lição se **repete** entre features (marcada `[candidata]` no `/ship`), o
+(feature **G7**): quando uma lição se **repete** entre features (marcada `[candidata]` no `/sdd-ship`), o
 `/learn` a promove a uma entrada `operations` (**nunca-destrutivo**, plano → aprova → aplica), gravando
 `promoted_from: [features]` como proveniência (verificado por `tools/learn.ps1`). O plano/ledger ficam em
 `_lessons/`; disciplina em [`/learn`](../commands/learn.md). O `curation-nudge` avisa quando o

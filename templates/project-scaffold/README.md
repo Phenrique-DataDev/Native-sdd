@@ -13,7 +13,7 @@ onboarding/new-project.ps1 -Path <dir>      # ou o atalho: New-SddProject <dir>
 
 1. Abra o Claude Code no projeto e rode **`/setup`** para preencher o contexto.
 2. **`/curate`** especializa o scaffold (cura agentes + treina a KB + sincroniza índices).
-3. Trabalhe em fases: `/brainstorm` → `/define` → `/spec` → `/build` → `/ship`.
+3. Trabalhe em fases: `/brainstorm` → `/define` → `/spec` → `/build` → `/sdd-ship`.
    Para tarefas pequenas, use `/dev`. Projeto já existente? Use `/adapt`.
 
 ## Estrutura
@@ -62,7 +62,7 @@ docs/                        documentação do projeto (fora da KB) — _ABOUT.m
     ├── templates/           templates das 5 fases
     ├── features/            BRAINSTORM/DEFINE/DESIGN gerados
     ├── reports/             BUILD_REPORT gerados
-    └── archive/             features encerradas via /ship
+    └── archive/             features encerradas via /sdd-ship
 ```
 
 > **Perfis:** `new-project.ps1 -Profile mvp` (**default**) entrega as 5 rules do núcleo e as 2 de área (`docs-first`, `kb-taxonomy`, 0 token de always-on) e não

@@ -21,7 +21,7 @@ com **proveniência** (`promoted_from`). Sem engine (reusa o molde do `/reflect`
 ## Princípio
 
 Boas práticas descobertas no **uso real** só viram valor quando **promovidas** a conhecimento
-reaplicável. O `/ship` arquiva "Lições aprendidas" em `SHIPPED_*.md` — acervo que ninguém relê. O
+reaplicável. O `/sdd-ship` arquiva "Lições aprendidas" em `SHIPPED_*.md` — acervo que ninguém relê. O
 `/learn` fecha esse loop: uma lição vira **prática** quando se **repete** (≥2 features). Destino é a KB
 camada `operations` — **não** uma rule sempre-ativa (mantém `rules/` enxuta e reusa a infra de KB).
 Se a prática vale só para **uma parte** do projeto (um glob: `migrations/**`), ela pode ganhar
@@ -37,7 +37,7 @@ e aí chega sozinha. É um complemento da entrada, não substituto (ver Passo 3)
 | armadilha técnica que se repete e tem mitigação clara | wording/nota efêmera sem padrão |
 
 Insumo: cada lição no `SHIPPED` é marcada `[candidata]` (promovível) ou `[pontual]` (one-off) pelo
-[`/ship`](ship.md). O gatilho conta as `[candidata]` **ainda não promovidas**.
+[`/sdd-ship`](sdd-ship.md). O gatilho conta as `[candidata]` **ainda não promovidas**.
 
 ---
 

@@ -53,7 +53,7 @@ que for público antes de cada commit.
 
 Um gate só vale se for **difícil de racionalizar para fora**. Todo artefato SDD com gate
 (a regra [`workflow-sdd.md`](../../templates/project-scaffold/.claude/rules/workflow-sdd.md)
-e os commands `/define`, `/build`, `/ship`, `/review-diff`) documenta, junto da lógica:
+e os commands `/define`, `/build`, `/sdd-ship`, `/review-diff`) documenta, junto da lógica:
 
 - **`## Racionalizações comuns`** — tabela `| Desculpa | Realidade |` com as desculpas
   frequentes para pular um passo e a refutação direta de cada uma.
@@ -98,7 +98,7 @@ retrato a cada run (visibilidade no PR) **fora do veredito** (exit 0; nunca bloq
 | Revisão | severidade priorizada | `/review-diff`, `code-reviewer` |
 | CLI-first | CLI antes de reimplementar | `.claude/rules/cli-first.md` |
 | Segredos | nunca versionar | `~/.claude/CLAUDE.md` |
-| Anti-racionalização | tabela desculpa→realidade + red flags nos gates | `workflow-sdd.md`, `/define`/`/build`/`/ship`/`/review-diff` |
+| Anti-racionalização | tabela desculpa→realidade + red flags nos gates | `workflow-sdd.md`, `/define`/`/build`/`/sdd-ship`/`/review-diff` |
 
 ## Veja também
 

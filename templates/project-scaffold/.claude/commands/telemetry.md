@@ -22,7 +22,7 @@ Format-PhaseReport -Path .claude/sdd/telemetry.jsonl
 
 ## Como os dados entram
 
-Cada fase SDD (`/brainstorm` … `/ship`) registra, **ao fechar**, as iterações que custou — via
+Cada fase SDD (`/brainstorm` … `/sdd-ship`) registra, **ao fechar**, as iterações que custou — via
 `Add-PhaseIteration` num passo **opcional e não bloqueante** de cada comando. É o sinal mais
 barato/útil; a **duração** é gravada só quando de fato medida
 (`Add-PhaseMetric -DurationSeconds`). Apenas metadados (fase/feature/iterações) — **nunca**

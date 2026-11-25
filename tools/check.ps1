@@ -540,7 +540,7 @@ function Get-LintPlan {
         }
         # Ligado em 2026-07-23, depois do dano: um projeto scaffolded viu o /status listar como
         # "build em andamento" uma feature já encerrada — o BUILD_REPORT tinha ficado em reports/
-        # porque o passo 3 do /ship dizia "mova/APONTE" e nada verificava a invariante. A redação do
+        # porque o passo 3 do /sdd-ship dizia "mova/APONTE" e nada verificava a invariante. A redação do
         # command virou imperativa no mesmo ciclo; este lint é o backstop. Roda no dogfood (a própria
         # raiz tem .claude/sdd/) e no alvo via /check. Custo: ~0,01 s (dois Get-ChildItem).
         @{ Name = 'sdd-lint'; Tool = 'sdd-lint.ps1'

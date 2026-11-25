@@ -68,5 +68,5 @@ invente um objetivo que o usuário não declarou.
 Não é handoff:
 - Coordenar com outra sessão **ativa no mesmo projeto** → `/peers` (se o perfil o entregar), que é
   presença e recado, não documento.
-- Encerrar uma feature → [`/ship`](../../commands/ship.md): o `SHIPPED` é o registro do que fechou,
+- Encerrar uma feature → [`/sdd-ship`](../../commands/sdd-ship.md): o `SHIPPED` é o registro do que fechou,
   não do que segue.

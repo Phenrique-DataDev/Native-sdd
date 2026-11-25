@@ -318,7 +318,7 @@ function Build-ArchiveIndex {
 
     $valid = @($Entries | Where-Object { $_.Feature -and $_.File } | Sort-Object { [string]$_.Feature })
     if ($valid.Count -eq 0) {
-        [void]$sb.Append("_(sem features arquivadas ainda — o ``/ship`` move cada feature para cá)_`n")
+        [void]$sb.Append("_(sem features arquivadas ainda — o ``/sdd-ship`` move cada feature para cá)_`n")
         return $sb.ToString()
     }
 

@@ -15,7 +15,7 @@
                  harness/hook arriscado) sobre settings*.json.
       - SDD    : Invoke-SddLint (orphan-build-report + build-report-sem-mapa/-mapa-vazio) —
                  relatório de feature JÁ arquivada que ficou em `.claude/sdd/reports/`, o que faz o
-                 /status reportar build aberto numa feature encerrada (backstop do passo 3 do /ship,
+                 /status reportar build aberto numa feature encerrada (backstop do passo 3 do /sdd-ship,
                  2026-07-23); e BUILD_REPORT vivo sem a seção `## Não exercitado` preenchida — o mapa
                  de cobertura de onde saíram TODOS os defeitos que a revisão comprou nas rodadas 5 e
                  6 do baseline (2026-08-26).
@@ -251,7 +251,7 @@ function Get-CheckSection {
                 $f = @(Invoke-ConfigLint -Path @($paths))
             }
             'sdd' {
-                # Invariante do /ship passo 3: relatório de feature já arquivada não fica em reports/.
+                # Invariante do /sdd-ship passo 3: relatório de feature já arquivada não fica em reports/.
                 $sdd = Join-Path $claude 'sdd'
                 if (-not (Test-Path -LiteralPath $sdd -PathType Container)) {
                     return [pscustomobject]@{ Name = 'sdd'; Status = 'n/a'; Findings = @() }

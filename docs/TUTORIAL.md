@@ -80,7 +80,7 @@ explícito.
    /brainstorm <sua ideia real>
    ```
    Resultado esperado: `.claude/sdd/features/BRAINSTORM_<FEATURE>.md` é criado — o 1º dos 5
-   artefatos do ciclo SDD (`/brainstorm → /define → /spec → /build → /ship`).
+   artefatos do ciclo SDD (`/brainstorm → /define → /spec → /build → /sdd-ship`).
 
 ## Resumo
 Você preparou a máquina uma única vez, criou um projeto que nasceu genérico e **se especializou**

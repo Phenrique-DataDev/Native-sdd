@@ -21,7 +21,7 @@ commands e rules se buscam com `Grep`/`Glob`.
 
 | Catálogo | Uma linha por | Quem regenera |
 |----------|---------------|---------------|
-| `.claude/sdd/archive/_index.md` | feature arquivada: link + título + resumo do `SHIPPED_*` (senão do `DEFINE_*`) | `/sync-context` (`Invoke-Resync`). O `/ship` o deixa stale e o passo 6 dele regenera |
+| `.claude/sdd/archive/_index.md` | feature arquivada: link + título + resumo do `SHIPPED_*` (senão do `DEFINE_*`) | `/sync-context` (`Invoke-Resync`). O `/sdd-ship` o deixa stale e o passo 6 dele regenera |
 | `docs/_index.md` | doc de `docs/`: link + título | idem |
 | `.claude/kb/_index.yaml` | domínio da KB: camada, entradas | idem |
 

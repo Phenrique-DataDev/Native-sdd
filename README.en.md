@@ -52,7 +52,7 @@ in a tool that has not been verified yet ([supported tools](#native-in-claude-co
 | 1 · Define | `/define` | Requirements and acceptance tests, each one with the condition that fails it |
 | 2 · Design | `/spec` | Architecture and technical spec |
 | 3 · Build | `/build` | Implementation with real lint and tests, plus a build report |
-| 4 · Ship | `/ship` | Archives the feature and records the lessons |
+| 4 · Ship | `/sdd-ship` | Archives the feature and records the lessons |
 
 One phase at a time: each phase reads the previous phase's artifact. Small tasks skip the cycle
 with `/dev`. In daily use, start with `/status`, a read-only panel that shows git, the open SDD
@@ -66,12 +66,12 @@ installs the latest tagged release, not `main`. You can read it first:
 
 ```powershell
 # Windows, in PowerShell
-irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.22/onboarding/bootstrap.ps1 | iex
+irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.23/onboarding/bootstrap.ps1 | iex
 ```
 
 ```bash
 # Linux and macOS (needs bash, curl and tar)
-curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.22/onboarding/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.23/onboarding/bootstrap.sh | bash
 ```
 
 **See what changes before installing.** `-Check` / `--check` only reports, `-DryRun` / `--dry-run`
@@ -79,7 +79,7 @@ lists each action without running it, and `-ProjectOnly` / `--project-only` leav
 configuration alone. A normal install backs up every file it overwrites (`<file>.bak-<date>`).
 
 ```powershell
-iex "& { $(irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.22/onboarding/bootstrap.ps1) } -DryRun"
+iex "& { $(irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.23/onboarding/bootstrap.ps1) } -DryRun"
 ```
 
 **2 · Create a project** (reopen the terminal first: the installer adds `New-SddProject`, alias
@@ -98,7 +98,7 @@ multi-agent sessions.
 ```text
 /setup     fills in the project context (stack, domain, conventions)
 /curate    specializes the scaffold: curates agents, trains the domain knowledge base, syncs indexes
-/brainstorm → /define → /spec → /build → /ship
+/brainstorm → /define → /spec → /build → /sdd-ship
 ```
 
 **Updating** has two layers: rerun the bootstrap for the machine, then `nsp <path> -Update` in each

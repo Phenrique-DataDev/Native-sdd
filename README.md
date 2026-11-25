@@ -21,8 +21,8 @@
 </p>
 
 <p align="center">
-  <strong>Versão atual: v1.0.22</strong> ·
-  <a href="https://github.com/Phenrique-DataDev/Native-sdd/releases/tag/v1.0.22">o que mudou nela</a> ·
+  <strong>Versão atual: v1.0.23</strong> ·
+  <a href="https://github.com/Phenrique-DataDev/Native-sdd/releases/tag/v1.0.23">o que mudou nela</a> ·
   <a href="https://github.com/Phenrique-DataDev/Native-sdd/releases">todas as releases</a>
 </p>
 
@@ -38,7 +38,7 @@
 ## Em 1 minuto / In one minute
 
 - **O que você ganha:** um comando prepara a máquina, e cada projeto novo nasce com as fases do SDD
-  (`/brainstorm` → `/define` → `/spec` → `/build` → `/ship`), o `/dev` para tarefa pequena, o
+  (`/brainstorm` → `/define` → `/spec` → `/build` → `/sdd-ship`), o `/dev` para tarefa pequena, o
   `/check` e um pre-commit que bloqueia segredo antes do commit.
 - **O mínimo para começar:** instalar, criar o projeto com `nsp <pasta>` (perfil `mvp`, o padrão),
   abrir o Claude Code nele e rodar `/setup`. Os passos estão no [Início rápido](#início-rápido--quickstart).
@@ -104,7 +104,7 @@ virar código. Tarefas pequenas usam o atalho **Dev Loop** (`/dev`), sem o ciclo
 | **1 · Define** | `/define` | Capturar **requisitos** e critérios de aceite — o *quê* e quando está "pronto" |
 | **2 · Design** | `/spec` | Definir **arquitetura** e a spec técnica — o *como* construir |
 | **3 · Build** | `/build` | **Implementar** com verificação real (lint/testes) + relatório de build |
-| **4 · Ship** | `/ship` | **Encerrar**: arquivar a feature e registrar as lições aprendidas |
+| **4 · Ship** | `/sdd-ship` | **Encerrar**: arquivar a feature e registrar as lições aprendidas |
 
 > Regra de ouro: **uma fase por vez**, sem pular — cada fase consome o artefato da anterior.
 
@@ -150,7 +150,7 @@ your `~/.claude` configuration alone. The bootstrap still caches the downloaded 
 
 ```powershell
 # Windows — sem clonar, num PowerShell
-irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.22/onboarding/bootstrap.ps1 | iex
+irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.23/onboarding/bootstrap.ps1 | iex
 ```
 
 > Em automação ou CI, embrulhe num processo próprio
@@ -158,7 +158,7 @@ irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.22/onboa
 
 ```bash
 # Linux e macOS — sem clonar (precisa de bash + curl + tar; o script avisa se algo faltar)
-curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.22/onboarding/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.23/onboarding/bootstrap.sh | bash
 ```
 
 > **No macOS** as dependências vêm pelo **Homebrew** (instalado se faltar) e o PowerShell pelo tarball
@@ -290,7 +290,7 @@ read-only (`curation-nudge`) avisa, sem nunca alterar nada, quando a curadoria f
 ### 5 · Executar — o ciclo SDD
 
 ```
-/brainstorm → /define → /spec → /build → /ship
+/brainstorm → /define → /spec → /build → /sdd-ship
 ```
 
 ## Dia a dia / Daily loop
@@ -310,7 +310,7 @@ Siga a recomendação ou ignore — ela só reflete o estado:
 |----------------------|---------------|
 | Projeto não inicializado | `/setup` → `/curate` |
 | Curadoria incompleta | comando da etapa (`/curate`) |
-| Feature SDD aberta | próxima fase (`/define` → `/spec` → `/build` → `/ship`) |
+| Feature SDD aberta | próxima fase (`/define` → `/spec` → `/build` → `/sdd-ship`) |
 | Item novo no `inbox/` | `/brainstorm` (feature) ou `/dev` (tarefa pequena) |
 | Curadoria desatualizada (staleness) | o comando do sinal (`/sync-context`, `/reflect`, `/learn`…) |
 | Tudo em dia | `/brainstorm` p/ nova feature, ou `/dev` |
@@ -461,7 +461,7 @@ Todos auto-contidos, em `.claude/commands/`. Detalhe de roteamento em `.claude/r
 | `/update-skills` | Inventaria e atualiza skills (global + projeto), preservando as custom |
 | `/skill-gap` | Detecta brecha de skill nas ondas da KB e gera o esqueleto faltante |
 | `/supplements` | **Repertório curado** de skills/plugins por disciplina: lista por tema e instala (opt-in, user-scoped) |
-| `/brainstorm` → `/define` → `/spec` → `/build` → `/ship` | As **5 fases** do SDD |
+| `/brainstorm` → `/define` → `/spec` → `/build` → `/sdd-ship` | As **5 fases** do SDD |
 | `/dev` | Dev Loop — tarefa pequena, sem o ciclo completo |
 | `/review-diff` | Revisa PR ou diff |
 | `/doubt` | Dúvida adversarial *in-flight* antes de firmar uma decisão (revisor fresh-context) |
@@ -488,7 +488,7 @@ Todos auto-contidos, em `.claude/commands/`. Detalhe de roteamento em `.claude/r
 | Começar um projeto do zero | `New-SddProject` → `/setup` → `/curate` |
 | Adotar um repositório que já existe | `/adapt` |
 | Levar melhorias do framework a um projeto já criado | `nsp <projeto> -Update` (preserva o que você customizou) |
-| Tocar uma feature de verdade | `/brainstorm` → … → `/ship` |
+| Tocar uma feature de verdade | `/brainstorm` → … → `/sdd-ship` |
 | Resolver algo pequeno e direto | `/dev` |
 
 ## Princípios / Philosophy
@@ -505,7 +505,7 @@ Todos auto-contidos, em `.claude/commands/`. Detalhe de roteamento em `.claude/r
 5. **Qualidade verificável — teste que a IA não passa só por passar.** Nada é "pronto" sem
    verificação real (lint, testes, critérios de aceite), e verde sozinho não basta: cada critério
    de aceite declara o **Falsificador** (a condição que o reprova), o `/build` reintroduz o defeito
-   e anota **qual teste reprova** (teste que passa com o defeito não conta) e o `/ship` roda o
+   e anota **qual teste reprova** (teste que passa com o defeito não conta) e o `/sdd-ship` roda o
    comando de verificação do projeto em vez de confiar no relatório do agente. É prova exigida,
    não bloqueio mecânico: nada impede o agente de editar um teste, e o `validator` e a revisão
    existem para pegar isso. Não inventar dados; não versionar segredos.

@@ -11,7 +11,7 @@ inicia trabalho de feature, escolha a fase certa e rode o command correspondente
 | 1. Define | "define", "requisitos", "critérios de aceite" · *"requirements", "acceptance criteria"* | `/define` | `.claude/sdd/features/DEFINE_<FEATURE>.md` |
 | 2. Design | "design", "arquitetura", "spec técnica" · *"architecture", "tech spec", "write the spec"* | `/spec` | `.claude/sdd/features/DESIGN_<FEATURE>.md` |
 | 3. Build | "build", "implemente", "execute" · *"implement", "let's code this"* | `/build` | código + `.claude/sdd/reports/BUILD_REPORT_<FEATURE>.md` |
-| 4. Ship | "ship", "encerrar feature", "arquivar" · *"wrap up", "close the feature", "archive"* | `/ship` | `.claude/sdd/archive/<FEATURE>/SHIPPED_<DATE>.md` |
+| 4. Ship | "ship", "encerrar feature", "arquivar" · *"wrap up", "close the feature", "archive"* | `/sdd-ship` | `.claude/sdd/archive/<FEATURE>/SHIPPED_<DATE>.md` |
 
 > **O idioma do projeto é seu.** Artefatos, `BACKLOG.md` e as seções que os lints exigem
 > (`## Não exercitado`/`## Not exercised`, `## Aberto`/`## Open`, `## Regras críticas`/`## Critical rules`)

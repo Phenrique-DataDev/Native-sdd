@@ -15,7 +15,7 @@ que a curadoria gera/instala, e devolve um **veredito** de conformidade. Oito se
 harness ignora — `Write(caminho)` no lugar de `Edit(caminho)`, que num `deny` não protege nada / hook
 arriscado) e **sdd**
 (`orphan-build-report`: relatório de feature **já arquivada** que ficou em `.claude/sdd/reports/` —
-o passo 3 do [`/ship`](ship.md) não rodou, e é isso que faz o `/status` anunciar como aberta uma
+o passo 3 do [`/sdd-ship`](sdd-ship.md) não rodou, e é isso que faz o `/status` anunciar como aberta uma
 feature encerrada; `build-report-sem-mapa` / `build-report-mapa-vazio`: BUILD_REPORT **vivo** sem a
 seção `## Não exercitado` preenchida — o mapa de cobertura de onde saíram **todos** os defeitos que
 a revisão comprou nas rodadas 5 e 6 do baseline), **link** (`broken-link`: link markdown **relativo** apontando para arquivo que
@@ -73,7 +73,7 @@ confira que o número bate com o projeto — um `ok` sobre poucos arquivos não 
 **Próximo passo do veredito:** `issues` → corrija os `error` antes de confiar na curadoria (KB malformada
 → revisar/`/reflect`; agente com dangling → ajustar `connects_to`; config malformada → corrigir o JSON;
 `orphan-build-report` → mova o relatório para `.claude/sdd/archive/<FEATURE>/`, como manda o passo 3 do
-`/ship`; `build-report-sem-mapa`/`-mapa-vazio` → declare no BUILD_REPORT o que o código aceita e você
+`/sdd-ship`; `build-report-sem-mapa`/`-mapa-vazio` → declare no BUILD_REPORT o que o código aceita e você
 não executou (ou `Nenhuma — <o que sustenta>`); é dela que a revisão parte; `broken-link` → conserte o caminho relativo ou o arquivo que sumiu, no arquivo e linha
 apontados; `no-bom-utf8`/`bom-antes-do-frontmatter` → **este é o único que tem correção automática**:
 `pwsh <tools>/encoding-lint.ps1 -Fix` conserta os `no-bom-utf8` prefixando os 3 bytes do BOM, sem
@@ -103,7 +103,7 @@ inventar** e sem reimplementar a varredura em silêncio:
 - **Config:** abra `.claude/settings.json` e confira se é JSON válido e se não há `allow` amplo (`*`).
 - **SDD:** para cada `.claude/sdd/reports/BUILD_REPORT_<F>*.md`, veja se existe
   `.claude/sdd/archive/<F>/SHIPPED_*.md` — se existir, o relatório é **órfão** (devia ter sido movido
-  pelo passo 3 do `/ship`).
+  pelo passo 3 do `/sdd-ship`).
 - **Links:** nos `.md` que você editou, confira os links **relativos** — texto entre colchetes
   seguido de um caminho `.md` entre parênteses. Resolva o caminho a partir do arquivo de origem e
   veja se o alvo existe. Ignore `http(s)`, âncoras puras (`#secao`) e placeholders (`<FEATURE>`).

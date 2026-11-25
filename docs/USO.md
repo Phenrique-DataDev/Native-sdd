@@ -11,7 +11,7 @@
 2. CRIAR      onboarding/new-project.ps1  → projeto novo já com o scaffold SDD
 3. SETUP      /setup                      → captura o contexto do projeto (stack, domínio)
 4. CURADORIA  /curate                       → especializa agentes/KB ao domínio
-5. EXECUTAR   SDD                         → /brainstorm → /define → /spec → /build → /ship
+5. EXECUTAR   SDD                         → /brainstorm → /define → /spec → /build → /sdd-ship
 ```
 
 > Todos os passos estão prontos. A curadoria (passo 4) é orquestrada pelo `/curate`, que
@@ -73,24 +73,24 @@ baixou (`[INFO   ] release: vX.Y.Z`); um push na `main` não muda o que você in
 
 ```powershell
 # Windows (PowerShell 5.1+) — sem flags
-irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.22/onboarding/bootstrap.ps1 | iex
+irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.23/onboarding/bootstrap.ps1 | iex
 
 # com flags do install.ps1: baixa o texto, embrulha num scriptblock e aplica os parâmetros
-iex "& { $(irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.22/onboarding/bootstrap.ps1) } -Check"
+iex "& { $(irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.23/onboarding/bootstrap.ps1) } -Check"
 
 # branch main em vez da última release (opt-in explícito; combina com os outros flags)
-iex "& { $(irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.22/onboarding/bootstrap.ps1) } -Ref main"
+iex "& { $(irm https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.23/onboarding/bootstrap.ps1) } -Ref main"
 ```
 
 ```bash
 # Linux — sem flags
-curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.22/onboarding/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.23/onboarding/bootstrap.sh | bash
 
 # com flags do install.sh: `bash -s --` repassa os args ao script vindo do pipe
-curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.22/onboarding/bootstrap.sh | bash -s -- --check
+curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.23/onboarding/bootstrap.sh | bash -s -- --check
 
 # branch main em vez da última release (opt-in explícito)
-curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.22/onboarding/bootstrap.sh | bash -s -- --ref main
+curl -fsSL https://raw.githubusercontent.com/Phenrique-DataDev/Native-sdd/v1.0.23/onboarding/bootstrap.sh | bash -s -- --ref main
 ```
 
 > **Três URLs, papéis distintos:** as URLs acima (`raw.githubusercontent.com/...`) servem o
@@ -300,7 +300,7 @@ consome o artefato da anterior. Tarefas pequenas usam o **Dev Loop**.
 | 1. Define | `/define` | `.claude/sdd/features/DEFINE_<FEATURE>.md` (gate: Clarity Score ≥ 12/15) |
 | 2. Design | `/spec` | `.claude/sdd/features/DESIGN_<FEATURE>.md` |
 | 3. Build | `/build` | código + `.claude/sdd/reports/BUILD_REPORT_<FEATURE>.md` |
-| 4. Ship | `/ship` | `.claude/sdd/archive/<FEATURE>/SHIPPED_<DATE>.md` |
+| 4. Ship | `/sdd-ship` | `.claude/sdd/archive/<FEATURE>/SHIPPED_<DATE>.md` |
 
 Atalhos fora do ciclo completo:
 

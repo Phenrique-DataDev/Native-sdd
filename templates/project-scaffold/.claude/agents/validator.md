@@ -55,7 +55,7 @@ Validar com **WIP local** (arquivo não-commitado, config alterada, cache sujo, 
 - **Deps do zero** no worktree, a partir do lockfile — o comando exato vem do `project-context.md`; não reuse o `node_modules`/venv sujo do diretório principal.
 - **Env:** rode com as variáveis que a entrega documenta. O que não está declarado não deve influir — se influi, é gap de reprodutibilidade a reportar.
 
-> **Não vira default.** Para AT rápido sem estado local sensível, o próprio diretório basta. Use o ambiente limpo quando a limpeza **puder mudar o resultado**: antes do `/ship`, com WIP no caminho, ou quando o AT depende de deps/config.
+> **Não vira default.** Para AT rápido sem estado local sensível, o próprio diretório basta. Use o ambiente limpo quando a limpeza **puder mudar o resultado**: antes do `/sdd-ship`, com WIP no caminho, ou quando o AT depende de deps/config.
 
 ## Nível de teste e verde instável
 | Nível | Pergunta | Caso negativo? | Quando usar |

@@ -24,7 +24,7 @@ Cada fase do SDD tem um command dedicado e **auto-contido** (carrega a própria 
 | `/define` | Fase 1 — requisitos e critérios de aceite |
 | `/spec` | Fase 2 — arquitetura e spec técnica |
 | `/build` | Fase 3 — implementar + relatório de build |
-| `/ship` | Fase 4 — encerrar, arquivar, registrar lições |
+| `/sdd-ship` | Fase 4 — encerrar, arquivar, registrar lições |
 | `/dev` | Atalho: tarefa pequena, sem o ciclo completo |
 
 **Entrada do projeto** — `/setup` só preenche o contexto; `/curate` roda a cadeia inteira; `/adapt` é o `/curate` de quem já tem código.
@@ -92,12 +92,12 @@ recusa por declararem `disable-model-invocation: true`: `/supplements` e `/updat
 máquina, fora do projeto) e `/simulate`, `/reflect` e `/learn` (pull-only). Para esses, sugira que o
 usuário digite.
 
-Uma skill de usuário com o mesmo nome vence o command no `Skill` (o gstack tem `spec`, `ship` e
-`learn`; o `/check` acusa a colisão). Se o conteúdo devolvido não for a fase deste projeto, não o siga:
+Uma skill de usuário com o mesmo nome vence o command no `Skill` (o gstack tem `spec` e `learn`; o
+`/check` acusa a colisão). Se o conteúdo devolvido não for a fase deste projeto, não o siga:
 leia `.claude/commands/<fase>.md` e siga esse arquivo.
 
 Poder disparar não é pular fase ([`workflow-sdd.md`](.claude/rules/workflow-sdd.md)): `/build` sem
-DESIGN continua fora. Antes de um command que escreve, arquiva ou custa (`/build`, `/ship`,
+DESIGN continua fora. Antes de um command que escreve, arquiva ou custa (`/build`, `/sdd-ship`,
 `/train-kb`, `/iterate`), diga o que vai rodar e por quê; os read-only (`/status`, `/check`,
 `/doubt`) vão direto.
 

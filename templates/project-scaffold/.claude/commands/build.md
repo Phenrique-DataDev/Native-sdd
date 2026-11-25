@@ -47,7 +47,7 @@ Implementar o que o DESIGN especifica e registrar o resultado.
    **Critério de julgamento humano** (`## Julgamento humano` do DEFINE): não tem teste nem
    mutação. Entregue o que o juiz precisa (a build exata, o roteiro) e registre a linha como ⏳ no
    BUILD_REPORT. Com qualquer ⏳ na tabela (juiz que não respondeu, AT que exige o que esta máquina
-   não tem), o Geral fica 🔄 e o `/ship` reprova. Quem julgou, quando e o resultado entram ali
+   não tem), o Geral fica 🔄 e o `/sdd-ship` reprova. Quem julgou, quando e o resultado entram ali
    quando o juiz responder; o agente não preenche o veredito no lugar dele.
 
 ## Delegar trabalho mecânico a uma sessão headless (`claude -p`) — opt-in
@@ -138,4 +138,4 @@ Ao fechar a fase, registre as iterações de re-trabalho (piloto B6 — consolid
 Aqui `n` é o **sinal mais forte**: nº de re-rodadas até o lint/testes/critérios passarem.
 `. "$toolsRoot/telemetry.ps1"; Add-PhaseIteration -Path .claude/sdd/telemetry.jsonl -Phase build -Feature <FEATURE> -Iterations <n>` — resolva `$toolsRoot` pela cascata de [`rules/tooling.md`](../rules/tooling.md)
 
-**Próximo passo (quando ✅):** `/ship <FEATURE>`
+**Próximo passo (quando ✅):** `/sdd-ship <FEATURE>`

@@ -17,7 +17,7 @@ Set-StrictMode -Version Latest
 $script:SddPhaseByRank = @{ 1 = 'brainstorm'; 2 = 'define'; 3 = 'design'; 4 = 'build' }
 
 # Fase SDD em andamento -> próximo comando da cadeia (usado pelo "próximo passo recomendado").
-$script:SddNextCommand = @{ brainstorm = '/define'; define = '/spec'; design = '/build'; build = '/ship' }
+$script:SddNextCommand = @{ brainstorm = '/define'; define = '/spec'; design = '/build'; build = '/sdd-ship' }
 
 # --- PURA: acesso seguro a propriedade sob StrictMode (campos novos do report são opcionais) ----
 function Get-PropOrNull {
@@ -83,7 +83,7 @@ function Get-OrphanBuildReports {
         Relatórios em .claude/sdd/reports/ cuja feature JÁ tem archive/<F>/SHIPPED_*.md.
 
     .DESCRIPTION
-        A invariante do /ship (passo 3): ao encerrar, os artefatos SAEM de reports/ e vão para
+        A invariante do /sdd-ship (passo 3): ao encerrar, os artefatos SAEM de reports/ e vão para
         archive/<FEATURE>/. Relatório que ficou para trás faz o /status reportar build aberto numa
         feature encerrada — foi o defeito observado em uso real (2026-07-23). Esta é a FONTE ÚNICA
         da detecção: o painel (Format-StatusReport) e o lint (sdd-lint.ps1) leem daqui.
@@ -131,7 +131,7 @@ function Get-PhaseName {
 function Get-SddFeatureStatus {
     <#
     .OUTPUTS [pscustomobject[]] { Feature; Phase; Shipped; OrphanReports } — uma por feature observada.
-    .NOTES   OrphanReports: relatórios que o /ship deixou em reports/ (ver Get-OrphanBuildReports).
+    .NOTES   OrphanReports: relatórios que o /sdd-ship deixou em reports/ (ver Get-OrphanBuildReports).
              Eles NÃO elevam a fase — uma feature encerrada não volta a "build" porque um arquivo
              ficou no lugar errado; o painel os mostra como órfãos e o sdd-lint os reprova.
     #>
@@ -558,13 +558,13 @@ function Format-StatusReport {
     }
     $lines.Add("              entregues: $shippedN")
 
-    # Relatório que o /ship deixou em reports/ com a feature já arquivada (invariante do passo 3).
+    # Relatório que o /sdd-ship deixou em reports/ com a feature já arquivada (invariante do passo 3).
     $orphFiles = @($feats | ForEach-Object { @(Get-PropOrNull $_ 'OrphanReports') } | Where-Object { $_ })
     if ($orphFiles.Count -gt 0) {
         $lines.Add(("              orfaos: {0} relatorio(s) em reports/ de feature ja arquivada" -f $orphFiles.Count))
         foreach ($f in $feats) {
             foreach ($o in @(Get-PropOrNull $f 'OrphanReports')) {
-                if ($o) { $lines.Add("              - $o -> mova p/ .claude/sdd/archive/$($f.Feature)/ (/ship passo 3)") }
+                if ($o) { $lines.Add("              - $o -> mova p/ .claude/sdd/archive/$($f.Feature)/ (/sdd-ship passo 3)") }
             }
         }
     }

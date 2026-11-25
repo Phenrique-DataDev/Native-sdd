@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-    ship-gate — a pré-condição do /ship vira verificação: o BUILD_REPORT da feature está ✅, com o
+    ship-gate — a pré-condição do /sdd-ship vira verificação: o BUILD_REPORT da feature está ✅, com o
     mapa de cobertura preenchido, e os comandos de verificação do projeto passam AGORA
     (SHIP_COM_PRECONDICAO_SO_EM_PROMPT, 2026-10-19).
 
@@ -11,7 +11,7 @@
       - Get-BuildReportStatus : `**Geral:**` do relatório → complete / in-progress / blocked / unfilled.
       - Get-PendingCriteria   : AT/JH com ⏳ na tabela; reprova mesmo com o ✅ na linha Geral.
       - Get-FeatureBuildReports : os BUILD_REPORT da feature em `reports/`, pelo mesmo casamento por
-                                  segmentos do /ship (`Resolve-ReportOwnerKey`): `F_LEVA2` é de F,
+                                  segmentos do /sdd-ship (`Resolve-ReportOwnerKey`): `F_LEVA2` é de F,
                                   `FZ` não.
       - Test-ShipReady        : junta as três provas e devolve { Ready; Failures; Warnings; Verifier }.
 

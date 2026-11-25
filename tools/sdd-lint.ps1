@@ -4,12 +4,12 @@
     ARQUIVADA não pode continuar em `reports/`; (2) todo BUILD_REPORT declara o que NÃO exercitou.
 
 .DESCRIPTION
-    O `/ship` (passo 3) MOVE os artefatos da feature para `archive/<FEATURE>/`. Enquanto o passo
+    O `/sdd-ship` (passo 3) MOVE os artefatos da feature para `archive/<FEATURE>/`. Enquanto o passo
     era ambíguo ("mova/aponte") e ninguém verificava, o relatório ficava para trás e o `/status`
     passava a mentir: feature encerrada aparecendo como *build em andamento*, com o "próximo passo"
-    sugerindo `/ship` de algo já shipado (observado em uso real, 2026-07-23).
+    sugerindo `/sdd-ship` de algo já shipado (observado em uso real, 2026-07-23).
 
-    É a família "regra sem mecanismo" que esta metodologia batiza, aplicada ao próprio `/ship`:
+    É a família "regra sem mecanismo" que esta metodologia batiza, aplicada ao próprio `/sdd-ship`:
     a redação do command é a disciplina, este lint é o backstop determinístico. Molde do
     `resync-lint.ps1` — casca fina sobre a fonte única da detecção (`Get-OrphanBuildReports`,
     em `status.ps1`), sem reimplementar o casamento de slug.
@@ -28,7 +28,7 @@
     nada além de notas do template e placeholders `{...}` por preencher).
 
     Só varre `reports/` — o `archive/` é histórico imutável e não pode reprovar retroativamente.
-    Como o `/ship` move o relatório para o archive, o universo afetado é exatamente o que ainda
+    Como o `/sdd-ship` move o relatório para o archive, o universo afetado é exatamente o que ainda
     está em construção — que é onde a seção serve para alguma coisa.
 
     Regras emitidas: `orphan-build-report`, `build-report-sem-mapa`, `build-report-mapa-vazio`

@@ -40,7 +40,7 @@ próprios projetos.
 5. **Qualidade verificável — teste que a IA não passa só por passar.** Nada é "pronto" sem
    verificação real (lint, testes, critérios de aceite), e verde sozinho não basta: cada critério
    de aceite declara o **Falsificador** (a condição que o reprova), o `/build` reintroduz o defeito
-   e anota **qual teste reprova** (teste que passa com o defeito não conta) e o `/ship` roda o
+   e anota **qual teste reprova** (teste que passa com o defeito não conta) e o `/sdd-ship` roda o
    comando de verificação do projeto em vez de confiar no relatório do agente. É prova exigida,
    não bloqueio mecânico: nada impede o agente de editar um teste, e o `validator` e a revisão
    existem para pegar isso. Não inventar dados.
@@ -52,7 +52,7 @@ próprios projetos.
 2. CRIAR        new-project          → copia o scaffold genérico (sem contexto)
 3. SETUP        /setup               → captura contexto do projeto (stack, domínio)
 4. CURADORIA    init/auto-otimização → /audit-agents + /train-kb especializam o projeto
-5. EXECUTAR     SDD                  → /brainstorm → /define → /spec → /build → /ship
+5. EXECUTAR     SDD                  → /brainstorm → /define → /spec → /build → /sdd-ship
 ```
 
 > Os passos 1–2 (instalador) e o passo 4 (curadoria automática) são as features em aberto
@@ -78,7 +78,7 @@ mesma data.
 |---|---|---|---|
 | **Instalação** | `uv tool install specify-cli`; pede Python 3.11+ e uv | `npm install -g @fission-ai/openspec`; pede Node.js 20.19+ (ou Homebrew) | um comando instala as CLIs, o Claude Code e o `~/.claude` (`onboarding/install`), e o `new-project` cria cada projeto |
 | **Agentes** | vários, por "integration" (o exemplo usa o GitHub Copilot) | "30+" ferramentas, segundo o README | nativo no Claude Code; medido ao vivo no Codex (e2e 3/3, em [`MEDICOES.md`](MEDICOES.md)), no Hermes, no Copilot e no Antigravity (o guard chega aos dois; no Antigravity não pergunta com as permissões puladas); só fixtures no Cursor e no OpenCode. Tabela completa no [README](../README.md#nativo-no-claude-code-medido-nas-demais--native-in-claude-code-measured-in-the-rest) |
-| **Fluxo** | `constitution` uma vez; `specify → plan → tasks → implement → converge` por feature; extensões de bug e de avaliação de ideia | `explore`, `propose`, `apply`, `archive`; o README diz "no rigid phase gates" | `/brainstorm → /define → /spec → /build → /ship`, uma fase por vez, e o `/dev` para tarefa pequena |
+| **Fluxo** | `constitution` uma vez; `specify → plan → tasks → implement → converge` por feature; extensões de bug e de avaliação de ideia | `explore`, `propose`, `apply`, `archive`; o README diz "no rigid phase gates" | `/brainstorm → /define → /spec → /build → /sdd-ship`, uma fase por vez, e o `/dev` para tarefa pequena |
 | **Extensão** | extensions, presets, workflows, bundles e catálogos (inclusive privados) | profiles, schemas da comunidade e "stores" (beta) para planejar entre repositórios | curadoria por projeto (`/audit-agents`, `/train-kb`), suplementos opt-in e `/adapt` para projeto existente |
 | **Runtime** | CLI em Python | CLI em Node.js; coleta estatística anônima de uso, com opt-out | PowerShell 7+ em Windows, Linux e macOS |
 

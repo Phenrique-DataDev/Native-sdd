@@ -53,7 +53,7 @@ não poda stale), **memória** (`Get-MemoryStatus` — KB via `Get-KbInventory` 
 painel determinístico.
 
 **Próximo passo — prioridade:** projeto não inicializado → `/setup` · curadoria incompleta → comando da
-etapa · feature aberta → próxima fase da mais adiantada (`/define`→`/spec`→`/build`→`/ship`) · `inbox/`
+etapa · feature aberta → próxima fase da mais adiantada (`/define`→`/spec`→`/build`→`/sdd-ship`) · `inbox/`
 com itens → `/brainstorm` (ou `/dev`) · **backlog com item aberto → `/define` do topo** (trabalho já
 triado vem antes de ideia nova) · staleness → comando do sinal · tudo em dia → `/brainstorm`.
 
