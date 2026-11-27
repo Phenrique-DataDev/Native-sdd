@@ -29,6 +29,7 @@ inicia trabalho de feature, escolha a fase certa e rode o command correspondente
 5. **Gate de qualidade:** o DEFINE tem um *Clarity Score* (mín. 12/15) antes de avançar
    para DESIGN. Não avance abaixo do mínimo sem confirmação.
 6. **SHIPPED só depois** do BUILD_REPORT completo e verificado.
+7. **Teste contraditório ou impossível: pare e pergunte.** Se dois testes exigem resultados opostos para a mesma entrada, ou nenhum código honesto passa em todos, não marque `xfail`/`skip` (ou equivalente), não apague nem altere o teste para a suíte ficar verde. Deixe código e testes como estão, explique o conflito e peça a decisão, mesmo sob prazo.
 
 ## Dev Loop (alternativa para tarefas pequenas)
 
