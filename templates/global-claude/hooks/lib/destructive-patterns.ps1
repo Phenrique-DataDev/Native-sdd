@@ -152,6 +152,38 @@ function Test-IsSafeVarSuffix {
     return ($dir -notin @('.', './') -and -not $dir.StartsWith('*'))
 }
 
+# --- PURA: nome da variável quando o token é UMA variável pura (`$X`, `"$X"`, `${X}`) -----------------
+# GUARD_MENOS_PEDIDOS (2026-11-27). Devolve $null para o que não é pura ou aponta para um diretório
+# conhecido (`$HOME`, `$PWD`, `$USERPROFILE`, `$TEMP`, `$XDG_*`, `*_HOME`): essas continuam `ask`.
+function Get-PureVarName {
+    param([string]$Token)
+    $t = $Token.Trim().Replace('"', '').Replace("'", '')
+    $n = $null
+    if ($t -match '^\$\{([A-Za-z_][A-Za-z0-9_]*)\}$') { $n = $Matches[1] }
+    elseif ($t -match '^\$([A-Za-z_][A-Za-z0-9_]*)$') { $n = $Matches[1] }
+    if (-not $n) { return $null }
+    # Nomes que o AMBIENTE costuma preencher com um diretório real: o "vazio" não vale para eles.
+    if ($n -match '^(?:HOME|PWD|OLDPWD|PATH|ROOT|SYSTEMROOT|SYSTEMDRIVE|WINDIR|PROGRAMFILES|PROGRAMDATA|PROGRAMW6432|APPDATA|LOCALAPPDATA|USERPROFILE|HOMEDRIVE|HOMEPATH|ONEDRIVE\w*|PUBLIC|ALLUSERSPROFILE|COMMONPROGRAM\w*|TEMP|TMP|TMPDIR|XDG_\w*|CLAUDE_PROJECT_DIR|GITHUB_WORKSPACE|GOPATH|VIRTUAL_ENV|SHELL|\w*_(?:HOME|ROOT))$') { return $null }
+    return $n
+}
+
+# --- PURA: o comando (re)define o nome por QUALQUER caminho? (atribuição, laço, read, declare…) -----
+# Variável pura que o comando NUNCA define vem de fora (env/argumento/função) e, vazia, vira
+# `rm -rf ""` (erro, nada some). Definida aqui e ainda não resolvida (`S=$(x)`, laço) pode ser `/`:
+# segue `ask`. `$Poisoned` com `*` (eval/source/aspa que atravessa linha) = não dá para afirmar nada.
+function Test-GuardNameDefined {
+    param([string]$Text, [string]$Name, $Poisoned)
+    if ($Poisoned -and $Poisoned.Contains('*')) { return $true }
+    if ($Poisoned -and $Poisoned.Contains($Name)) { return $true }
+    $n = [regex]::Escape($Name)
+    if ($Text -match "(?<![\w$-])$n\+?=") { return $true }
+    if ($Text -match "(?<![\w$-])$n\[") { return $true }                       # X[0]=/
+    if ($Text -match "\bprintf\s+-v\s*['""]?$n\b") { return $true }                 # printf -v X /
+    if ($Text -match "\b(?:for|select)\s+$n\b") { return $true }
+    if ($Text -match "\b(?:read|mapfile|readarray|getopts|declare|local|typeset|readonly|export|unset)\b[^;&|\n]*\b$n\b") { return $true }
+    return $false
+}
+
 # --- PURA: o alvo é "arriscado"? (absoluto fora das raízes / home / var / glob amplo / sobe) ----
 # O token chega JÁ expandido (Expand-GuardVariable). O que sobrou de `$` não se resolveu -> ask.
 # Sem SafeRoots, todo absoluto é arriscado — POSIX e drive Windows (GUARD_RM_CEGO_A_CAMINHO_WINDOWS).
@@ -235,7 +267,12 @@ function Get-GuardPoisonedName {
     $inS = $false; $inD = $false
     foreach ($line in ($Command -split '\n')) {
         if ($line.StartsWith('#HD ')) { continue }        # corpo de heredoc: aspas ali são texto
+        # `\"` / `\'` / `\\` fora de aspas simples: o próximo caractere é LITERAL, não abre/fecha aspa
+        # (GUARD_MENOS_PEDIDOS: `echo "{\"a\":1}"` desbalanceava e envenenava TODAS as variáveis do comando).
+        $esc = $false
         foreach ($ch in ($line + "`n").ToCharArray()) {
+            if ($esc) { $esc = $false; continue }
+            if ($ch -eq '\' -and -not $inS) { $esc = $true; continue }
             if ($ch -eq "'" -and -not $inD) { $inS = -not $inS; continue }
             if ($ch -eq '"' -and -not $inS) { $inD = -not $inD; continue }
             if ($ch -eq "`n" -and ($inS -or $inD)) { [void]$set.Add('*'); return , $set }
@@ -278,6 +315,24 @@ function Expand-GuardVariable {
         })
 }
 
+# --- PURA: o pathspec é AMPLO (`.`, `..`, glob, diretório, `:/`)? — GUARD_MENOS_PEDIDOS -----------
+# `git checkout -- graph-data.js` descarta UM arquivo que o comando nomeia (o mesmo efeito de um Edit,
+# que não pede); `git checkout -- .` / `restore src/` / `restore *.py` descartam o que o comando
+# não enumera, e esses seguem pedindo. Diretório sem barra final (`src`) passa: tokenização não vê o disco.
+function Test-IsBroadPathspec {
+    param([string]$Token)
+    $t = $Token.Trim().Replace('"', '').Replace("'", '')
+    if ($t -like '--pathspec-from-file*') { return $true }   # a lista vem de um arquivo: não dá para enumerar
+    if ($t -eq '' -or $t.StartsWith('-')) { return $false }
+    if ($t -in @('.', '..')) { return $true }
+    if ($t -match '[$`{]') { return $true }                  # `$(pwd)`, `$DIR`, `{a,b}`: o que sai não é enumerável
+    if ($t.StartsWith('~') -or $t.StartsWith('/') -or $t -match '^[A-Za-z]:') { return $true }   # absoluto: pode ser a raiz do repositório
+    if ($t -match '[*?\[]') { return $true }
+    if ($t.EndsWith('/') -or $t.EndsWith('\')) { return $true }
+    if ($t.StartsWith(':')) { return $true }        # pathspec mágico (`:/`, `:(glob)…`)
+    return $false
+}
+
 # --- PURA: o segmento é um `git` que apaga trabalho não-commitado (working-tree/stash)? — J6 -----
 # Tabela por-subcomando (DESIGN D-001): só `ask` p/ o que destrói o não-commitado; rotina/branch passa.
 function Test-IsDestructiveGit {
@@ -290,7 +345,7 @@ function Test-IsDestructiveGit {
     $skipVal = $false   # opção global com valor separado (`-C dir`): o valor não é o subcomando
     $sub = $null
     $hasForce = $false; $hasDry = $false; $hasStaged = $false; $hasWorktree = $false
-    $hasDDash = $false; $hasDot = $false; $stashFirst = $null
+    $hasDDash = $false; $hasDot = $false; $hasBroad = $false; $stashFirst = $null
     foreach ($tok in $tokens) {
         switch ($stage) {
             0 { if ($tok -eq 'git') { $stage = 1 } }
@@ -314,15 +369,18 @@ function Test-IsDestructiveGit {
                         if ($c -match 'n') { $hasDry = $true }
                     }
                 }
+                if (Test-IsBroadPathspec $tok) { $hasBroad = $true }
                 if ($null -eq $stashFirst -and -not $tok.StartsWith('-')) { $stashFirst = $tok }
             }
         }
     }
     if (-not $sub) { return $false }
+    if ($Segment -match '(?:^|\s)xargs\s') { $hasBroad = $true }   # `git ls-files -m | xargs git checkout --`
     switch ($sub) {
         'clean'    { return ($hasForce -and -not $hasDry) }          # apaga untracked; -n/--dry-run não
-        'restore'  { return ((-not $hasStaged) -or $hasWorktree) }   # sem --staged = descarta working tree
-        'checkout' { return ($hasDDash -or $hasDot) }                # checkout de paths (--/.) descarta
+        # sem --staged = descarta working tree; só pede quando o pathspec é AMPLO (arquivo nomeado passa)
+        'restore'  { return (((-not $hasStaged) -or $hasWorktree) -and $hasBroad) }
+        'checkout' { return (($hasDDash -or $hasDot) -and $hasBroad) }   # checkout de paths (--/.) descarta
         'stash'    { return ($stashFirst -eq 'drop' -or $stashFirst -eq 'clear') }
         default    { return $false }                                 # status/diff/log/pull/add/commit…
     }
@@ -376,8 +434,13 @@ function Test-RunsStringAsCode {
     if ([string]::IsNullOrWhiteSpace($Command)) { return $false }
     if ($Command -match '(?i)(?:^|[\s;&|(])(?:eval|source)\s') { return $true }
     if ($Command -match '(?i)\b(?:sh|bash|zsh|ksh|dash|pwsh|powershell|python[0-9.]*|node|perl|ruby)\b[^|;&\n]*\s-(?:c|command|e|ne|pe)\b') { return $true }
-    if ($Command -match '(?i)\b(?:sh|bash|zsh|ksh|dash|pwsh|powershell)\s*<<') { return $true }
+    # `(?<![\w.\-])`: `cat > run.sh <<'EOF'` escreve um ARQUIVO .sh, não executa um shell (GUARD_MENOS_PEDIDOS).
+    if ($Command -match '(?i)(?<![\w.\-])(?:sh|bash|zsh|ksh|dash|pwsh|powershell)\s*<<') { return $true }
     if ($Command -match '(?i)\b(?:iex|invoke-expression)(?:\s*[("`$]|\s+'')') { return $true }
+    # Corpo de heredoc ENTREGUE a um shell por pipe (`cat <<EOF | bash`) ou a outra máquina (`ssh h <<EOF`)
+    # também executa (GUARD_MENOS_PEDIDOS: o corpo só deixa de ser analisado quando nada o executa).
+    if ($Command -match '(?i)\|\s*(?:sudo\s+)?(?:sh|bash|zsh|ksh|dash|pwsh|powershell)(?![\w.\-])') { return $true }
+    if ($Command -match '(?i)(?<![\w.\-])(?:ssh|wsl)\b[^\n<]*<<') { return $true }
     return $false
 }
 
@@ -391,6 +454,53 @@ function Remove-GuardQuotedText {
     $t = [regex]::Replace($t, "'[^']*'", "''")
     $t = [regex]::Replace($t, '"(?:[^"\\]|\\.)*"', '""')
     return $t
+}
+
+# --- PURA: o comando sem o CORPO dos heredocs (GUARD_MENOS_PEDIDOS, 2026-11-27) ------------------
+# `python - <<'EOF' … rm -rf /x …`, `git commit -F - <<EOF … git checkout -- . …`: o corpo é DADO para
+# quem lê o stdin, não comando. Aspas ficam (o alvo do `rm` mora nelas). Só vale quando nada executa o
+# corpo como código (Test-RunsStringAsCode); com `bash <<EOF` o corpo continua sendo analisado.
+# Remove o corpo, o terminador E o operador `<<TAG` da linha de abertura: um operador órfão faria a 2ª
+# passada (ConvertTo-GuardAnalysisText) marcar como corpo TUDO o que vem depois, cegando o resto.
+function Remove-GuardHeredocBody {
+    param([string]$Command)
+    if ([string]::IsNullOrEmpty($Command) -or -not $Command.Contains('<<')) { return $Command }
+    $lines = @($Command -split '\r?\n')
+    $out = [System.Collections.Generic.List[string]]::new()
+    $i = 0
+    while ($i -lt $lines.Count) {
+        $line = $lines[$i]
+        # Tag literal (\w+) seguida de fronteira: `<<EOF-1` e `<<"E"OF` NAO casam (o bash le diferente).
+        $m = [regex]::Match($line, '(?<!<)<<-?\s*([''"]?)(\w+)\1(?=[\s;|&)<>]|$)')
+        if ($m.Success) {
+            $tag = $m.Groups[2].Value
+            $quoted = $m.Groups[1].Value -ne ''
+            # Consumidor = 1a palavra do ULTIMO comando antes do `<<` (separa em `&& || ; | $( ( crase`).
+            # So leitores comuns (cat, tee, git, gh, python, node, jq): `sh -s <<`, `bash -`, `$(sh -s <<` mantem o corpo.
+            $pre = $line.Substring(0, $m.Index)
+            $piece = ([regex]::Split($pre, '&&|\|\||;|\||\$\(|\(|`') | Select-Object -Last 1).Trim()
+            while ($piece -match '^[A-Za-z_][A-Za-z0-9_]*=\S*\s+(.*)$') { $piece = $Matches[1] }
+            $fw = (($piece -split '\s+')[0]).Replace('"', '').Replace("'", '')
+            $fw = ($fw -replace '^.*[\/]', '').ToLowerInvariant() -replace '\.exe$', ''
+            $ehMsg = $fw -in 'cat', 'tee', 'git', 'gh', 'python', 'python3', 'py', 'node', 'jq'
+            # Pipe DEPOIS do operador (`cat <<EOF | bash`, `| crontab -`): o corpo segue para outro comando; mantem.
+            if ($line.Substring($m.Index + $m.Length) -match '\|') { $ehMsg = $false }
+            $end = -1
+            for ($j = $i + 1; $j -lt $lines.Count; $j++) { if ($lines[$j].Trim() -ceq $tag) { $end = $j; break } }
+            if ($end -gt 0 -and $ehMsg) {
+                $body = ($lines[($i + 1)..($end - 1)] -join "`n")
+                # Tag SEM aspas expande `$(...)`/crase: ai' o corpo e' codigo, nao dado.
+                if ($quoted -or $body -notmatch '\$\(|`') {
+                    $out.Add($line.Remove($m.Index, $m.Length))
+                    $i = $end + 1
+                    continue
+                }
+            }
+        }
+        $out.Add($line)
+        $i++
+    }
+    return ($out -join "`n")
 }
 
 # --- PURA: o comando baixa um script e o executa direto no shell? (no comando bruto) ----------
@@ -483,7 +593,12 @@ function Get-DestructiveDecision {
     # 1) download-to-shell roda ANTES do split (que quebraria `curl x | sh`). Texto entre aspas/heredoc
     #    só conta quando algo o executa como código (`bash -c "…"`, `eval`, `iex "…"`): commit message,
     #    `sed`/`rg` e doc que CITAM `curl|sh` deixam de pedir confirmação.
-    $dlView = if (Test-RunsStringAsCode $Command) { $Command } else { Remove-GuardQuotedText $Command }
+    #    GUARD_MENOS_PEDIDOS: o gatilho `eval `/`source ` casava em PROSA (heredoc, commit message, doc) e
+    #    marcava o comando inteiro como "executa código". Confirma no texto SEM aspas/heredoc: o que de
+    #    fato executa (`bash -c "…"`, `bash <<EOF`, `iex "…"`) segue visível lá (QT-006..009).
+    $qt = Remove-GuardQuotedText $Command
+    $codigo = (Test-RunsStringAsCode $Command) -and (Test-RunsStringAsCode $qt)
+    $dlView = if ($codigo) { $Command } else { $qt }
     if (Test-IsDownloadToShell $dlView) {
         return [pscustomobject]@{ Decision = 'ask'
             Reason = 'Download de script executado direto no shell (curl/wget | sh). Confirmacao exigida.'
@@ -500,19 +615,21 @@ function Get-DestructiveDecision {
     # - variáveis: só com `$` E `rm` no comando — sem isso nada disso muda a decisão (e o heredoc
     #   marcado não muda a detecção de rm/git/chmod).
     $roots = $null
+    # GUARD_MENOS_PEDIDOS: corpo de heredoc que nada executa é dado — fora da análise de rm/git/chmod.
+    $base = if ($codigo) { $Command } else { Remove-GuardHeredocBody $Command }
     # `cd`/`git` só pagam a análise quando há git destrutivo possível (+150-250 ms no .sh, medido).
-    $need = $Command.Contains('$') -and ($Command -match '(?:^|\s)(?:rm|chmod)(?:\s|$)' -or
-        ($Command -match '(?:^|\s)git(?:\s|$)' -and $Command -match '(?:^|\s)(?:clean|restore|checkout|stash)(?:\s|$)'))
+    $need = $base.Contains('$') -and ($base -match '(?:^|\s)(?:rm|chmod)(?:\s|$)' -or
+        ($base -match '(?:^|\s)git(?:\s|$)' -and $base -match '(?:^|\s)(?:clean|restore|checkout|stash)(?:\s|$)'))
     # Diretório efetivo de cada segmento (cwd, depois de `cd X`), para o git destrutivo dentro do
     # TEMP (DESTRUCTIVE_GUARD_AFROUXA). `$null` = não se sabe -> o git volta a pedir.
     $curDir = if ($Cwd) { ConvertTo-GuardPath $Cwd } else { $null }
     if ($curDir -and -not ($curDir.StartsWith('/') -or $curDir -match '^[A-Z]:/')) { $curDir = $null }
     $subSaved = [System.Collections.Generic.Stack[object]]::new()
     $tempRoots = $null
-    $analise = $Command
+    $analise = $base
     $poisoned = $null; $vars = $null; $envVars = $null
     if ($need) {
-        $analise = ConvertTo-GuardAnalysisText $Command
+        $analise = ConvertTo-GuardAnalysisText $base
         $poisoned = Get-GuardPoisonedName $analise
         # Nome de variável de shell diferencia caixa ($s != $S); hashtable do PowerShell não.
         $vars = [System.Collections.Generic.Dictionary[string, object]]::new([StringComparer]::Ordinal)
@@ -558,6 +675,9 @@ function Get-DestructiveDecision {
             $risky = @()
             foreach ($t in $targets) {
                 $r = Expand-GuardVariable $t $vars $envVars $poisoned
+                # GUARD_MENOS_PEDIDOS: `rm -rf "$X"` com X que o comando nunca define (env/argumento) passa.
+                $pv = Get-PureVarName $r
+                if ($pv -and -not (Test-GuardNameDefined $analise $pv $poisoned)) { continue }
                 if (Test-IsRiskyTarget $r $roots) {
                     # D11: mostra o que será apagado de fato quando houve substituição.
                     $risky += if ($r -ne $t) { "$t (= $r)" } else { $t }

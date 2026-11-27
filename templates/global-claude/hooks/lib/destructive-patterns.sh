@@ -182,6 +182,39 @@ guard_safe_var_suffix() {
   return 0
 }
 
+# PURA: o token e' UMA variavel pura (`$X`, `"$X"`, `${X}`) fora das que apontam p/ diretorio conhecido?
+# Espelha Get-PureVarName (GUARD_MENOS_PEDIDOS). Seta _GPV com o nome; retorna 0 se for pura.
+guard_pure_var() {
+  local t="${1-}" n lc re1='^\$\{([A-Za-z_][A-Za-z0-9_]*)\}$' re2='^\$([A-Za-z_][A-Za-z0-9_]*)$'
+  t="${t//\"/}"; t="${t//\'/}"
+  t="${t#"${t%%[![:space:]]*}"}"; t="${t%"${t##*[![:space:]]}"}"
+  if [[ $t =~ $re1 ]]; then n="${BASH_REMATCH[1]}"
+  elif [[ $t =~ $re2 ]]; then n="${BASH_REMATCH[1]}"
+  else return 1; fi
+  lc="$(printf '%s' "$n" | tr 'A-Z' 'a-z')"   # sem ${n,,}: o bash 3.2 do macOS nao tem
+  case "$lc" in
+    home|pwd|oldpwd|path|root|systemroot|systemdrive|windir|programfiles|programdata|programw6432|appdata|localappdata|userprofile|homedrive|homepath|onedrive*|public|allusersprofile|commonprogram*|temp|tmp|tmpdir|xdg_*|claude_project_dir|github_workspace|gopath|virtual_env|shell|*_home|*_root) return 1 ;;
+  esac
+  _GPV="$n"
+  return 0
+}
+
+# PURA: o comando (re)define o nome por QUALQUER caminho? Espelha Test-GuardNameDefined. Var pura que o
+# comando NUNCA define vem de fora (env/argumento) e, vazia, vira `rm -rf ""` (erro). Definida aqui e nao
+# resolvida (`S=$(x)`, laco) pode ser `/`: segue `ask`. GUARD_POISON `*` = nao da para afirmar nada.
+guard_name_defined() {
+  local text="${1-}" name="${2-}"
+  [ "$GUARD_POISON" = '*' ] && return 0
+  _guard_is_poisoned "$name" && return 0
+  printf '%s\n' "$text" | grep -qE "(^|[^A-Za-z0-9_\$-])${name}\+?=" && return 0
+  printf '%s\n' "$text" | grep -qE "(^|[^A-Za-z0-9_\$-])${name}\[" && return 0
+  printf '%s
+' "$text" | grep -qE "(^|[^A-Za-z0-9_])printf[[:space:]]+-v[[:space:]]*[\"']?${name}([^A-Za-z0-9_]|\$)" && return 0
+  printf '%s\n' "$text" | grep -qE "(^|[^A-Za-z0-9_])(for|select)[[:space:]]+${name}([^A-Za-z0-9_]|\$)" && return 0
+  printf '%s\n' "$text" | grep -qE "(^|[^A-Za-z0-9_])(read|mapfile|readarray|getopts|declare|local|typeset|readonly|export|unset)([^;&|]*[^A-Za-z0-9_])?${name}([^A-Za-z0-9_]|\$)" && return 0
+  return 1
+}
+
 # PURA: o alvo (ja expandido) e' "arriscado"? Espelha Test-IsRiskyTarget (usa GUARD_ROOTS).
 is_risky_target() {
   local t="${1-}" n u re_up='/\.\.(/|$)'
@@ -266,7 +299,7 @@ guard_analysis_text() {
 # PURA: nomes envenenados (o guard nao acompanha a redefinicao). Espelha Get-GuardPoisonedName.
 # Preenche GUARD_POISON. Recebe o texto ja marcado por guard_analysis_text.
 guard_poisoned_names() {
-  local cmd="${1-}" seg line qs="" ch i in_s=0 in_d=0 rest=""
+  local cmd="${1-}" seg line qs="" ch i in_s=0 in_d=0 rest="" esc=0
   GUARD_POISON=""
   [ -z "$cmd" ] && return 0
   if printf '%s' "$cmd" | grep -qiE '(^|[[:space:];&|(])(eval|source)[[:space:]]' \
@@ -278,11 +311,15 @@ guard_poisoned_names() {
     case "$line" in '#HD '*) continue ;; esac
     qs="${qs}${line}${GUARD_NL}"
   done <<< "$cmd"
-  qs="$(printf '%s' "$qs" | tr -cd "\"'\n")"
+  # `\"` / `\'` / `\` fora de aspas simples: o proximo caractere e' LITERAL (GUARD_MENOS_PEDIDOS).
+  # Por isso a contra-barra tambem sobrevive ao tr; o `esc` zera a cada linha, como no .ps1.
+  qs="$(printf '%s' "$qs" | tr -cd "\"'\\\\\n")"
   i=0
   while [ "$i" -lt "${#qs}" ]; do
     ch="${qs:$i:1}"
-    if [ "$ch" = "'" ] && [ "$in_d" -eq 0 ]; then in_s=$((1 - in_s))
+    if [ "$esc" -eq 1 ]; then esc=0
+    elif [ "$ch" = "\\" ] && [ "$in_s" -eq 0 ]; then esc=1
+    elif [ "$ch" = "'" ] && [ "$in_d" -eq 0 ]; then in_s=$((1 - in_s))
     elif [ "$ch" = '"' ] && [ "$in_s" -eq 0 ]; then in_d=$((1 - in_d))
     elif [ "$ch" = "$GUARD_NL" ] && { [ "$in_s" -eq 1 ] || [ "$in_d" -eq 1 ]; }; then GUARD_POISON='*'; return 0
     fi
@@ -358,7 +395,7 @@ _guard_set_var() {
 # PURA: o segmento e' um `git` que apaga trabalho nao-commitado (working-tree/stash)? Espelha Test-IsDestructiveGit (J6).
 is_destructive_git() {
   local seg="${1-}" tok sub="" stage=0 skipval=0
-  local has_force=0 has_dry=0 has_staged=0 has_worktree=0 has_ddash=0 has_dot=0 stash_first=""
+  local has_force=0 has_dry=0 has_staged=0 has_worktree=0 has_ddash=0 has_dot=0 has_broad=0 stash_first="" bt
   printf '%s' "$seg" | grep -qE '(^|[[:space:]])(sudo[[:space:]]+)?git([[:space:]]|$)' || return 1
   for tok in $seg; do
     case "$stage" in
@@ -381,6 +418,13 @@ is_destructive_git() {
             case "$tok" in *n*) has_dry=1 ;; esac
             ;;
         esac
+        # pathspec AMPLO (`.`, `..`, glob, diretorio, `:/`)? Espelha Test-IsBroadPathspec.
+        bt="${tok//\"/}"; bt="${bt//\'/}"
+        case "$bt" in
+          --pathspec-from-file*) has_broad=1 ;;
+          -*) : ;;
+          .|..|*'*'*|*'?'*|*'['*|*/|*\\|:*|*'$'*|*'`'*|*'{'*|/*|'~'*|[A-Za-z]:*) has_broad=1 ;;
+        esac
         if [ -z "$stash_first" ]; then
           case "$tok" in -*) : ;; *) stash_first="$tok" ;; esac
         fi
@@ -388,10 +432,11 @@ is_destructive_git() {
     esac
   done
   [ -n "$sub" ] || return 1
+  case " $seg " in *[[:space:]]xargs[[:space:]]*) has_broad=1 ;; esac   # `... | xargs git checkout --`
   case "$sub" in
     clean)    [ "$has_force" -eq 1 ] && [ "$has_dry" -eq 0 ] && return 0 ;;
-    restore)  { [ "$has_staged" -eq 0 ] || [ "$has_worktree" -eq 1 ]; } && return 0 ;;
-    checkout) { [ "$has_ddash" -eq 1 ] || [ "$has_dot" -eq 1 ]; } && return 0 ;;
+    restore)  { [ "$has_staged" -eq 0 ] || [ "$has_worktree" -eq 1 ]; } && [ "$has_broad" -eq 1 ] && return 0 ;;
+    checkout) { [ "$has_ddash" -eq 1 ] || [ "$has_dot" -eq 1 ]; } && [ "$has_broad" -eq 1 ] && return 0 ;;
     stash)    { [ "$stash_first" = "drop" ] || [ "$stash_first" = "clear" ]; } && return 0 ;;
   esac
   return 1
@@ -441,9 +486,73 @@ runs_string_as_code() {
   [ -z "${c//[[:space:]]/}" ] && return 1
   printf '%s' "$c" | grep -qiE '(^|[[:space:];&|(])(eval|source)[[:space:]]' && return 0
   printf '%s' "$c" | grep -qiE '\b(sh|bash|zsh|ksh|dash|pwsh|powershell|python[0-9.]*|node|perl|ruby)\b[^|;&]*[[:space:]]-(c|command|e|ne|pe)\b' && return 0
-  printf '%s' "$c" | grep -qiE '\b(sh|bash|zsh|ksh|dash|pwsh|powershell)[[:space:]]*<<' && return 0
+  # `run.sh <<'EOF'` escreve um ARQUIVO .sh, nao executa um shell (GUARD_MENOS_PEDIDOS): `.`/`-`/alnum antes nao conta.
+  printf '%s' "$c" | grep -qiE '(^|[^[:alnum:]_.-])(sh|bash|zsh|ksh|dash|pwsh|powershell)[[:space:]]*<<' && return 0
   printf '%s' "$c" | grep -qiE "\b(iex|invoke-expression)([[:space:]]*[(\"\`\$]|[[:space:]]+')" && return 0
+  # Corpo de heredoc ENTREGUE a um shell por pipe (`cat <<EOF | bash`) ou a outra maquina (`ssh h <<EOF`)
+  # tambem executa (GUARD_MENOS_PEDIDOS). Espelha os dois ultimos -match do .ps1.
+  printf '%s' "$c" | grep -qiE '\|[[:space:]]*(sudo[[:space:]]+)?(sh|bash|zsh|ksh|dash|pwsh|powershell)([^[:alnum:]_.-]|$)' && return 0
+  printf '%s' "$c" | grep -qiE '(^|[^[:alnum:]_.-])(ssh|wsl)([^<]*)<<' && return 0
   return 1
+}
+
+# PURA: o comando sem o CORPO dos heredocs -> _GH. Espelha Remove-GuardHeredocBody (GUARD_MENOS_PEDIDOS).
+# Aspas ficam (o alvo do `rm` mora nelas). So vale quando nada executa o corpo como codigo.
+# Remove corpo, terminador E o operador `<<TAG` da abertura (operador orfao cegaria a 2a passada).
+remove_heredoc_bodies() {
+  local c="${1-}" line out="" tag="" q op pre piece fw body i n j end ok
+  local re='(^|[^<])<<-?[[:space:]]*(["'"'"']?)([A-Za-z0-9_]+)(["'"'"']?)([[:space:]]|[;|&)<>]|$)'
+  local -a lines ehmsg=0 rest
+  case "$c" in *'<<'*) ;; *) _GH="$c"; return 0 ;; esac
+  c="${c//$'\r'/}"
+  lines=()
+  while IFS= read -r line || [ -n "$line" ]; do lines[${#lines[@]}]="$line"; done <<< "$c"
+  n=${#lines[@]}; i=0
+  while [ "$i" -lt "$n" ]; do
+    line="${lines[$i]}"
+    if [[ $line =~ $re ]] && [ "${BASH_REMATCH[2]}" = "${BASH_REMATCH[4]}" ]; then
+      q="${BASH_REMATCH[2]}"; tag="${BASH_REMATCH[3]}"
+      # prefixo ate o `<<` que casou (nao o 1o `<<` da linha, que pode ser um `<<<`)
+      pre="${line%%"${BASH_REMATCH[0]}"*}${BASH_REMATCH[1]}"
+      ehmsg=0
+      piece="$(printf '%s' "$pre" | sed -E 's/.*(&&|\|\||;|\||\$\(|\(|`)//')"
+      piece="${piece#"${piece%%[![:space:]]*}"}"
+      while [[ $piece =~ ^[A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+(.*)$ ]]; do piece="${BASH_REMATCH[1]}"; done
+      fw="${piece%%[[:space:]]*}"; fw="${fw//\"/}"; fw="${fw//\'/}"; fw="${fw##*[\/]}"
+      fw="$(printf '%s' "$fw" | tr 'A-Z' 'a-z')"; fw="${fw%.exe}"
+      case "$fw" in cat|tee|git|gh|python|python3|py|node|jq) ehmsg=1 ;; esac
+      rest="${line#*"${BASH_REMATCH[0]}"}"
+      case "$rest" in *'|'*) ehmsg=0 ;; esac
+      end=-1; j=$((i+1))
+      while [ "$j" -lt "$n" ]; do
+        body="${lines[$j]}"; body="${body#"${body%%[![:space:]]*}"}"; body="${body%"${body##*[![:space:]]}"}"
+        if [ "$body" = "$tag" ]; then end=$j; break; fi
+        j=$((j+1))
+      done
+      ok=0
+      if [ "$end" -gt 0 ] && [ "$ehmsg" -eq 1 ]; then
+        body=""; j=$((i+1))
+        while [ "$j" -lt "$end" ]; do body="${body}${lines[$j]}${GUARD_NL}"; j=$((j+1)); done
+        if [ -n "$q" ]; then ok=1
+        else case "$body" in *'$('*|*'`'*) ok=0 ;; *) ok=1 ;; esac
+        fi
+      fi
+      if [ "$ok" -eq 1 ]; then
+        # tira o operador `<<[-]QTAGQ` da linha de abertura
+        local opq="<<${q}${tag}${q}" opd="<<-${q}${tag}${q}"
+        case "$line" in
+          *"$opd"*) line="${line/"$opd"/}" ;;
+          *"$opq"*) line="${line/"$opq"/}" ;;
+          *) line="${line/"<< ${q}${tag}${q}"/}" ;;
+        esac
+        out="${out}${line}${GUARD_NL}"
+        i=$((end+1)); continue
+      fi
+    fi
+    out="${out}${line}${GUARD_NL}"
+    i=$((i+1))
+  done
+  _GH="${out%$GUARD_NL}"
 }
 
 # PURA: o comando sem o que e so TEXTO (aspas e corpo de heredoc) -> _GQ. Espelha Remove-GuardQuotedText.
@@ -576,8 +685,12 @@ _destructive_decision() {
   local re_gitc='(^|[[:space:]])git[[:space:]]+-C[[:space:]]+([^[:space:]]+)'
   local curdir="" substack="" dir sv risky
   [ -z "${cmd//[[:space:]]/}" ] && return 1
-  local dlview="$cmd"
-  if ! runs_string_as_code "$cmd"; then remove_quoted_text "$cmd"; dlview="$_GQ"; fi
+  local dlview="$cmd" codigo=0 base="$cmd"
+  # GUARD_MENOS_PEDIDOS: `eval `/`source ` em PROSA (heredoc, commit message) nao e' codigo: confirma no
+  # texto SEM aspas/heredoc. O que de fato executa (`bash -c "..."`, `bash <<EOF`, `iex "..."`) segue visivel.
+  remove_quoted_text "$cmd"
+  if runs_string_as_code "$cmd" && runs_string_as_code "$_GQ"; then codigo=1; else dlview="$_GQ"; fi
+  if [ "$codigo" -eq 0 ]; then remove_heredoc_bodies "$cmd"; base="$_GH"; fi
   if is_download_to_shell "$dlview"; then
     printf '%s' 'Download de script executado direto no shell (curl/wget | sh). Confirmacao exigida.'
     return 0
@@ -595,14 +708,14 @@ _destructive_decision() {
   while IFS= read -r t; do
     case "${t%%"$GUARD_TAB"*}" in TEMP|TMP|TMPDIR) [ -n "${t#*"$GUARD_TAB"}" ] && GUARD_ENVVARS="${GUARD_ENVVARS}${t}${GUARD_NL}" ;; esac
   done <<< "$envvars"
-  GUARD_VARS=""; GUARD_POISON=""; analise="$cmd"
+  GUARD_VARS=""; GUARD_POISON=""; analise="$base"
   if [ -n "$cwd" ]; then guard_norm_path "$cwd"; case "$_GP" in /*|[A-Z]:/*) curdir="$_GP" ;; esac; fi
   # Variavel so importa para alvo de `rm`: sem `$` ou sem `rm`, nada disso muda a decisao (e o
   # heredoc marcado nao muda a deteccao de rm/git/chmod) -- pula o trabalho caro.
   # cd/git so pagam a analise com git destrutivo possivel (+150-250 ms medido). Espelha o $need do .ps1.
-  if [[ $cmd == *'$'* ]] && { [[ $cmd =~ $re_rm ]] || { [[ $cmd =~ $re_git ]] && [[ $cmd =~ $re_gsub ]]; }; }; then
+  if [[ $base == *'$'* ]] && { [[ $base =~ $re_rm ]] || { [[ $base =~ $re_git ]] && [[ $base =~ $re_gsub ]]; }; }; then
     need=1
-    guard_analysis_text "$cmd"; analise="$_GA"
+    guard_analysis_text "$base"; analise="$_GA"
     guard_poisoned_names "$analise"
   fi
   while IFS= read -r seg; do
@@ -638,6 +751,8 @@ _destructive_decision() {
       while IFS= read -r t; do
         [ -n "$t" ] || continue
         guard_expand "$t"; r="$_GE"
+        # GUARD_MENOS_PEDIDOS: `rm -rf "$X"` com X que o comando nunca define (env/argumento) passa.
+        if guard_pure_var "$r" && ! guard_name_defined "$analise" "$_GPV"; then continue; fi
         if is_risky_target "$r"; then
           # D11: mostra o que sera apagado de fato quando houve substituicao.
           if [ "$r" != "$t" ]; then t="$t (= $r)"; fi
